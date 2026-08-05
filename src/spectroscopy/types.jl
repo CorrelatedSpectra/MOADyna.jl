@@ -98,6 +98,16 @@ struct SpectraTensor{S<:Number, T<:Real, N, F}
     Eg::Float64
     block_size::Int
     metadata::Dict{Symbol,Any}
+
+    # Explicit inner constructor. This suppresses the auto-generated
+    # argument-inferring constructor, whose `T` is unbound whenever
+    # `chunks === nothing`: `T` appears only inside the `Union`, so it
+    # cannot be recovered from the arguments. Every call site already
+    # supplies all four parameters explicitly.
+    function SpectraTensor{S, T, N, F}(tensor, chunks, ω_grid, Eg,
+                                       block_size, metadata) where {S<:Number, T<:Real, N, F}
+        return new{S, T, N, F}(tensor, chunks, ω_grid, Eg, block_size, metadata)
+    end
 end
 
 # --- show -------------------------------------------------------------------
