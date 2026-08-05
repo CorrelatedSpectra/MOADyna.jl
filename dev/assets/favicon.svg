@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- I2: [ Lorentzian ] — pure spectroscopy favicon.
+       Brackets = Algebra/operator structure; Lorentzian peak = the dynamical response
+       (XAS, RIXS, χ(ω) — what the package actually computes). Letterless. -->
+
+  <!-- Lorentzian-shape bell, symmetric around x=100, baseline y=140, peak top y=58 -->
+  <path d="M 60 140 C 80 140 88 58 100 58 C 112 58 120 140 140 140"
+        stroke="#1d1d2c" stroke-width="10" fill="none"
+        stroke-linecap="square" stroke-linejoin="miter"/>
+
+  <!-- [ -->
+  <path d="M 58 40 L 38 40 L 38 168 L 58 168"
+        stroke="#9558B2" stroke-width="9" fill="none"
+        stroke-linecap="square" stroke-linejoin="miter"/>
+
+  <!-- ] -->
+  <path d="M 142 40 L 162 40 L 162 168 L 142 168"
+        stroke="#9558B2" stroke-width="9" fill="none"
+        stroke-linecap="square" stroke-linejoin="miter"/>
+</svg>
