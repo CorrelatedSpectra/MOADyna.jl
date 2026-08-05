@@ -88,4 +88,6 @@ using MOAD
         include("gradients/test_forward_fidelity.jl")
         include("gradients/test_fit_spectrum.jl")
     end
+
+    include("test_aqua.jl")
 end

@@ -3,22 +3,39 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
   workflow_dispatch:
+
+# Least privilege: the suite only needs to read the repository.
+permissions:
+  contents: read
+
+# Superseded runs on the same ref are cancelled; a run for a tag or for main
+# is never cancelled by a later one.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
     name: Julia ${{ matrix.julia-version }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        julia-version: ['1.10', '1.11']
-        os: [ubuntu-latest, macOS-latest]
+        # '1.10' is the current LTS; '1' tracks the latest stable release.
+        # Julia 1.11 is unmaintained, so it is deliberately not covered.
+        include:
+          - {julia-version: '1.10', os: ubuntu-latest}
+          - {julia-version: '1',    os: ubuntu-latest}
+          - {julia-version: '1',    os: macOS-latest}
+          - {julia-version: '1',    os: windows-latest}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
@@ -26,3 +43,20 @@ jobs:
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
+
+  validation:
+    name: Validation suite (cross-code references)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+          arch: x64
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      # Runs against the tracked reference data in docs/dev/validation/;
+      # no external code (Quanty, QuSpin) is executed.
+      - name: Run validation suite
+        run: julia --project=. --color=yes test/validation_runtests.jl

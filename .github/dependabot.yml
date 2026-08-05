@@ -1,0 +1,26 @@
+version: 2
+
+# CompatHelper is in maintenance mode and now points users at Dependabot,
+# which supports Julia (>= 1.10). One mechanism covers both the package
+# [compat] bounds and the GitHub Actions versions.
+updates:
+  - package-ecosystem: julia
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "compat"
+
+  - package-ecosystem: julia
+    directory: "/docs"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "compat(docs)"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"

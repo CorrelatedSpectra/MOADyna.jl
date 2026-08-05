@@ -455,13 +455,24 @@ Both channels must share the same inner representation type `R`. Convert
 to a common type (e.g., via `to_pole`) before constructing if they differ.
 `GreensFunction(nothing, nothing)` is an `ArgumentError`.
 """
-function GreensFunction(addition::Union{Nothing, R},
-                        removal::Union{Nothing, R}) where {T, R <: AbstractResponse{T}}
-    return GreensFunction{T, R}(addition, removal)
+# One method per valid channel combination, so `R` is bound by an actual
+# argument in every case. A single `Union{Nothing, R}` signature for both
+# arguments would leave `R` (and hence `T`) unbound when both are `nothing`
+# — a latent dispatch hazard, flagged by Aqua's unbound-type-parameter check.
+function GreensFunction(addition::R, removal::R) where {R <: AbstractResponse}
+    return GreensFunction{eltype(R), R}(addition, removal)
 end
 
-# Specialised method for the both-nothing case: T and R can't be inferred,
-# so dispatch a clean ArgumentError instead of UndefVarError(:T, :static_parameter).
+function GreensFunction(addition::R, ::Nothing) where {R <: AbstractResponse}
+    return GreensFunction{eltype(R), R}(addition, nothing)
+end
+
+function GreensFunction(::Nothing, removal::R) where {R <: AbstractResponse}
+    return GreensFunction{eltype(R), R}(nothing, removal)
+end
+
+# Both-nothing: no `R` to infer, so give a clean ArgumentError rather than
+# an UndefVarError about an undetermined static parameter.
 function GreensFunction(::Nothing, ::Nothing)
     throw(ArgumentError(
         "GreensFunction: at least one channel (addition or removal) must be populated"

@@ -8,21 +8,50 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Needed by Documenter's deploy step (GitHub Pages via gh-pages branch).
+# Default to read-only; the deploy job below elevates for itself alone.
 permissions:
-  contents: write
-  pull-requests: read
-  statuses: write
+  contents: read
+
+concurrency:
+  group: docs-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Pull requests build the docs (strict: doctests, missing docstrings and
+  # unresolved cross-references are errors) but never deploy.
   build:
-    name: Build and deploy documentation
+    name: Build documentation
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
         with:
-          version: '1.10'
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - name: Instantiate docs environment
+        run: |
+          julia --project=docs -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path = pwd()))
+            Pkg.instantiate()'
+      - name: Build
+        run: julia --project=docs --color=yes docs/make.jl
+
+  # main and tags build and publish to gh-pages.
+  deploy:
+    name: Build and deploy documentation
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
       - uses: julia-actions/cache@v2
       - name: Instantiate docs environment
         run: |
@@ -34,4 +63,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-        run: julia --project=docs docs/make.jl
+        run: julia --project=docs --color=yes docs/make.jl

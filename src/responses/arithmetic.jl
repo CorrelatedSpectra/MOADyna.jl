@@ -360,6 +360,19 @@ function Base.:+(R::AbstractResponse, L::LanczosResponse)
     return R + to_pole(L)
 end
 
+"""
+    L1::LanczosResponse + L2::LanczosResponse -> PoleResponse
+
+Convert both operands to `PoleResponse` via [`to_pole`](@ref), then add.
+
+This method disambiguates the two mixed `LanczosResponse`/`AbstractResponse`
+methods above: for two `LanczosResponse` arguments neither is more specific,
+so without it `L1 + L2` raises an ambiguity error.
+"""
+function Base.:+(L1::LanczosResponse, L2::LanczosResponse)
+    return to_pole(L1) + to_pole(L2)
+end
+
 # --- GridResponse + GridResponse -----------------------------------------
 
 """
