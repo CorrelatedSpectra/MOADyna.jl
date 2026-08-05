@@ -24,7 +24,7 @@ core-level spectroscopy. MOAD is an independent Julia project with its own desig
 goals: explicit, inspectable operator algebra; programmable exact-diagonalization
 workflows; and a path toward parameter estimation / inverse problems, lattice
 methods, and time-dependent dynamics. `MOAD.QuantyIO` and the [Coming from
-Quanty](docs/src/app/from_quanty.md) appendix keep practical interoperability
+Quanty](https://correlatedspectra.github.io/MOAD.jl/stable/app/from_quanty/) appendix keep practical interoperability
 available where it helps.
 
 ## What it does
@@ -145,7 +145,7 @@ A compact block of MOAD primitives produces a tensor-valued spectrum ready to
 broaden, polarize, or write to disk. The full three-polarization version, with the
 canonical NiO parameter set, is in
 [`examples/05_nio_xas.jl`](examples/05_nio_xas.jl), and the same physics is walked
-through step by step in the [NiO tutorial](docs/src/tut/nio.md).
+through step by step in the [NiO tutorial](https://correlatedspectra.github.io/MOAD.jl/stable/tut/nio/).
 
 ## More examples
 
@@ -162,15 +162,26 @@ The [`examples/`](examples/) directory contains runnable scripts:
 
 ## Documentation
 
-The manual and tutorials live under [`docs/src/`](docs/src/) (Documenter.jl) and
-are the source of truth for the public API. Cross-code validation reports and
-reference data are under [`docs/dev/validation/`](docs/dev/validation/).
+**📖 [Read the documentation](https://correlatedspectra.github.io/MOAD.jl/stable)** — manual, tutorials, and the full API
+reference.
+
+Useful entry points:
+
+- [Getting started](https://correlatedspectra.github.io/MOAD.jl/stable/tut/getting_started/) — installation and first calculation
+- [NiO: XAS, RIXS, and nIXS](https://correlatedspectra.github.io/MOAD.jl/stable/tut/nio/) — a complete worked multiplet calculation
+- [Manual](https://correlatedspectra.github.io/MOAD.jl/stable/man/intro/) — operator algebra, bases, ED, responses, spectroscopy
+- [Library reference](https://correlatedspectra.github.io/MOAD.jl/stable/lib/algebra/) — every exported function
+- [Coming from Quanty](https://correlatedspectra.github.io/MOAD.jl/stable/app/from_quanty/) — command mapping and interop notes
+
+The docs are built from [`docs/src/`](docs/src/) with Documenter.jl. Cross-code
+validation reports and reference data live under
+[`docs/dev/validation/`](docs/dev/validation/).
 
 ## Interoperability
 
 `MOAD.QuantyIO` reads [Quanty](https://www.quanty.org/) text dumps (operators and
 related data), so an external operator can be imported as a native
-[`OperatorSum`](docs/src/lib/algebra.md):
+[`OperatorSum`](https://correlatedspectra.github.io/MOAD.jl/stable/lib/algebra/):
 
 ```julia
 hilbert  = Hilbert(:s => FermionSite{10}(:s))
@@ -179,7 +190,7 @@ H        = read_quanty_operator("hamiltonian_dump.txt", hilbert, mode_map)
 ```
 
 For Quanty-to-MOAD command mapping and interop notes, see [Coming from
-Quanty](docs/src/app/from_quanty.md).
+Quanty](https://correlatedspectra.github.io/MOAD.jl/stable/app/from_quanty/).
 
 ## Citing
 
@@ -206,7 +217,7 @@ when it appears.
 MOAD builds on the Julia numerical ecosystem — notably KrylovKit.jl (eigensolvers)
 and WignerSymbols.jl (angular-momentum coupling), plus HDF5.jl, OhMyThreads.jl,
 StaticArrays.jl, and DataStructures.jl. See
-[Acknowledgments](docs/src/app/acknowledgments.md) for the full list and citations.
+[Acknowledgments](https://correlatedspectra.github.io/MOAD.jl/stable/app/acknowledgments/) for the full list and citations.
 
 ## License
 
