@@ -5,6 +5,8 @@
 # MOAD.jl
 
 [![CI](https://github.com/CorrelatedSpectra/MOAD.jl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CorrelatedSpectra/MOAD.jl/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://correlatedspectra.github.io/MOAD.jl/stable)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21808796.svg)](https://doi.org/10.5281/zenodo.21808796)
 ![Julia: 1.10+](https://img.shields.io/badge/julia-1.10%2B-9558B2)
 
 **Many-body Operators, Algebra, and Dynamics** — a Julia framework for
@@ -183,8 +185,17 @@ Quanty](docs/src/app/from_quanty.md).
 
 **Citing the software.** Please cite the version you used. Machine-readable
 metadata is in [`CITATION.cff`](CITATION.cff) (GitHub renders a "Cite this
-repository" button from it). Each tagged release is archived with its own DOI;
-the DOI for a release will be listed here once that archive is available.
+repository" button from it).
+
+Each tagged release is archived on Zenodo with its own DOI:
+
+| | DOI |
+|---|---|
+| All versions (resolves to the latest) | [10.5281/zenodo.21808796](https://doi.org/10.5281/zenodo.21808796) |
+| v0.3.0 | [10.5281/zenodo.21808797](https://doi.org/10.5281/zenodo.21808797) |
+
+Cite the **version-specific** DOI for reproducibility — it pins the exact code
+a calculation used.
 
 **Methods paper.** A separate paper describing the methods is planned. It is
 not the same citation as the software archive, and this section will be updated

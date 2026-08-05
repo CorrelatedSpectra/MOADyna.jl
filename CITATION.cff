@@ -16,6 +16,14 @@ license: MIT
 type: software
 version: 0.3.0
 date-released: "2026-08-05"
+doi: 10.5281/zenodo.21808796
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21808796
+    description: Concept DOI — resolves to the latest archived release.
+  - type: doi
+    value: 10.5281/zenodo.21808797
+    description: Archived release v0.3.0.
 keywords:
   - julia
   - many-body
