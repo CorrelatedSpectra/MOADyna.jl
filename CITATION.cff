@@ -9,7 +9,7 @@ abstract: >-
 authors:
   - family-names: Lu
     given-names: Yi
-    email: yi.lu1988@gmail.com
+    email: yilu@nju.edu.cn
 url: "https://github.com/CorrelatedSpectra/MOAD.jl"
 repository-code: "https://github.com/CorrelatedSpectra/MOAD.jl"
 license: MIT

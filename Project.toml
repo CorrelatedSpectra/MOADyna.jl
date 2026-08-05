@@ -1,7 +1,7 @@
 name = "MOAD"
 uuid = "5c3054dd-214e-41f9-9cf5-211a9fa316b3"
 version = "0.3.0"
-authors = ["Yi Lu <yi.lu1988@gmail.com>"]
+authors = ["Yi Lu <yilu@nju.edu.cn>"]
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
