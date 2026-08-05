@@ -362,6 +362,32 @@ end
         @test_throws ArgumentError GreensFunction(G, nothing) +
                                    GreensFunction(P, nothing)
     end
+
+    @testset "LanczosResponse + LanczosResponse" begin
+        # Regression: the two mixed Lanczos/AbstractResponse methods are
+        # equally specific for two LanczosResponse operands, so without a
+        # dedicated method this raised a dispatch ambiguity error.
+        L1 = _make_lanczos_K1(Eg = 0.5, Γ = 0.1)
+        L2 = _make_lanczos_K2(Eg = 0.5, Γ = 0.1)
+
+        S = L1 + L2
+        @test S isa PoleResponse
+
+        # Semantics: adding promotes both operands via to_pole and sums them.
+        ωs = [-1.0, 0.0, 0.75, 2.5]
+        @test maximum(maximum(abs, S(ω) - (to_pole(L1)(ω) + to_pole(L2)(ω)))
+                      for ω in ωs) < 1e-10
+
+        # Commutative, and consistent with the mixed-argument methods.
+        @test maximum(maximum(abs, S(ω) - (L2 + L1)(ω)) for ω in ωs) < 1e-10
+        @test maximum(maximum(abs, S(ω) - (to_pole(L1) + L2)(ω)) for ω in ωs) < 1e-10
+
+        # Eg / Γ mismatches are rejected, as for any PoleResponse sum.
+        L_badEg = _make_lanczos_K1(Eg = 0.9, Γ = 0.1)
+        L_badΓ  = _make_lanczos_K1(Eg = 0.5, Γ = 0.2)
+        @test_throws ArgumentError L1 + L_badEg
+        @test_throws ArgumentError L1 + L_badΓ
+    end
 end
 
 # =====================================================================

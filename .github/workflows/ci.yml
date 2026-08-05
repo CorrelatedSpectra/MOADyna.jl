@@ -12,8 +12,10 @@ on:
 permissions:
   contents: read
 
-# Superseded runs on the same ref are cancelled; a run for a tag or for main
-# is never cancelled by a later one.
+# Superseded pull-request runs are cancelled. For main and tags an
+# in-progress run is always allowed to finish; a newer pending run may
+# still replace an older *pending* one in the same group, which is the
+# behaviour we want.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
