@@ -1,0 +1,85 @@
+-- Eigensystem cross-check for the z_only model.
+--
+-- Loads the same Hamiltonian as `z_only_print.Quanty`, restricts to the
+-- 8-fermion sector (Ni²⁺ with full ligand shell, C(10, 8) = 45 states),
+-- and dumps the lowest 5 eigenvalues + eigenvectors in machine-readable
+-- form for the MOAD-side comparison script `z_only_eigen_compare.jl`.
+--
+-- Output files (relative to where Quanty is invoked):
+--   z_only_quanty_eigvals.txt   — one eigenvalue per line, ascending
+--   z_only_quanty_eigvecs.txt   — concatenated `print(psi)` blocks
+
+NF = 10
+
+U          = 6.0
+Delta      = 0.0
+dE_apin    = 0.20
+dE_apout   = 1.14
+t_sigma_in = 1.52
+t_sigma_out= 0.99
+
+nd  = 2.0
+nL  = 6.0
+dC  = U
+denom = nd + nL
+eL = (-0.0 - nd * Delta + nd * dC) / denom
+ed = eL + Delta - dC
+
+H_Ni = ed * (NewOperator("Number", NF, {0,1,2,3}, {0,1,2,3}, {1,1,1,1}))
+
+H_L  = eL * (NewOperator("Number", NF, {4,5,6,7,8,9}, {4,5,6,7,8,9}, {1,1,1,1,1,1}))
+     + dE_apin  * (NewOperator("Number", NF, {4,5},     {4,5},       {1,1}))
+     + dE_apout * (NewOperator("Number", NF, {6,7,8,9}, {6,7,8,9},   {1,1,1,1}))
+
+H_U  = NewOperator(NF, 0, {{0, -0, 1, -1, U}})
+     + NewOperator(NF, 0, {{2, -2, 3, -3, U}})
+
+function hop(i_set, j_set, t)
+   return t * (NewOperator("Number", NF, i_set, j_set, {1, 1})
+              + NewOperator("Number", NF, j_set, i_set, {1, 1}))
+end
+
+H_kin =  hop({0, 1}, {6, 7}, t_sigma_out)
+      - hop({0, 1}, {4, 5}, t_sigma_in)
+      + hop({2, 3}, {4, 5}, t_sigma_in)
+      - hop({2, 3}, {8, 9}, t_sigma_out)
+
+H = H_Ni + H_L + H_U + H_kin
+H.Chop()
+
+-- Diagonalize in the n_fermion = 8 sector. Quanty restriction notation:
+--   {NF, NB, {"NumberMaskAndCount", min, max}}.
+-- The "1111111111" mask counts every mode; restrict to total 8 electrons.
+Npsi = 5
+psiList = Eigensystem(H, {NF, 0, {"1111111111", 8, 8}}, Npsi)
+
+-- Eigenvalues file
+fEv = io.open("z_only_quanty_eigvals.txt", "w")
+fEv:write("# Lowest ", Npsi, " eigenvalues, n_fermion = 8 sector\n")
+for i = 1, Npsi do
+   E = Chop(psiList[i] * H * psiList[i])
+   fEv:write(string.format("%.16e\n", E))
+end
+fEv:close()
+
+-- Eigenvectors file: concatenated print(psi) blocks.
+-- We rebind print to a file-writer for the duration of the dump.
+fEvc = io.open("z_only_quanty_eigvecs.txt", "w")
+local original_print = print
+print = function(...)
+   local args = {...}
+   for i, v in ipairs(args) do
+      fEvc:write(tostring(v))
+      if i < #args then fEvc:write("\t") end
+   end
+   fEvc:write("\n")
+end
+for i = 1, Npsi do
+   print(psiList[i])
+end
+print = original_print
+fEvc:close()
+
+-- Echo to stdout for confirmation
+original_print(string.format("Wrote %d eigenvalues to z_only_quanty_eigvals.txt", Npsi))
+original_print(string.format("Wrote %d eigenvectors to z_only_quanty_eigvecs.txt", Npsi))

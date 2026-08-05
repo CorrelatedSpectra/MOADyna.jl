@@ -1,0 +1,31 @@
+# Julia
+Manifest.toml
+*.cov
+*.jl.cov
+*.jl.mem
+deps/deps.jl
+deps/build.log
+deps/downloads/
+deps/usr/
+deps/src/
+docs/build/
+docs/site/
+
+# Reference codebases (cloned for offline reading; not part of MOAD)
+ref/
+
+# Local third-party builds (e.g. libmsym dylib build, used by future
+# extraction scripts; not part of MOAD source tree)
+dev_scripts/_libmsym_build/
+
+# OS / editor
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
+
+# Example script runtime outputs (never commit)
+examples/nio_xas*.txt
+examples/nio_rixs*.txt
+examples/nio_nixs*.txt

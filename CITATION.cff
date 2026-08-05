@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use MOAD.jl in your research, please cite it as below."
+title: "MOAD.jl: Many-body Operators, Algebra, and Dynamics"
+abstract: >-
+  MOAD.jl is a Julia framework for many-body operator algebra,
+  Hilbert-space construction, exact diagonalization, dynamical
+  correlation functions, and core-level spectroscopies (XAS, RIXS,
+  fluorescence yield) on lattice and atomic multiplet problems.
+authors:
+  - family-names: Lu
+    given-names: Yi
+    email: yi.lu1988@gmail.com
+url: "https://github.com/CorrelatedSpectra/MOAD.jl"
+repository-code: "https://github.com/CorrelatedSpectra/MOAD.jl"
+license: MIT
+type: software
+version: 0.3.0
+date-released: "2026-08-05"
+keywords:
+  - julia
+  - many-body
+  - quantum-mechanics
+  - exact-diagonalization
+  - spectroscopy
+  - XAS
+  - RIXS
+  - multiplet
+  - condensed-matter

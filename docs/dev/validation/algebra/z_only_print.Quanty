@@ -1,0 +1,57 @@
+-- Standalone z_only Hamiltonian builder for MOAD validation.
+-- Builds the same H as progressive_models/01_z_only/model.lua but using
+-- NewOperator directly (no external helpers), with print(H) at the end so
+-- we can parse and compare.
+--
+-- Mode mapping (Quanty 0-indexed):
+--   z1 = (0, 1) = (up, dn)    Ni1 d_z2
+--   z2 = (2, 3)               Ni2 d_z2
+--   a0 = (4, 5)               apical inner
+--   a1 = (6, 7)               apical outer above
+--   a2 = (8, 9)               apical outer below
+
+NF = 10
+
+-- Parameters (model.lua defaults, Bz=0 for clean comparison)
+U          = 6.0
+Delta      = 0.0
+dE_apin    = 0.20
+dE_apout   = 1.14
+t_sigma_in = 1.52
+t_sigma_out= 0.99
+
+-- Charge-transfer energies (derived in model.lua: ct_energies)
+nd  = 2.0  -- 2 e on Ni z's at reference
+nL  = 6.0  -- closed-shell apicals
+dC  = U
+denom = nd + nL
+eL = (-0.0 - nd * Delta + nd * dC) / denom    -- = 1.5
+ed = eL + Delta - dC                           -- = -4.5
+
+-- On-site Ni: ed * (n_0 + n_1 + n_2 + n_3)
+H_Ni = ed * (NewOperator("Number", NF, {0,1,2,3}, {0,1,2,3}, {1,1,1,1}))
+
+-- On-site Lig: eL * sum + dE_apin*n_a0 + dE_apout*(n_a1+n_a2)
+H_L  = eL * (NewOperator("Number", NF, {4,5,6,7,8,9}, {4,5,6,7,8,9}, {1,1,1,1,1,1}))
+     + dE_apin  * (NewOperator("Number", NF, {4,5},     {4,5},       {1,1}))
+     + dE_apout * (NewOperator("Number", NF, {6,7,8,9}, {6,7,8,9},   {1,1,1,1}))
+
+-- Coulomb: U * (n_0 n_1 + n_2 n_3) using ladder spec {C0 A0 C1 A1, U}
+H_U  = NewOperator(NF, 0, {{0, -0, 1, -1, U}})
+     + NewOperator(NF, 0, {{2, -2, 3, -3, U}})
+
+-- Hopping: build symmetric forward/back pairs
+function hop(i_set, j_set, t)
+   return t * (NewOperator("Number", NF, i_set, j_set, {1, 1})
+              + NewOperator("Number", NF, j_set, i_set, {1, 1}))
+end
+
+H_kin =  hop({0, 1}, {6, 7}, t_sigma_out)        -- z1 -- a1, +t_so
+      - hop({0, 1}, {4, 5}, t_sigma_in)          -- z1 -- a0, -t_si
+      + hop({2, 3}, {4, 5}, t_sigma_in)          -- z2 -- a0, +t_si
+      - hop({2, 3}, {8, 9}, t_sigma_out)         -- z2 -- a2, -t_so
+
+H = H_Ni + H_L + H_U + H_kin
+H.Chop()
+
+print(H)

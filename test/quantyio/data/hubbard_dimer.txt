@@ -1,0 +1,21 @@
+Operator: CrAn
+QComplex         =          0 (Real==0 or Complex==1 or Mixed==2)
+MaxLength        =          4 (largest number of product of lader operators)
+NFermionic modes =          4 (Number of fermionic modes (site, spin, orbital, ...) in the one particle basis)
+NBosonic modes   =          0 (Number of bosonic modes (phonon modes, ...) in the one particle basis)
+
+Operator of Length   2
+QComplex      =          0 (Real==0 or Complex==1)
+N             =          4 (number of operators of length   2)
+C  0 A  2 | -1.00000000000000E+00
+C  1 A  3 | -1.00000000000000E+00
+C  2 A  0 | -1.00000000000000E+00
+C  3 A  1 | -1.00000000000000E+00
+
+Operator of Length   4
+QComplex      =          0 (Real==0 or Complex==1)
+N             =          2 (number of operators of length   4)
+C  1 C  0 A  1 A  0 | -4.00000000000000E+00
+C  3 C  2 A  3 A  2 | -4.00000000000000E+00
+
+

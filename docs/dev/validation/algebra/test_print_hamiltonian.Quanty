@@ -1,0 +1,28 @@
+-- Minimal validation script: build a small Hamiltonian and print it.
+-- 4 spin-orbitals (2 spinless orbitals × 2 spin):
+--   mode 0 = orbital 0, spin up
+--   mode 1 = orbital 0, spin dn
+--   mode 2 = orbital 1, spin up
+--   mode 3 = orbital 1, spin dn
+
+NF = 4
+
+-- Hopping: t * (c†_0 c_2 + c†_1 c_3 + h.c.)  =  t * (h_up + h_dn + h.c.)
+t_hop = 1.5
+H_hop = t_hop * (NewOperator("Number", NF, {0, 1}, {2, 3}, {1, 1})
+              +  NewOperator("Number", NF, {2, 3}, {0, 1}, {1, 1}))
+
+-- On-site Coulomb on orbital 0:  U * c†_0 c†_1 c_1 c_0  (n_up n_dn)
+U = 4.0
+-- Use NewOperator with explicit ladder spec
+H_U = NewOperator(NF, 0, {{0, -0, 1, -1, U}})  -- {C0 A0 C1 A1, coef=U} ... I'm guessing the spec; check Quanty docs
+
+print("=== H_hop ===")
+print(H_hop)
+
+print("=== H_U ===")
+print(H_U)
+
+print("=== H_total ===")
+H = H_hop + H_U
+print(H)

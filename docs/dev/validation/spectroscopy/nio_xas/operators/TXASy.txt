@@ -1,0 +1,23 @@
+
+Operator: CF
+QComplex         =          1 (Real==0 or Complex==1 or Mixed==2)
+MaxLength        =          2 (largest number of product of lader operators)
+NFermionic modes =         26 (Number of fermions in the one particle basis)
+NBosonic modes   =          0 (Number of bosons in the one particle basis)
+
+Operator of Length   2
+QComplex      =          1 (Real==0 or Complex==1)
+N             =         12 (number of operators of length   2)
+C  6 A  0 |  0.000000000000000E+00  4.472135954999579E-01
+C  7 A  1 |  0.000000000000000E+00  4.472135954999579E-01
+C  8 A  2 |  0.000000000000000E+00  3.162277660168379E-01
+C  9 A  3 |  0.000000000000000E+00  3.162277660168379E-01
+C 10 A  4 |  0.000000000000000E+00  1.825741858350554E-01
+C 11 A  5 |  0.000000000000000E+00  1.825741858350554E-01
+C 10 A  0 |  0.000000000000000E+00  1.825741858350554E-01
+C 11 A  1 |  0.000000000000000E+00  1.825741858350554E-01
+C 12 A  2 |  0.000000000000000E+00  3.162277660168379E-01
+C 13 A  3 |  0.000000000000000E+00  3.162277660168379E-01
+C 14 A  4 |  0.000000000000000E+00  4.472135954999579E-01
+C 15 A  5 |  0.000000000000000E+00  4.472135954999579E-01
+
