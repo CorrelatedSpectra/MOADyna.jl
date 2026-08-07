@@ -1,30 +1,30 @@
 <p align="center">
-  <img src="assets/logo.svg" width="420" alt="MOAD — Many-body Operators, Algebra, and Dynamics">
+  <img src="assets/logo.svg" width="420" alt="MOADyna — Many-body Operators, Algebra, and Dynamics">
 </p>
 
-# MOAD.jl
+# MOADyna.jl
 
-[![CI](https://github.com/CorrelatedSpectra/MOAD.jl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CorrelatedSpectra/MOAD.jl/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://correlatedspectra.github.io/MOAD.jl/stable)
+[![CI](https://github.com/CorrelatedSpectra/MOADyna.jl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CorrelatedSpectra/MOADyna.jl/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://correlatedspectra.github.io/MOADyna.jl/stable)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21808796.svg)](https://doi.org/10.5281/zenodo.21808796)
 ![Julia: 1.10+](https://img.shields.io/badge/julia-1.10%2B-9558B2)
 
 **Many-body Operators, Algebra, and Dynamics** — a Julia framework for
 exact diagonalization of finite quantum many-body systems and the dynamical
 response functions built on top of it. You write a Hamiltonian as a symbolic
-operator expression; MOAD enumerates the conserved-sector Hilbert space, assembles
+operator expression; MOADyna enumerates the conserved-sector Hilbert space, assembles
 a sparse matrix, diagonalizes it, and evaluates correlation functions and
 spectra — lattice models and atomic multiplet problems through one operator
 language.
 
-**Background.** MOAD grew out of many years of working with
+**Background.** MOADyna grew out of many years of working with
 [Quanty](https://www.quanty.org/), and owes a real intellectual debt to Maurits
 Haverkort — his code and ideas shaped how the author thinks about multiplet and
-core-level spectroscopy. MOAD is an independent Julia project with its own design
+core-level spectroscopy. MOADyna is an independent Julia project with its own design
 goals: explicit, inspectable operator algebra; programmable exact-diagonalization
 workflows; and a path toward parameter estimation / inverse problems, lattice
-methods, and time-dependent dynamics. `MOAD.QuantyIO` and the [Coming from
-Quanty](https://correlatedspectra.github.io/MOAD.jl/stable/app/from_quanty/) appendix keep practical interoperability
+methods, and time-dependent dynamics. `MOADyna.QuantyIO` and the [Coming from
+Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/) appendix keep practical interoperability
 available where it helps.
 
 ## What it does
@@ -54,7 +54,7 @@ available where it helps.
   `multipole`, `quadrupole`, `nixs`) — built from the rank-k engine.
 - **Point groups.** 42 groups with character tables, subduction, crystal-field
   expansion, and classification of many-body eigenstates by spatial irrep.
-- **Differentiable forward model.** `MOAD.Gradients` makes the map from physical
+- **Differentiable forward model.** `MOADyna.Gradients` makes the map from physical
   parameters (Slater reductions, Δ, 10Dq, hybridization, ζ) to a T=0 XAS spectrum
   differentiable — forward-mode with an analytic resolvent, exposing a
   VJP/pullback over a degeneracy-clustered spectral measure, plus a deterministic
@@ -64,7 +64,7 @@ available where it helps.
 
 ```julia
 using Pkg
-Pkg.add(url = "https://github.com/CorrelatedSpectra/MOAD.jl")   # not yet registered
+Pkg.add(url = "https://github.com/CorrelatedSpectra/MOADyna.jl")   # not yet registered
 ```
 
 Requires Julia 1.10 or newer. Current development release: **v0.3.0** (install by
@@ -76,7 +76,7 @@ A half-filled 4-site Hubbard chain: build the Hamiltonian, restrict to a
 conserved sector, diagonalize.
 
 ```julia
-using MOAD
+using MOADyna
 
 L, t, U = 4, 1.0, 4.0
 sites   = [FermionSite{2}(Symbol("s$i")) for i in 1:L]   # modes 1,2 = ↑,↓
@@ -100,7 +100,7 @@ octahedral crystal field, eg/t2g hybridization, ground state, and the L₂,₃ X
 spectrum:
 
 ```julia
-using MOAD
+using MOADyna
 
 m   = ShellModel([:Ni_2p, :Ni_3d, :L_3d])
 gs  = atomic_parameters(:Ni, "3d8";     scaling = :scaled_80)   # Ni²⁺ ground
@@ -141,11 +141,11 @@ spec_x = xas(assemble(compile(H_XAS, basis_xas), basis_xas), basis_xas,
              Gamma = 0.6, Eg = gs_eig.values[1])
 ```
 
-A compact block of MOAD primitives produces a tensor-valued spectrum ready to
+A compact block of MOADyna primitives produces a tensor-valued spectrum ready to
 broaden, polarize, or write to disk. The full three-polarization version, with the
 canonical NiO parameter set, is in
 [`examples/05_nio_xas.jl`](examples/05_nio_xas.jl), and the same physics is walked
-through step by step in the [NiO tutorial](https://correlatedspectra.github.io/MOAD.jl/stable/tut/nio/).
+through step by step in the [NiO tutorial](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/nio/).
 
 ## More examples
 
@@ -162,16 +162,16 @@ The [`examples/`](examples/) directory contains runnable scripts:
 
 ## Documentation
 
-**📖 [Read the documentation](https://correlatedspectra.github.io/MOAD.jl/stable)** — manual, tutorials, and the full API
+**📖 [Read the documentation](https://correlatedspectra.github.io/MOADyna.jl/stable)** — manual, tutorials, and the full API
 reference.
 
 Useful entry points:
 
-- [Getting started](https://correlatedspectra.github.io/MOAD.jl/stable/tut/getting_started/) — installation and first calculation
-- [NiO: XAS, RIXS, and nIXS](https://correlatedspectra.github.io/MOAD.jl/stable/tut/nio/) — a complete worked multiplet calculation
-- [Manual](https://correlatedspectra.github.io/MOAD.jl/stable/man/intro/) — operator algebra, bases, ED, responses, spectroscopy
-- [Library reference](https://correlatedspectra.github.io/MOAD.jl/stable/lib/algebra/) — every exported function
-- [Coming from Quanty](https://correlatedspectra.github.io/MOAD.jl/stable/app/from_quanty/) — command mapping and interop notes
+- [Getting started](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/getting_started/) — installation and first calculation
+- [NiO: XAS, RIXS, and nIXS](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/nio/) — a complete worked multiplet calculation
+- [Manual](https://correlatedspectra.github.io/MOADyna.jl/stable/man/intro/) — operator algebra, bases, ED, responses, spectroscopy
+- [Library reference](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/) — every exported function
+- [Coming from Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/) — command mapping and interop notes
 
 The docs are built from [`docs/src/`](docs/src/) with Documenter.jl. Cross-code
 validation reports and reference data live under
@@ -179,18 +179,18 @@ validation reports and reference data live under
 
 ## Interoperability
 
-`MOAD.QuantyIO` reads [Quanty](https://www.quanty.org/) text dumps (operators and
+`MOADyna.QuantyIO` reads [Quanty](https://www.quanty.org/) text dumps (operators and
 related data), so an external operator can be imported as a native
-[`OperatorSum`](https://correlatedspectra.github.io/MOAD.jl/stable/lib/algebra/):
+[`OperatorSum`](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/):
 
 ```julia
 hilbert  = Hilbert(:s => FermionSite{10}(:s))
-mode_map = i -> (:s, i + 1)           # external 0-indexed → MOAD 1-indexed
+mode_map = i -> (:s, i + 1)           # external 0-indexed → MOADyna 1-indexed
 H        = read_quanty_operator("hamiltonian_dump.txt", hilbert, mode_map)
 ```
 
-For Quanty-to-MOAD command mapping and interop notes, see [Coming from
-Quanty](https://correlatedspectra.github.io/MOAD.jl/stable/app/from_quanty/).
+For Quanty-to-MOADyna command mapping and interop notes, see [Coming from
+Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/).
 
 ## Citing
 
@@ -212,12 +212,22 @@ a calculation used.
 not the same citation as the software archive, and this section will be updated
 when it appears.
 
+## AI assistance
+
+MOADyna was developed with substantial assistance from Anthropic's Claude Code,
+with OpenAI's Codex used for a second pass of code review. I directed the
+design, reviewed the resulting code by hand, and am responsible for the
+package. Correctness is checked by the test suite in CI and by cross-code
+numerical validation against [Quanty](https://www.quanty.org/) and
+[QuSpin](https://quspin.github.io/QuSpin/) — see
+[`docs/dev/validation/`](docs/dev/validation/).
+
 ## Acknowledgments
 
-MOAD builds on the Julia numerical ecosystem — notably KrylovKit.jl (eigensolvers)
+MOADyna builds on the Julia numerical ecosystem — notably KrylovKit.jl (eigensolvers)
 and WignerSymbols.jl (angular-momentum coupling), plus HDF5.jl, OhMyThreads.jl,
 StaticArrays.jl, and DataStructures.jl. See
-[Acknowledgments](https://correlatedspectra.github.io/MOAD.jl/stable/app/acknowledgments/) for the full list and citations.
+[Acknowledgments](https://correlatedspectra.github.io/MOADyna.jl/stable/app/acknowledgments/) for the full list and citations.
 
 ## License
 
@@ -235,7 +245,7 @@ fix, please open an issue first to discuss the design.
 
 ## Roadmap
 
-MOAD is under active development toward a stable v1.0 API; pre-1.0
+MOADyna is under active development toward a stable v1.0 API; pre-1.0
 minor releases may contain breaking changes (semver 0.x). See
 [`CHANGELOG.md`](CHANGELOG.md) for what each release added. Planned
 directions — matrix-free operator application, symmetry-adapted bases,

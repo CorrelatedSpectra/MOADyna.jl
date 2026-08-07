@@ -25,7 +25,7 @@
 #                                 · 3j(ℓ_b, k, ℓ_a; −m_b, q, m_a)
 #                                 · 3j(ℓ_b, k, ℓ_a; 0, 0, 0),   m_b = m_a + q.
 #
-# Quanty's `(l1, m1)` is the created (bra) index = MOAD's `(ℓ_b, m_b)`;
+# Quanty's `(l1, m1)` is the created (bra) index = MOADyna's `(ℓ_b, m_b)`;
 # `(l2, m2)` the annihilated (ket) = `(ℓ_a, m_a)`; `q = m1 − m2 = m_b − m_a`.
 # At k=1 this is identical to `dipole.jl`, so `dipole` is recoverable as the
 # k=1 special case (refactored in Stage A).

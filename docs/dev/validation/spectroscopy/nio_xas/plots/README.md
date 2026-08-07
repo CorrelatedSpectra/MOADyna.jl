@@ -1,13 +1,13 @@
 # NiO L_{2,3} XAS — comparison plots
 
-Apples-to-apples plots comparing MOAD's `xas` output with PyQuanty's
+Apples-to-apples plots comparing MOADyna's `xas` output with PyQuanty's
 Lanczos-cont-frac reference and Quanty's `CreateSpectra` output, on
 the same NiO multiplet calculation.
 
 ## One-time install
 
 The plot scripts use a separate Julia environment so `Plots.jl` and
-`GR_jll` don't become hard dependencies of MOAD itself.
+`GR_jll` don't become hard dependencies of MOADyna itself.
 
 ```bash
 cd docs/dev/validation/spectroscopy/nio_xas/plots
@@ -15,7 +15,7 @@ julia --project=. -e 'import Pkg; Pkg.develop(path="../../../../../.."); Pkg.ins
 ```
 
 (The path has six `..` segments: `plots/ → nio_xas/ → spectroscopy/ →
-validation/ → dev/ → docs/ → MOAD/`.)
+validation/ → dev/ → docs/ → MOADyna/`.)
 
 ## Run
 
@@ -29,7 +29,7 @@ directory:
 
 | File | Content |
 |---|---|
-| `XAS_x.png` | x-polarisation spectrum (MOAD / PyQuanty / Quanty) + residuals |
+| `XAS_x.png` | x-polarisation spectrum (MOADyna / PyQuanty / Quanty) + residuals |
 | `XAS_y.png` | y-polarisation spectrum + residuals |
 | `XAS_z.png` | z-polarisation spectrum + residuals |
 | `XAS_isotropic.png` | Sum over polarisations + residuals |

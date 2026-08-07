@@ -1,10 +1,10 @@
 """
-    MOAD.Spectroscopy
+    MOADyna.Spectroscopy
 
-Multiplet spectroscopy on Hamiltonians built by `MOAD.Bases`. Provides
+Multiplet spectroscopy on Hamiltonians built by `MOADyna.Bases`. Provides
 three user-facing entry points
 
-- [`xas`](@ref MOAD.Spectroscopy.xas) — X-ray absorption spectrum,
+- [`xas`](@ref MOADyna.Spectroscopy.xas) — X-ray absorption spectrum,
   ``\\chi_{ab}(\\omega) = \\langle\\psi| T_a^\\dagger \\, G(\\omega) \\, T_b |\\psi\\rangle``;
 - [`rixs`](@ref) — Resonant Inelastic X-ray Scattering map,
   ``\\chi_{ijkl}(\\omega_\\mathrm{in},\\omega) = \\langle\\psi| T^\\dagger_\\mathrm{in,i} G_\\mathrm{int}^\\dagger \\, T_\\mathrm{out,j} \\, G(\\omega) \\, T_\\mathrm{out,k}^\\dagger \\, G_\\mathrm{int} \\, T_\\mathrm{in,l} |\\psi\\rangle``;
@@ -18,14 +18,14 @@ pole extraction, spectrum algebra, and disk I/O.
 The pipeline is hand-rolled block Lanczos with continued-fraction
 evaluation (rectangular `R` from rank-revealing initial QR + ragged-
 block deflation). Projected dynamics for symmetry- or sector-restricted
-calculations route through `MOAD.Bases.apply_restriction!` after every
+calculations route through `MOADyna.Bases.apply_restriction!` after every
 matvec. See the docstrings on individual entry points for usage.
 
 The submodule re-exports `xas`, `rixs`, `fluorescence_yield`, and
-`SpectraTensor` to the umbrella `MOAD` namespace; the post-processing
+`SpectraTensor` to the umbrella `MOADyna` namespace; the post-processing
 helpers (`re_broaden`, `polarise`, `poles`, `find_chunk`,
 `save_spectra`, `load_spectra`, …) are reached as
-`MOAD.Spectroscopy.<name>`.
+`MOADyna.Spectroscopy.<name>`.
 """
 module Spectroscopy
 
@@ -59,13 +59,13 @@ include("io.jl")
 
 # --- Exports -----------------------------------------------------------------
 #
-# Top-level `MOAD` re-exports the three entry points + result type. Helpers
-# stay at submodule scope (`MOAD.Spectroscopy.<name>`) to keep the umbrella
+# Top-level `MOADyna` re-exports the three entry points + result type. Helpers
+# stay at submodule scope (`MOADyna.Spectroscopy.<name>`) to keep the umbrella
 # namespace focused.
 #
 # Algorithm internals (LanczosChunk, BlockTriDiagonal, block_lanczos, cf_block,
 # evaluate_on_grid, Defaults, pretty_step, auto_grid) are intentionally NOT
-# exported — accessible via MOAD.Spectroscopy.<name> for power users / tests.
+# exported — accessible via MOADyna.Spectroscopy.<name> for power users / tests.
 
 export SpectraTensor
 export DEFAULTS
@@ -78,7 +78,7 @@ export save_spectra, load_spectra
 
 # ---------------------------------------------------------------------------
 # Backward-compat shims (v0.2 → v0.7): kernel functions moved to
-# MOAD.Responses. These const aliases preserve MOAD.Spectroscopy.<name>
+# MOADyna.Responses. These const aliases preserve MOADyna.Spectroscopy.<name>
 # call sites without requiring migration. Deprecation removed at v0.7 freeze.
 # ---------------------------------------------------------------------------
 const block_lanczos = Responses.block_lanczos

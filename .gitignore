@@ -11,11 +11,11 @@ deps/src/
 docs/build/
 docs/site/
 
-# Reference codebases (cloned for offline reading; not part of MOAD)
+# Reference codebases (cloned for offline reading; not part of MOADyna)
 ref/
 
 # Local third-party builds (e.g. libmsym dylib build, used by future
-# extraction scripts; not part of MOAD source tree)
+# extraction scripts; not part of MOADyna source tree)
 dev_scripts/_libmsym_build/
 
 # OS / editor

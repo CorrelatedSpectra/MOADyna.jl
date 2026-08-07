@@ -79,7 +79,7 @@ EagerBasis(m::ShellModel, restrictions...) =
 """
     basis(m::ShellModel, restrictions...; lazy::Bool = false) -> AbstractBasis
 
-Convenience overload of `MOAD.Bases.basis` for `ShellModel`. Equivalent
+Convenience overload of `MOADyna.Bases.basis` for `ShellModel`. Equivalent
 to `basis(m.hilbert, restrictions...; lazy=lazy)`.
 """
 basis(m::ShellModel, restrictions...; lazy::Bool = false) =

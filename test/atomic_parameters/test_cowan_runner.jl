@@ -1,7 +1,7 @@
 # test/atomic_parameters/test_cowan_runner.jl
 #
 # Validation-tier tests for the live Cowan runner. They self-skip when
-# `MOAD_COWAN` (or `TTMULT`) is unset, so the unit suite stays green on
+# `MOADYNA_COWAN` (or `TTMULT`) is unset, so the unit suite stays green on
 # machines without a Cowan binary.
 #
 # Reference values come from R. D. Cowan's RCN Mod 36 output (LANL build,
@@ -9,11 +9,11 @@
 # Haverkort dictionary for shared (element, configuration) entries.
 
 using Test
-import MOAD
-using MOAD: atomic_parameters, radial_wavefunction, radial_integral
+import MOADyna
+using MOADyna: atomic_parameters, radial_wavefunction, radial_integral
 
-const _MOAD_COWAN_PATH = let
-    p = get(ENV, "MOAD_COWAN", get(ENV, "TTMULT", ""))
+const _MOADYNA_COWAN_PATH = let
+    p = get(ENV, "MOADYNA_COWAN", get(ENV, "TTMULT", ""))
     isfile(p) ? p : ""
 end
 
@@ -30,10 +30,10 @@ end
 end
 
 @testset "Cowan runner — Pr 4f² (vs reference out36, f-shell return shape)" begin
-    if _MOAD_COWAN_PATH == ""
-        @info "Skipping live Cowan test: MOAD_COWAN / TTMULT not set or invalid"
+    if _MOADYNA_COWAN_PATH == ""
+        @info "Skipping live Cowan test: MOADYNA_COWAN / TTMULT not set or invalid"
     else
-        p = atomic_parameters(:Pr, "4f2"; cowan = _MOAD_COWAN_PATH)
+        p = atomic_parameters(:Pr, "4f2"; cowan = _MOADYNA_COWAN_PATH)
         # Reference (RCN Mod 36, LANL build):
         #   F²(4f,4f) = 0.8982247 Ry × 13.605693 = 12.222 eV
         #   F⁴(4f,4f) = 0.5634601 Ry × 13.605693 =  7.667 eV
@@ -57,17 +57,17 @@ end
 end
 
 @testset "Cowan runner — Ni²⁺ 3d⁸ (matches Haverkort static dict)" begin
-    if _MOAD_COWAN_PATH == ""
-        @info "Skipping live Cowan test: MOAD_COWAN / TTMULT not set or invalid"
+    if _MOADYNA_COWAN_PATH == ""
+        @info "Skipping live Cowan test: MOADYNA_COWAN / TTMULT not set or invalid"
     else
         # The static path returns Haverkort 2005 values (Cowan RCN36K HF).
         # Since Ni "3d8" is in the static dict, atomic_parameters() will
         # never reach the Cowan runner for it — call _run_cowan_by_config
         # directly to verify the live runner reproduces the static-dict numbers.
         p_static = atomic_parameters(:Ni, "3d8")
-        p_cowan  = MOAD.AtomicParameters._run_cowan_by_config(
+        p_cowan  = MOADyna.AtomicParameters._run_cowan_by_config(
             :Ni, "3d8";
-            binary = _MOAD_COWAN_PATH,
+            binary = _MOADYNA_COWAN_PATH,
             scaling = :HF)
         @test isapprox(p_cowan.Fdd.F2, p_static.Fdd.F2; atol = 0.05)
         @test isapprox(p_cowan.Fdd.F4, p_static.Fdd.F4; atol = 0.05)
@@ -85,7 +85,7 @@ end
     # mock BlockData with the 3d-3d entries deliberately absent and
     # confirm `_shape_to_nested` throws `KeyError` rather than silently
     # producing F²(3d,3d) = 0.
-    BD = MOAD.AtomicParameters.BlockData
+    BD = MOADyna.AtomicParameters.BlockData
     empty_block = BD(
         Dict{Tuple{String, String, Int}, Float64}(),  # fk: empty
         Dict{Tuple{String, String, Int}, Float64}(),  # gk: empty
@@ -93,7 +93,7 @@ end
         Dict{Tuple{String, Int}, Float64}(             # rk: 3d only
             ("3d", 2) => 0.5, ("3d", 4) => 0.4),
     )
-    @test_throws KeyError MOAD.AtomicParameters._shape_to_nested(
+    @test_throws KeyError MOADyna.AtomicParameters._shape_to_nested(
         empty_block, :Ni, 2, :ground, Symbol("3d"), "3d8")
 end
 
@@ -102,8 +102,8 @@ end
     # `mktempdir(cleanup=true)` (which only fires at Julia exit). After a
     # successful call with `keep_scratch=false`, the scratch directory
     # must not exist.
-    if _MOAD_COWAN_PATH == ""
-        @info "Skipping live Cowan cleanup test: MOAD_COWAN / TTMULT not set"
+    if _MOADYNA_COWAN_PATH == ""
+        @info "Skipping live Cowan cleanup test: MOADYNA_COWAN / TTMULT not set"
     else
         # Run with keep_scratch=true to surface the path, then verify a
         # default-cleanup run (keep_scratch=false implicit) doesn't leave
@@ -115,11 +115,11 @@ end
         tmproot = tempdir()
         before = Set(readdir(tmproot))
         atomic_parameters(:Ni, "3d8";
-                          cowan = _MOAD_COWAN_PATH)   # static-dict hits first
+                          cowan = _MOADYNA_COWAN_PATH)   # static-dict hits first
         # Static dict short-circuits: confirm the runner is exercised
         # via _run_cowan_by_config directly.
-        MOAD.AtomicParameters._run_cowan_by_config(
-            :Ni, "3d8"; binary = _MOAD_COWAN_PATH, scaling = :HF)
+        MOADyna.AtomicParameters._run_cowan_by_config(
+            :Ni, "3d8"; binary = _MOADYNA_COWAN_PATH, scaling = :HF)
         after = Set(readdir(tmproot))
         # Anything new in tmproot left behind by us is a leak. (Other
         # processes may add entries, but they wouldn't be removed —
@@ -132,9 +132,9 @@ end
               isempty(new_entries)
 
         # Direct keep_scratch=true smoke test: scratch_path is set.
-        p_keep = MOAD.AtomicParameters._run_cowan(
+        p_keep = MOADyna.AtomicParameters._run_cowan(
             :Ni, 2, :ground;
-            binary = _MOAD_COWAN_PATH,
+            binary = _MOADYNA_COWAN_PATH,
             shell  = Symbol("3d"),
             scaling = :HF,
             keep_scratch = true)
@@ -149,13 +149,13 @@ end
     # The public `atomic_parameters` accepts the `keep_scratch` kwarg so
     # the diagnostic in `_missing_required` is actionable through the
     # public API.
-    if _MOAD_COWAN_PATH == ""
-        @info "Skipping keep_scratch passthrough test: MOAD_COWAN / TTMULT not set"
+    if _MOADYNA_COWAN_PATH == ""
+        @info "Skipping keep_scratch passthrough test: MOADYNA_COWAN / TTMULT not set"
     else
         # Use Pr 4f² which is *not* in the static dict, so the call is
         # forced through the live Cowan runner.
         p = atomic_parameters(:Pr, "4f2";
-                              cowan = _MOAD_COWAN_PATH,
+                              cowan = _MOADYNA_COWAN_PATH,
                               keep_scratch = true)
         @test haskey(p, :scratch_path)
         @test isdir(p.scratch_path)
@@ -173,8 +173,8 @@ end
     # cosmetic (Cowan ignores it numerically). Default is the
     # spectroscopy convention (`ion_stage = charge + 1`), so Pr³⁺ →
     # "Pr IV". The `ion_label` kwarg overrides only the deck label.
-    deck_default = MOAD.AtomicParameters._build_in36(:Pr, 3, "4f2")
-    deck_override = MOAD.AtomicParameters._build_in36(
+    deck_default = MOADyna.AtomicParameters._build_in36(:Pr, 3, "4f2")
+    deck_override = MOADyna.AtomicParameters._build_in36(
         :Pr, 3, "4f2"; ion_label = "Pr III")
     @test occursin("Pr IV", deck_default)
     @test occursin("Pr III", deck_override)
@@ -185,10 +185,10 @@ end
 end
 
 @testset "radial_wavefunction — Ni 3d⁸ (P(r) from tape2n; nIXS Bessel moments)" begin
-    if _MOAD_COWAN_PATH == ""
-        @info "Skipping live Cowan radial test: MOAD_COWAN / TTMULT not set or invalid"
+    if _MOADYNA_COWAN_PATH == ""
+        @info "Skipping live Cowan radial test: MOADYNA_COWAN / TTMULT not set or invalid"
     else
-        rw = radial_wavefunction(:Ni, "3d8"; cowan = _MOAD_COWAN_PATH)
+        rw = radial_wavefunction(:Ni, "3d8"; cowan = _MOADYNA_COWAN_PATH)
         # The 641-point RCN log mesh (Bohr), ending at r(mesh) ≈ 1910.724.
         @test length(rw.r) == 641
         @test isapprox(rw.r[end], 1910.724; atol = 0.01)
@@ -251,7 +251,7 @@ end
       1s    2.    -100.00000    1.0
       2s    2.     -10.00000    1.0
     """
-    res = MOAD.AtomicParameters._parse_cowan_radial(fake_out36, path)
+    res = MOADyna.AtomicParameters._parse_cowan_radial(fake_out36, path)
     @test res.r ≈ [0.0, 1.0, 2.0, 3.0, 4.0]
     @test Set(keys(res.P)) == Set(["1s", "2s"])
     @test res.P["1s"] ≈ [1.0, 2.0, 3.0, 4.0, 5.0]
@@ -261,7 +261,7 @@ end
     # tail layout differs (qnl present). Reuse the same binary; only out36 meta
     # changes. The irel guard fires before tape2n is even read.
     rel_out36 = replace(fake_out36, "irel= 1" => "irel= 4")
-    @test_throws ErrorException MOAD.AtomicParameters._parse_cowan_radial(rel_out36, path)
+    @test_throws ErrorException MOADyna.AtomicParameters._parse_cowan_radial(rel_out36, path)
 
     rm(path; force = true)
 end

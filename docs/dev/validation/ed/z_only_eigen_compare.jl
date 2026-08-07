@@ -1,5 +1,5 @@
 # =====================================================================
-# z_only Eigensystem cross-check: MOAD vs Quanty
+# z_only Eigensystem cross-check: MOADyna vs Quanty
 # =====================================================================
 #
 # Phase-0 numerical validation of the full pipeline:
@@ -8,7 +8,7 @@
 #           → z_only_quanty_eigvals.txt
 #           → z_only_quanty_eigvecs.txt
 #
-#   MOAD:   read_quanty_operator → compile → assemble → eigen
+#   MOADyna:   read_quanty_operator → compile → assemble → eigen
 #           ≈
 #           read_quanty_eigenvalues + read_quanty_wavefunctions
 #
@@ -23,7 +23,7 @@
 # Then run this script from the repo root:
 #   julia --project=. docs/dev/validation/z_only_eigen_compare.jl
 
-using MOAD
+using MOADyna
 using LinearAlgebra: norm, eigvals, Hermitian
 using SparseArrays: nnz
 using Printf
@@ -40,11 +40,11 @@ for p in (QUANTY_OP_DUMP, QUANTY_EIGVALS, QUANTY_EIGVECS)
                         "(and z_only_print.Quanty for the operator dump) first.")
 end
 
-# ----- Build the Hamiltonian + basis on the MOAD side ---------------------
+# ----- Build the Hamiltonian + basis on the MOADyna side ---------------------
 
 const HILBERT = Hilbert(:s => FermionSite{10}(:s))
 const SITE    = HILBERT[:s]
-# Quanty modes 0..9 → MOAD (:s, 1)..(:s, 10).
+# Quanty modes 0..9 → MOADyna (:s, 1)..(:s, 10).
 const MODE_MAP = i -> (:s, i + 1)
 
 H = read_quanty_operator(QUANTY_OP_DUMP, HILBERT, MODE_MAP)
@@ -53,12 +53,12 @@ basis = EagerBasis(HILBERT, n_fermion(HILBERT) == 8)
 
 H_compiled = compile(H, basis)
 H_sparse = assemble(H_compiled, basis)
-@info "MOAD assembled" basis_size = length(basis) nnz = nnz(H_sparse)
+@info "MOADyna assembled" basis_size = length(basis) nnz = nnz(H_sparse)
 
-# ----- Run MOAD's eigen ---------------------------------------------------
+# ----- Run MOADyna's eigen ---------------------------------------------------
 
 E_moad = eigen(H, basis; n = 5)
-@info "MOAD eigen done" values = E_moad.values
+@info "MOADyna eigen done" values = E_moad.values
 
 # ----- Read Quanty side ---------------------------------------------------
 
@@ -74,7 +74,7 @@ function _compare_eigvals(E_moad, quanty_eigvals)
     println("\n", "=" ^ 60)
     println("Eigenvalue comparison (n_fermion = 8 sector)")
     println("=" ^ 60)
-    @printf "%-8s  %-22s  %-22s  %-12s\n" "k" "MOAD" "Quanty" "|Δ|"
+    @printf "%-8s  %-22s  %-22s  %-12s\n" "k" "MOADyna" "Quanty" "|Δ|"
     println("-" ^ 70)
     max_diff = 0.0
     for k in 1:5
@@ -128,7 +128,7 @@ function _compare_eigvecs(V_moad, V_quanty, λ)
         P_M = V_moad[:,   rng] * V_moad[:,   rng]'
         P_Q = V_quanty[:, rng] * V_quanty[:, rng]'
         fnorm = norm(P_M - P_Q)
-        @printf "  cluster %s (size %d): ‖P_MOAD - P_Quanty‖_F = %.4e\n" string(rng) length(rng) fnorm
+        @printf "  cluster %s (size %d): ‖P_MOADyna - P_Quanty‖_F = %.4e\n" string(rng) length(rng) fnorm
         max_diff = max(max_diff, fnorm)
     end
     return max_diff
@@ -144,7 +144,7 @@ println("=" ^ 60)
 @printf "Max projector Frobenius diff: %.4e\n" max_proj_diff
 
 if max_eigval_diff < 1e-10 && max_proj_diff < 1e-9
-    println("\n✓ MOAD and Quanty agree on the lowest 5 eigenpairs.")
+    println("\n✓ MOADyna and Quanty agree on the lowest 5 eigenpairs.")
 else
     println("\n✗ Discrepancy exceeds tolerance. See per-level numbers above.")
     exit(1)

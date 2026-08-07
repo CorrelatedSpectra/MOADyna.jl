@@ -1,5 +1,5 @@
 @testset "encoding" begin
-    using MOAD.Bases: EncodingMap, mode_entry, get_span, set_span!,
+    using MOADyna.Bases: EncodingMap, mode_entry, get_span, set_span!,
                       get_bit, set_bit!, clear_bit!,
                       _state_less_flat
 

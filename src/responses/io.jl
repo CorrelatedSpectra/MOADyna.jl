@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — HDF5 round-trip for AbstractResponse
+# MOADyna.Responses — HDF5 round-trip for AbstractResponse
 # =====================================================================
 #
 # Format versions:
@@ -158,7 +158,7 @@ function load_response(file::AbstractString)
         version = read(HDF5.attributes(f)["version"])
         version ∈ _RESPONSES_IO_FORMAT_VERSIONS_SUPPORTED || throw(ArgumentError(
             "Responses I/O: unrecognized version \"$version\" " *
-            "(this MOAD supports $(collect(_RESPONSES_IO_FORMAT_VERSIONS_SUPPORTED)))"))
+            "(this MOADyna supports $(collect(_RESPONSES_IO_FORMAT_VERSIONS_SUPPORTED)))"))
         return _read_response(f, version)
     end
 end

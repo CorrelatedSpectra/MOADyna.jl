@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Spectroscopy — dynamical_structure_factor (2e Task 2) tests
+# MOADyna.Spectroscopy — dynamical_structure_factor (2e Task 2) tests
 # =====================================================================
 #
 # Thin-wrapper checks for the one-sided dynamical structure factor
@@ -10,9 +10,9 @@
 using Test
 using LinearAlgebra
 using SparseArrays
-using MOAD
-using MOAD: GridResponse
-using MOAD.Spectroscopy: dynamical_structure_factor
+using MOADyna
+using MOADyna: GridResponse
+using MOADyna.Spectroscopy: dynamical_structure_factor
 
 # Dense one-sided correlator C(ω) = ⟨ψ₀|O†(ω+Eg−H+iΓ/2)⁻¹O|ψ₀⟩.
 function _dense_corr_sf(H::Matrix, O::Matrix, ψ₀::Vector, Eg::Float64,

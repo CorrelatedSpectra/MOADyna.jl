@@ -25,10 +25,10 @@
 # (MODE 0 in Quanty's 0-indexed convention) on the LEFT, mode NF-1 on
 # the right. So "1100" = Quanty modes {0, 1} occupied.
 #
-# Convention bridge to MOAD:
-# - Quanty mode index `i` (0-indexed) maps to MOAD's `(site_name, label)`
+# Convention bridge to MOADyna:
+# - Quanty mode index `i` (0-indexed) maps to MOADyna's `(site_name, label)`
 #   via the user-supplied `mode_map`, identical to the operator reader.
-# - Each occupied mode is written into MOAD's packed-UInt64 encoding
+# - Each occupied mode is written into MOADyna's packed-UInt64 encoding
 #   via the basis's `EncodingMap`. The result is a length-`nwords`
 #   `Vector{UInt64}` that we look up in the basis via `get_index`.
 
@@ -39,12 +39,12 @@
         -> Vector{eltype}
 
 Read the FIRST `WaveFunction:` block from `path` and return a dense
-MOAD-indexed coefficient vector aligned to `basis`. Coefficients of
+MOADyna-indexed coefficient vector aligned to `basis`. Coefficients of
 basis states not appearing in the dump are zero.
 
 `mode_map` follows the same convention as `read_quanty_operator`:
 either a function `i -> (site_name, label)` or a `Dict{Int, ...}`
-mapping Quanty's 0-indexed mode integers to MOAD addresses.
+mapping Quanty's 0-indexed mode integers to MOADyna addresses.
 
 If Quanty's wavefunction is real (QComplex=0), the imaginary parts of
 the returned vector are exactly zero. Use `eltype=Float64` when you
@@ -67,7 +67,7 @@ end
 
 Read EVERY `WaveFunction:` block from `path` (typical use: an
 `Eigensystem` dump that contains multiple eigenvectors). Returns a
-vector of MOAD-indexed coefficient vectors in file order.
+vector of MOADyna-indexed coefficient vectors in file order.
 """
 function read_quanty_wavefunctions(path::AbstractString, basis,
                                    mode_map; eltype = ComplexF64)
@@ -189,9 +189,9 @@ function _parse_wavefunction_line(line::AbstractString, qcomplex::Int)
     end
 end
 
-# Encode a Quanty bit string ("1100") into MOAD's packed-UInt64 layout.
+# Encode a Quanty bit string ("1100") into MOADyna's packed-UInt64 layout.
 # Bit `i` (0-indexed) of the string corresponds to Quanty mode `i`; the
-# user-supplied `mode_map` maps that to (site_name, label) in MOAD.
+# user-supplied `mode_map` maps that to (site_name, label) in MOADyna.
 function _bitstring_to_words!(buf::AbstractVector{UInt64},
                               bitstr::AbstractString,
                               encoding,
@@ -208,7 +208,7 @@ function _bitstring_to_words!(buf::AbstractVector{UInt64},
         ch === '1' || continue
         qmode = i - 1
         site_name, label = _lookup_mode(mode_map, qmode)
-        # Resolve the bit position in MOAD's encoding.
+        # Resolve the bit position in MOADyna's encoding.
         entry = mode_entry(encoding, site_name, _splat(label))
         # FermionSite modes are 1-bit. Set that bit.
         # (Boson/spin sites would need set_span!; not needed for v0.1

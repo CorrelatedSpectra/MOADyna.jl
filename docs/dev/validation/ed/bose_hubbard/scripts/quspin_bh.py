@@ -1,18 +1,18 @@
 """
-QuSpin reference for Bose-Hubbard validation in MOAD.
+QuSpin reference for Bose-Hubbard validation in MOADyna.
 
 Generates `bh_reference.h5` (committed alongside this script under
 `reference/`). The test under `test/ed/validation/test_bh_quspin.jl`
-loads the fixture and compares against MOAD.
+loads the fixture and compares against MOADyna.
 
-Hamiltonian (matches MOAD `examples/03_bose_hubbard.jl`):
+Hamiltonian (matches MOADyna `examples/03_bose_hubbard.jl`):
 
     H = -t Σ_{<ij>} (b†_i b_j + h.c.)
        + (U/2) Σ_i n_i (n_i - 1)
        - μ Σ_i n_i
 
 Boundary: open. No symmetry block projection (kblock / pblock
-disabled) so the QuSpin basis spans the same Fock sector as MOAD's
+disabled) so the QuSpin basis spans the same Fock sector as MOADyna's
 EagerBasis(h, n_boson(h) == Nb).
 
 Re-run with:

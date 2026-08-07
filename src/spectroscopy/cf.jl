@@ -1,8 +1,8 @@
 # =====================================================================
-# evaluate_on_grid — Spectroscopy-side wrapper over MOAD.Responses.cf_block
+# evaluate_on_grid — Spectroscopy-side wrapper over MOADyna.Responses.cf_block
 # =====================================================================
 #
-# cf_block itself lives in src/responses/cf.jl (MOAD.Responses.cf_block).
+# cf_block itself lives in src/responses/cf.jl (MOADyna.Responses.cf_block).
 # evaluate_on_grid wraps a LanczosChunk (a Spectroscopy-domain type), so it
 # lives here to avoid a circular dependency.
 

@@ -4,7 +4,7 @@
 #
 #   H = -t Σ_<ij> b†_i b_j + h.c.  +  (U/2) Σ_i n_i (n_i - 1)  -  μ Σ_i n_i
 
-using MOAD
+using MOADyna
 
 const L = 4
 const Nmax = 5      # bosonic occupation cutoff per site

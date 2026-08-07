@@ -1,6 +1,6 @@
 # Diagnostics
 
 ```@autodocs
-Modules = [MOAD.Diagnostics]
+Modules = [MOADyna.Diagnostics]
 Private = false
 ```

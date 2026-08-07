@@ -1,13 +1,13 @@
 # Point Groups
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
-`MOAD.PointGroups` turns a Schoenflies symbol into a fully computable group: it enumerates the
+`MOADyna.PointGroups` turns a Schoenflies symbol into a fully computable group: it enumerates the
 symmetry operations, builds the character table (cross-checked against curated reference
 tables), and derives subduction, projectors, and crystal-field parameters from first
 principles. It covers **42 reference-labelled groups** (32 crystallographic + 10
@@ -20,7 +20,7 @@ task-oriented tour; the [Point-Group Theory Primer](@ref) appendix is the deeper
 irreducible representations are computed at construction:
 
 ```@example pg
-using MOAD
+using MOADyna
 
 G = pointgroup(:Oh)
 (order = length(G.elements), nclasses = length(G.classes), nirreps = length(G.irreps))
@@ -36,7 +36,7 @@ G = pointgroup(:Oh)
 ## Character table
 
 [`character_table`](@ref) returns the classes, irreps, and the character matrix;
-[`print_character_table`](@ref MOAD.PointGroups.print_character_table) pretty-prints it, and [`character_table_compare`](@ref) shows
+[`print_character_table`](@ref MOADyna.PointGroups.print_character_table) pretty-prints it, and [`character_table_compare`](@ref) shows
 the reference vs computed orderings side by side.
 
 ```@example pg
@@ -88,7 +88,7 @@ akm = expand_clm_central(G, 2, [0.6, -0.4])         # ε(E_g)=0.6, ε(T_2g)=-0.4
 
 For a cubic ``d`` shell only the ``k = 4`` terms survive, with the cubic-harmonic constraint
 ``A_{4,\pm4} = \sqrt{5/14}\,A_{4,0}`` enforced automatically. Lower-symmetry groups (e.g.
-`:C4v`, `:D4h`, `:Td`) and multiplicity-aware ``f``-shell blocks via [`expand_clm`](@ref MOAD.PointGroups.expand_clm) are
+`:C4v`, `:D4h`, `:Td`) and multiplicity-aware ``f``-shell blocks via [`expand_clm`](@ref MOADyna.PointGroups.expand_clm) are
 worked in the [Point-Group Theory Primer](@ref).
 
 ## Classifying a subspace
@@ -112,7 +112,7 @@ worked example, the Ni²⁺ ``d^8`` ground state in a cubic field is the orbital
 triplet ``{}^3A_{2g}`` — and the routine confirms its spatial irrep is ``A_{2g}``:
 
 ```@example pg
-using MOAD
+using MOADyna
 md  = ShellModel([:Ni_3d])
 Hd  = coulomb(md, :Ni_3d; U = 0.0, F = (11.14, 6.87)) +
       0.56 * Akm(md, :Ni_3d, :Oh, [0.6, -0.4])

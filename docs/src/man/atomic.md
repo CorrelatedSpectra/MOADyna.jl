@@ -1,13 +1,13 @@
 # Atomic Parameters
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
-`MOAD.AtomicParameters` supplies the numerical inputs a multiplet Hamiltonian needs —
+`MOADyna.AtomicParameters` supplies the numerical inputs a multiplet Hamiltonian needs —
 Slater–Condon ``F^k``/``G^k``, spin–orbit ``\zeta``, and the radial moments ``\langle r^k\rangle`` — for
 transition-metal and lanthanide configurations, via [`atomic_parameters`](@ref). The values
 come from a static Haverkort-derived dictionary (Cowan RCN36K Hartree–Fock), with an
@@ -16,7 +16,7 @@ optional Cowan runner for configurations outside the static set.
 ## Looking up a configuration
 
 ```@example atom
-using MOAD
+using MOADyna
 
 p = atomic_parameters(:Ni, "3d8")
 (p.Fdd, p.zeta, p.provenance)

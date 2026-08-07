@@ -1,9 +1,9 @@
 # =====================================================================
-# Builder — convert ParsedOperator + mode_map → MOAD.Algebra OperatorSum
+# Builder — convert ParsedOperator + mode_map → MOADyna.Algebra OperatorSum
 # =====================================================================
 #
 # The `mode_map` argument tells the builder how Quanty's integer mode
-# index translates to a MOAD `(site_name::Symbol, label_tuple)`. The
+# index translates to a MOADyna `(site_name::Symbol, label_tuple)`. The
 # user supplies this — it encodes their own convention for what each
 # Quanty mode represents.
 #
@@ -17,10 +17,10 @@
 """
     build_operator(parsed::ParsedOperator, hilbert::Hilbert, mode_map) -> OperatorSum
 
-Construct a MOAD `OperatorSum` from a parsed Quanty dump. The chain
+Construct a MOADyna `OperatorSum` from a parsed Quanty dump. The chain
 order in the parsed dump is preserved literally — the resulting product
-goes through MOAD.Algebra's Tier-2 canonicalization, so the output is
-the canonical MOAD representation regardless of Quanty's storage order.
+goes through MOADyna.Algebra's Tier-2 canonicalization, so the output is
+the canonical MOADyna representation regardless of Quanty's storage order.
 
 `mode_map` is either a function `Int -> (Symbol, label)` or a `Dict{Int,
 Tuple{Symbol, ...}}` defining which (site, label) each Quanty mode
@@ -46,7 +46,7 @@ end
 
 function _build_term(term::ParsedTerm, hilbert::Hilbert, mode_map, ::Type{T}) where {T}
     # Build the chain by multiplying single-entry operators in order.
-    # Each lookup goes through MOAD's canonicalization on the way in
+    # Each lookup goes through MOADyna's canonicalization on the way in
     # via the `*` operator.
     coef = T == Float64 ? real(term.coefficient) : term.coefficient
     chain_op = nothing  # OperatorSum{T} or nothing

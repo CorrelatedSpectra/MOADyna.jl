@@ -1,6 +1,6 @@
 using Test
-using MOAD
-using MOAD.Algebra: FermionSite, Hilbert, OperatorSum
+using MOADyna
+using MOADyna.Algebra: FermionSite, Hilbert, OperatorSum
 
 # =====================================================================
 # Algebra-level interaction primitives — FermionSite + orbital-pair forms

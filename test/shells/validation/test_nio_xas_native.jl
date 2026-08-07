@@ -3,10 +3,10 @@
 # =====================================================================
 #
 # Builds the canonical NiO L_{2,3} XAS Hamiltonian end-to-end using
-# native MOAD primitives (`onsite_energies`, `coulomb`, `LS`, `Akm`,
-# `hop`, `dipole`) — NO `MOAD.QuantyIO.read_quanty_operator` anywhere.
+# native MOADyna primitives (`onsite_energies`, `coulomb`, `LS`, `Akm`,
+# `hop`, `dipole`) — NO `MOADyna.QuantyIO.read_quanty_operator` anywhere.
 #
-# Compares the resulting MOAD spectrum tensor to the PyQuanty reference
+# Compares the resulting MOADyna spectrum tensor to the PyQuanty reference
 # (`XAS_lanczos_cont_frac.txt`) across all three Cartesian polarisations.
 # Plan 2 target: residual ≤ 1e-4 of peak.
 #
@@ -24,7 +24,7 @@
 @testset "NiO L_{2,3} XAS — native (no read_quanty_operator)" begin
     using DelimitedFiles
     using LinearAlgebra: norm
-    using MOAD: xas
+    using MOADyna: xas
 
     # ---------------------------------------------------------------
     # Reference-data presence check
@@ -107,7 +107,7 @@
         nshells(m, :Ni_2p) in 5:6,
         total(m) == 24)
 
-    @info "MOAD native NiO basis sizes: GS = $(length(basis_gs)), XAS = $(length(basis_xas))"
+    @info "MOADyna native NiO basis sizes: GS = $(length(basis_gs)), XAS = $(length(basis_xas))"
     @test length(basis_gs)  == 190
     @test length(basis_xas) == 310
 
@@ -116,7 +116,7 @@
     # ---------------------------------------------------------------
     gs = eigen(H_GS, basis_gs; n = 3)
     Eg = gs.values[1]
-    @info "MOAD native NiO Eg = $(round(Eg; digits = 6)) eV (Quanty: ≈ -3.503)"
+    @info "MOADyna native NiO Eg = $(round(Eg; digits = 6)) eV (Quanty: ≈ -3.503)"
     @test Eg ≈ -3.503 atol = 0.01
 
     psi0 = embed(gs.vectors[:, 1], basis_gs => basis_xas)
@@ -148,7 +148,7 @@
         ref_col  = complex.(ref[:, 2 * ax_idx], ref[:, 2 * ax_idx + 1])
         peak     = maximum(abs, ref_col)
         residual = maximum(abs, spec.tensor .- ref_col) / peak
-        @info "MOAD native NiO XAS $(ax_name): max |Δ| / peak = $(residual)"
+        @info "MOADyna native NiO XAS $(ax_name): max |Δ| / peak = $(residual)"
         @test residual < 1e-4
     end
 end

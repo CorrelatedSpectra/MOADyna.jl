@@ -1,17 +1,17 @@
 # test/gradients/test_affine_model.jl
 #
-# Build-step 1 of the v0.3 differentiable forward model (MOAD.Gradients): the
+# Build-step 1 of the v0.3 differentiable forward model (MOADyna.Gradients): the
 # affine Hamiltonian model H(θ) = Σ_i c_i(θ) M_i and its directional derivative,
 # finite-difference-validated on a compact NiO ligand-field ground-state
 # Hamiltonian. No eigensolver here. Reproducible: every parameter is fixed below
 # (no RNG).
 
-using MOAD
+using MOADyna
 using LinearAlgebra
 using SparseArrays
 using Test
 
-const G = MOAD.Gradients
+const G = MOADyna.Gradients
 
 @testset "Gradients build-step 1: affine model" begin
     # --- Compact NiO ligand-field ground-state model (two shells) -----------

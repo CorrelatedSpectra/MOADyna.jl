@@ -2,7 +2,7 @@
 #
 # Fock-space many-body classify_state(ψ, basis, m, G): the LiftedRep apply.
 using Test
-using MOAD
+using MOADyna
 using LinearAlgebra: norm, tr
 
 @testset "classify_state (many-body Fock apply)" begin
@@ -12,7 +12,7 @@ using LinearAlgebra: norm, tr
         b = basis(m, nshells(m, :H_1s) == 2)     # one closed-shell determinant
         @test length(b) == 1
         G = pointgroup(:Oh)
-        res = MOAD.classify_state([1.0 + 0im], b, m, G)
+        res = MOADyna.classify_state([1.0 + 0im], b, m, G)
         @test res.dominant_IR == :A1g
         @test isapprox(res.dominant_weight, 1.0; atol = 1e-8)
     end
@@ -31,7 +31,7 @@ using LinearAlgebra: norm, tr
         @test isapprox(gs.values[1], gs.values[2]; atol = 1e-6)
         @test isapprox(gs.values[2], gs.values[3]; atol = 1e-6)
         for i in 1:3
-            res = MOAD.classify_state(gs.vectors[:, i], b, m, G)
+            res = MOADyna.classify_state(gs.vectors[:, i], b, m, G)
             @test res.dominant_IR == :A2g
             @test isapprox(res.dominant_weight, 1.0; atol = 1e-6)
         end
@@ -53,9 +53,9 @@ using LinearAlgebra: norm, tr
         χ = zeros(ComplexF64, nG)
         for i in 1:N
             ei = zeros(ComplexF64, N); ei[i] = 1
-            χ .+= MOAD.Diagnostics._lift_matrix_elements(ei, b, m, G)
+            χ .+= MOADyna.Diagnostics._lift_matrix_elements(ei, b, m, G)
         end
-        sub = MOAD.classify_subspace(χ, G)
+        sub = MOADyna.classify_subspace(χ, G)
         d = Dict(sub)
         @test get(d, :Eg, 0) == 2
         @test get(d, :T2g, 0) == 2
@@ -70,7 +70,7 @@ using LinearAlgebra: norm, tr
         b = basis(m, nshells(m, :Ni_3d) == 10)   # the single d¹⁰ state
         @test length(b) == 1
         G = pointgroup(:Oh)
-        res = MOAD.classify_state([1.0 + 0im], b, m, G)
+        res = MOADyna.classify_state([1.0 + 0im], b, m, G)
         @test res.dominant_IR == :A1g
         @test isapprox(res.dominant_weight, 1.0; atol = 1e-8)
     end
@@ -79,8 +79,8 @@ using LinearAlgebra: norm, tr
         m = ShellModel([:H_1s])
         b = basis(m, nshells(m, :H_1s) == 2)
         G = pointgroup(:Oh)
-        @test_throws DimensionMismatch MOAD.classify_state([1.0+0im, 2.0+0im], b, m, G)
-        @test_throws ArgumentError MOAD.classify_state([0.0+0im], b, m, G)
+        @test_throws DimensionMismatch MOADyna.classify_state([1.0+0im, 2.0+0im], b, m, G)
+        @test_throws ArgumentError MOADyna.classify_state([0.0+0im], b, m, G)
     end
 
 end

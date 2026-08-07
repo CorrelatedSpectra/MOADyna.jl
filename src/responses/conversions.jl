@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — conversions: to_pole, to_grid
+# MOADyna.Responses — conversions: to_pole, to_grid
 # =====================================================================
 #
 # Convention pins:

@@ -1,12 +1,12 @@
-# Build the z_only Hamiltonian in MOAD and compare term-by-term against
+# Build the z_only Hamiltonian in MOADyna and compare term-by-term against
 # the Quanty dump in z_only_quanty_output.txt.
 #
 # Conventions:
-#   - MOAD modes are 1..10 (1-indexed); Quanty 0..9 (0-indexed)
-#   - MOAD canonical chain order is ascending; Quanty descending
-#   - Mode mapping (MOAD 1-indexed → Quanty 0-indexed): m → m-1
+#   - MOADyna modes are 1..10 (1-indexed); Quanty 0..9 (0-indexed)
+#   - MOADyna canonical chain order is ascending; Quanty descending
+#   - Mode mapping (MOADyna 1-indexed → Quanty 0-indexed): m → m-1
 
-using MOAD
+using MOADyna
 
 # Same parameters as the Quanty script
 const U          = 6.0
@@ -24,10 +24,10 @@ const ed = eL + Delta - dC                              # = -4.5
 
 # ----- Build Hamiltonian -----
 # Single FermionSite{10} representing all 10 spin-orbitals.
-# Quanty mode i ↔ MOAD label i+1.
+# Quanty mode i ↔ MOADyna label i+1.
 s = FermionSite{10}(:s)
 
-# On-site Ni (modes 1-4 in MOAD ↔ 0-3 in Quanty)
+# On-site Ni (modes 1-4 in MOADyna ↔ 0-3 in Quanty)
 H_Ni = ed * sum(n(s, m) for m in 1:4)
 
 # On-site L: eL on all 6 ligands + dE_apin on a0 + dE_apout on a1, a2
@@ -89,10 +89,10 @@ function parse_quanty_dump(filename)
     return terms
 end
 
-# Convert a MOAD OperatorTerm to Quanty's convention (0-indexed, descending)
-function moad_to_quanty(term::MOAD.Algebra.OperatorTerm)
+# Convert a MOADyna OperatorTerm to Quanty's convention (0-indexed, descending)
+function moad_to_quanty(term::MOADyna.Algebra.OperatorTerm)
     chain_q = Tuple{Symbol,Int}[]
-    # MOAD chain is ascending; Quanty wants descending. Same number of swaps
+    # MOADyna chain is ascending; Quanty wants descending. Same number of swaps
     # for cdag's vs c's individually, so the sign cancels (for normal-ordered chains
     # which is what we have post-canonicalization).
     cdags = Tuple{Symbol,Int}[]
@@ -116,7 +116,7 @@ quanty_terms = parse_quanty_dump(joinpath(@__DIR__, "z_only_quanty_output.txt"))
 moad_terms = [moad_to_quanty(t) for t in H]
 
 println("Quanty parsed: ", length(quanty_terms), " terms")
-println("MOAD    has:   ", length(moad_terms),   " terms")
+println("MOADyna    has:   ", length(moad_terms),   " terms")
 println()
 
 # Index by chain for fast lookup
@@ -155,13 +155,13 @@ println("=== Comparison ===")
 println("Matched (chain & coef): ", matched, " / ", length(quanty_terms))
 println("Mismatched coefs:       ", length(mismatched_coef))
 println("Only in Quanty:         ", length(quanty_only))
-println("Only in MOAD:           ", length(moad_only))
+println("Only in MOADyna:           ", length(moad_only))
 
 if !isempty(mismatched_coef)
     println()
     println("Mismatched coefficients:")
     for (chain, qc, mc) in mismatched_coef
-        println("  $chain  Quanty=$qc  MOAD=$mc  diff=$(abs(qc-mc))")
+        println("  $chain  Quanty=$qc  MOADyna=$mc  diff=$(abs(qc-mc))")
     end
 end
 
@@ -175,7 +175,7 @@ end
 
 if !isempty(moad_only)
     println()
-    println("Terms only in MOAD:")
+    println("Terms only in MOADyna:")
     for c in moad_only
         println("  $c  coef=$(moad_dict[c])")
     end

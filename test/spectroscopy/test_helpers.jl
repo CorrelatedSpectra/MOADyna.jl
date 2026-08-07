@@ -1,7 +1,7 @@
 @testset "Spectroscopy helpers" begin
     using LinearAlgebra
-    using MOAD: xas
-    using MOAD.Spectroscopy: SpectraTensor, find_chunk, tridiagonal,
+    using MOADyna: xas
+    using MOADyna.Spectroscopy: SpectraTensor, find_chunk, tridiagonal,
                               BlockTriDiagonal, poles, re_broaden, polarise,
                               average, weighted_sum, restrict_to_window,
                               plot_range
@@ -210,7 +210,7 @@
     end
 
     @testset "polarise(rixs, ε_in, ε_out): tensor-form contraction" begin
-        using MOAD: rixs
+        using MOADyna: rixs
         sys = build_3level_rixs()
         ω_in_grid  = 3.0:0.5:7.0
         ω_out_grid = 0.0:0.1:4.0
@@ -247,7 +247,7 @@
     end
 
     @testset "polarise(rixs, ε_in, ε_out): input validation" begin
-        using MOAD: rixs
+        using MOADyna: rixs
         sys = build_3level_rixs()
         # Scalar T_in + scalar T_out RIXS: polarise(_, ε, ε) should reject.
         r = rixs(sys.H, sys.H, sys.basis, sys.T_in, sys.T_out, sys.ψ;
@@ -266,7 +266,7 @@
     end
 
     @testset "re_broaden(rixs; Γ_final): replays cf at new Γ" begin
-        using MOAD: rixs
+        using MOADyna: rixs
         sys = build_3level_rixs()
         ω_in_grid  = 3.5:0.5:6.5
         ω_out_grid = 1.0:0.1:3.0
@@ -289,7 +289,7 @@
     end
 
     @testset "restrict_to_window: RIXS keeps ω_in axis" begin
-        using MOAD: rixs
+        using MOADyna: rixs
         sys = build_3level_rixs()
         ω_in_grid  = 3.0:0.5:7.0
         ω_out_grid = 0.0:0.1:4.0

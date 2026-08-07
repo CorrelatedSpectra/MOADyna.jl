@@ -6,7 +6,7 @@
 #   * `to_jlmj(m, shell)` — (ℓm, σ) → (j, m_j) j-coupled basis transform
 #     via Clebsch-Gordan coefficients.
 #
-# Convention recap (matches `MOAD.Algebra.rotate`'s Sakurai convention):
+# Convention recap (matches `MOADyna.Algebra.rotate`'s Sakurai convention):
 #   columns of the returned `U` = new basis vectors expressed in the
 #   old basis. Equivalently, `U[j, i]` = ⟨e_old_j | e_new_i⟩.
 #
@@ -29,7 +29,7 @@ using WignerSymbols: clebschgordan
 Build the (ℓm) → real-cubic-harmonic basis-change matrix for one shell of
 the model. Shape is `2(2ℓ+1) × 2(2ℓ+1)`; columns are the new real-K basis
 vectors expressed in the old (ℓm) basis (Sakurai convention, matching
-`MOAD.Algebra.rotate`).
+`MOADyna.Algebra.rotate`).
 
 Real-K column ordering (m-ordered, Questaal):
   * ℓ=0 (s): trivial 2×2 identity (spin block only).
@@ -84,7 +84,7 @@ end
 Build the (ℓ m_ℓ, σ) → (ℓ j m_j) basis-change matrix for one shell of
 the model. Shape is `2(2ℓ+1) × 2(2ℓ+1)`; columns are the new
 `|ℓ, j, m_j⟩` basis vectors expressed in the old `|ℓ, m_ℓ, σ⟩` basis
-(Sakurai convention, matching `MOAD.Algebra.rotate`):
+(Sakurai convention, matching `MOADyna.Algebra.rotate`):
 
     U[ old=(m_ℓ, σ), new=(j, m_j) ] = ⟨ℓ, m_ℓ; 1/2, σ | j, m_j⟩
 

@@ -2,7 +2,7 @@
 # (helper subcase), nparams, LiftedRep / lift (single-particle rotation
 # matrices), classify (rep-theory-level: takes precomputed subspace
 # characters or projector weights). The many-body Fock-space apply that
-# consumes `lift` lives in `MOAD.Diagnostics` as
+# consumes `lift` lives in `MOADyna.Diagnostics` as
 # `classify_state(ψ, basis, m, G)` (it needs the Shells/Bases layers,
 # which load after PointGroups).
 
@@ -240,7 +240,7 @@ function _symmetry_adapted_basis(G::PointGroup, ℓ::Int; experimental::Bool=fal
         # with opposite orientations (e.g. C4 sends T_{3,1c}→+T_{3,1s} for E^(1)
         # but T_{3,3c}→−T_{3,3s} for E^(2)). To align all copies to the same
         # real-tesseral convention, we rotate the multiplicity space by an
-        # m_Γ×m_Γ orthogonal matrix W. The convention below is MOAD's internal
+        # m_Γ×m_Γ orthogonal matrix W. The convention below is MOADyna's internal
         # multiplicity-frame, anchored to a B_{2,0}-zero-coupling rule on the
         # last copy and a positivity rule on the first. It coincides with the
         # multiplicity convention exercised by the Quanty Akm regression suite
@@ -280,7 +280,7 @@ function _symmetry_adapted_basis(G::PointGroup, ℓ::Int; experimental::Bool=fal
                 # Build W: m_Γ × m_Γ orthogonal matrix.
                 # For m_Γ ≥ 3 with d_Γ > 1, the alignment is not yet
                 # implemented; `experimental=true` falls back to identity
-                # (MOAD's internal gauge — possibly convention-drifting).
+                # (MOADyna's internal gauge — possibly convention-drifting).
                 W = (m_Γ ≥ 3 && experimental) ?
                     Matrix{Float64}(I, m_Γ, m_Γ) :
                     _multiplicity_frame_W(b_vec)
@@ -451,7 +451,7 @@ function _multiplicity_frame_W(b_vec::Vector{Float64})
         "d_Γ=2). The current pipeline cannot place the m_Γ × m_Γ " *
         "multiplicity block in a stable canonical orientation without " *
         "a sourced explicit-irrep-matrix table. Pass `experimental=true` " *
-        "to `expand_clm` to accept MOAD's internal (possibly " *
+        "to `expand_clm` to accept MOADyna's internal (possibly " *
         "convention-drifting) basis for this cell."))
 end
 
@@ -527,7 +527,7 @@ field onto that block); non-CF blocks are rejected. Returns a vector of
 
 The full isotypic form is needed to express row-endomorphism couplings (`⊗J`,
 e.g. the trigonal `A_{4,±3}` of D3d) that a compact `⊗I` block cannot reach.
-Results are at MOAD's single canonical orientation (the hand-typed generators);
+Results are at MOADyna's single canonical orientation (the hand-typed generators);
 multi-setting support is a separate (spgrep/libmsym) effort. The
 [`expand_clm(G, ℓ, params::AbstractVector{<:Real})`](@ref) overload takes real
 coordinates on each IR's CF-reachable Hermitian basis — for real `⊗I` IRs these
@@ -550,10 +550,10 @@ and only accepts cells where the output convention is anchored:
 `experimental=true` relaxes both gates:
 
 - Auto-named groups (`:computed_auto` provenance) become acceptable;
-  the IR ordering is MOAD's deterministic but possibly
+  the IR ordering is MOADyna's deterministic but possibly
   convention-drifting choice.
 - The `m_Γ ≥ 3` multiplicity-frame alignment falls back to identity;
-  the `m_Γ × m_Γ` block is in MOAD's internal basis without external
+  the `m_Γ × m_Γ` block is in MOADyna's internal basis without external
   anchoring.
 
 Use `experimental=true` only when you accept that the output may not

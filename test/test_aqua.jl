@@ -10,5 +10,5 @@
 using Aqua
 
 @testset "Aqua quality assurance" begin
-    Aqua.test_all(MOAD)
+    Aqua.test_all(MOADyna)
 end

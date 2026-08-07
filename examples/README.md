@@ -1,4 +1,4 @@
-# MOAD examples
+# MOADyna examples
 
 Runnable, self-contained scripts. Each builds a model with the public API and
 prints (or writes) a result. Run from the repo root, e.g.:

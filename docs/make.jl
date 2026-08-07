@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.jl documentation build driver
+# MOADyna.jl documentation build driver
 # =====================================================================
 #
 # Local build:
@@ -18,24 +18,24 @@
 ENV["GKSwstype"] = "100"
 
 using Documenter
-using MOAD
+using MOADyna
 
-# All submodules are top-level under MOAD (see src/MOAD.jl); list every
+# All submodules are top-level under MOADyna (see src/MOADyna.jl); list every
 # one so `@autodocs` Library pages and `checkdocs` see the full surface.
-const MOAD_MODULES = [
-    MOAD,
-    MOAD.Algebra,
-    MOAD.Bases,
-    MOAD.ED,
-    MOAD.Responses,
-    MOAD.Spectroscopy,
-    MOAD.Shells,
-    MOAD.AtomicParameters,
-    MOAD.PointGroups,
-    MOAD.QuantyIO,
-    MOAD.Diagnostics,
-    MOAD.Units,
-    MOAD.Gradients,
+const MOADYNA_MODULES = [
+    MOADyna,
+    MOADyna.Algebra,
+    MOADyna.Bases,
+    MOADyna.ED,
+    MOADyna.Responses,
+    MOADyna.Spectroscopy,
+    MOADyna.Shells,
+    MOADyna.AtomicParameters,
+    MOADyna.PointGroups,
+    MOADyna.QuantyIO,
+    MOADyna.Diagnostics,
+    MOADyna.Units,
+    MOADyna.Gradients,
 ]
 
 const PAGES = [
@@ -53,7 +53,7 @@ const PAGES = [
         "Atomic parameters"              => "man/atomic.md",
     ],
     # NOTE: a top-level "Tutorials" bucket is a deliberate adaptation —
-    # TensorKit folds its tutorial into the Manual; MOAD promotes worked
+    # TensorKit folds its tutorial into the Manual; MOADyna promotes worked
     # examples to their own section for the spectroscopy / Quanty audience.
     "Tutorials" => [
         "Getting started"      => "tut/getting_started.md",
@@ -83,15 +83,15 @@ const PAGES = [
 ]
 
 makedocs(;
-    sitename = "MOAD.jl",
+    sitename = "MOADyna.jl",
     authors  = "Yi Lu and contributors",
-    modules  = MOAD_MODULES,
+    modules  = MOADYNA_MODULES,
     # Pin the GitHub repo explicitly for source links (matches
     # `canonical` + `deploydocs`).
-    repo     = Documenter.Remotes.GitHub("CorrelatedSpectra", "MOAD.jl"),
+    repo     = Documenter.Remotes.GitHub("CorrelatedSpectra", "MOADyna.jl"),
     format   = Documenter.HTML(;
         prettyurls = get(ENV, "CI", nothing) == "true",
-        canonical  = "https://correlatedspectra.github.io/MOAD.jl/stable",
+        canonical  = "https://correlatedspectra.github.io/MOADyna.jl/stable",
         edit_link  = "main",
         # `assets/logo.svg` is auto-detected; an SVG favicon link is wired
         # in the Stage-3 polish step (Documenter's `assets` list only takes
@@ -107,7 +107,7 @@ makedocs(;
 
 # No-op locally; deploys from CI to GitHub Pages.
 deploydocs(;
-    repo      = "github.com/CorrelatedSpectra/MOAD.jl",
+    repo      = "github.com/CorrelatedSpectra/MOADyna.jl",
     devbranch = "main",
     versions  = ["stable" => "v^", "dev" => "dev"],
 )

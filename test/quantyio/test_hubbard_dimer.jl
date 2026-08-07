@@ -5,7 +5,7 @@
 # A 2-site, 2-orbital Hubbard dimer (4 fermion modes) is a standard
 # many-body test case: small enough to inline a checked-in Quanty operator
 # dump, large enough to exercise the bridge end-to-end (operator parse +
-# build + algebraic equivalence + eigenvalue check via MOAD's eigen).
+# build + algebraic equivalence + eigenvalue check via MOADyna's eigen).
 #
 # This replaced the project-specific z_only round-trip in the official
 # test suite. The z_only validation script is preserved in
@@ -20,10 +20,10 @@
     t = 1.0
     U = 4.0
 
-    # ----- Bridge: read Quanty's operator dump into MOAD -----
+    # ----- Bridge: read Quanty's operator dump into MOADyna -----
     s = FermionSite{4}(:s)            # 4 modes: site0↑, site0↓, site1↑, site1↓
     h = Hilbert(:s => s)
-    map_fn = i -> (:s, i + 1)         # Quanty 0-indexed → MOAD 1-indexed
+    map_fn = i -> (:s, i + 1)         # Quanty 0-indexed → MOADyna 1-indexed
     H_bridge = read_quanty_operator(dump_path, h, map_fn)
 
     # ----- Algebra: same H built natively -----

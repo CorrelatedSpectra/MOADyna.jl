@@ -1,6 +1,6 @@
 # Introduction
 
-**MOAD** (Many-body Operators, Algebra, and Dynamics) is a Julia framework for exact
+**MOADyna** (Many-body Operators, Algebra, and Dynamics) is a Julia framework for exact
 diagonalization and core-level spectroscopy of small, strongly-correlated quantum systems —
 atomic multiplets, impurity and cluster models, and small lattices of fermions, bosons, and
 spins. It is designed as a theorist-first tool: a programmable, inspectable environment in
@@ -20,7 +20,7 @@ layer and inspect what you have.
 It helps to know which of two registers you are reading. The **core** — operator algebra,
 bases, exact diagonalization, response functions, and the point-group engine — speaks
 standard many-body theory: its types and functions are named for the mathematical objects
-they are (an [`OperatorSum`](@ref), a [`QuantumNumber`](@ref MOAD.Algebra.QuantumNumber), a
+they are (an [`OperatorSum`](@ref), a [`QuantumNumber`](@ref MOADyna.Algebra.QuantumNumber), a
 [`correlator`](@ref)), and its docstrings give the precise definition. The **spectroscopy
 layer** on top — [`xas`](@ref), [`rixs`](@ref), the multiplet builders, the
 [NiO: XAS, RIXS, and nIXS](@ref) tutorial — speaks the experimentalist's language of
@@ -30,7 +30,7 @@ core, never the reverse.
 
 ## How the package is organised
 
-MOAD is one package of submodules, each exercised by the test suite and each the subject of a
+MOADyna is one package of submodules, each exercised by the test suite and each the subject of a
 Manual chapter. They fall into two groups: a **calculation pipeline** that carries a model from
 operators to a spectrum, and a **multiplet toolkit** that builds the physical operators and
 parameters the pipeline consumes.
@@ -64,7 +64,7 @@ operators and parameters it runs on:
 
 ## Where to start
 
-- New to MOAD? The [Getting Started](@ref) tutorial builds and solves a Hubbard chain end
+- New to MOADyna? The [Getting Started](@ref) tutorial builds and solves a Hubbard chain end
   to end.
 - Here for spectroscopy? Jump to [Multiplets & Standard Operators](@ref) and the
   [NiO: XAS, RIXS, and nIXS](@ref) tutorial.

@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Spectroscopy — kubo_response: full Kubo retarded χ_AB(ω,T) (Item C)
+# MOADyna.Spectroscopy — kubo_response: full Kubo retarded χ_AB(ω,T) (Item C)
 # =====================================================================
 #
 # Validated against the closed-form two-level susceptibility. A single fermion
@@ -13,9 +13,9 @@
 using Test
 using LinearAlgebra
 using SparseArrays
-using MOAD
-using MOAD: kubo_response
-using MOAD.Spectroscopy: SpectraTensor
+using MOADyna
+using MOADyna: kubo_response
+using MOADyna.Spectroscopy: SpectraTensor
 
 @testset "kubo_response (Item C)" begin
     s = FermionSite{2}(:s)

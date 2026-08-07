@@ -1,6 +1,6 @@
 # ED
 
 ```@autodocs
-Modules = [MOAD.ED]
+Modules = [MOADyna.ED]
 Private = false
 ```

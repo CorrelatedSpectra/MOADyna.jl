@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Spectroscopy — optical_conductivity (2e Task 1) API + unit tests
+# MOADyna.Spectroscopy — optical_conductivity (2e Task 1) API + unit tests
 # =====================================================================
 #
 # Thin-wrapper checks for the regular optical conductivity
@@ -11,9 +11,9 @@
 using Test
 using LinearAlgebra
 using SparseArrays
-using MOAD
-using MOAD: GridResponse
-using MOAD.Spectroscopy: optical_conductivity
+using MOADyna
+using MOADyna: GridResponse
+using MOADyna.Spectroscopy: optical_conductivity
 
 # Dense one-sided correlator Λ(ω) = ⟨ψ₀|A†(ω+Eg−H+iΓ/2)⁻¹A|ψ₀⟩.
 function _dense_corr(H::Matrix, A::Matrix, ψ₀::Vector, Eg::Float64,

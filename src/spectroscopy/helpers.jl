@@ -10,13 +10,13 @@
 # most `B·K_fin × B·K_fin`) or on the precomputed tensor — no Lanczos
 # rerun, no large-Hilbert-space operations.
 #
-# These are not re-exported at the umbrella `MOAD` namespace; access as
-# `MOAD.Spectroscopy.re_broaden(...)`, etc.
+# These are not re-exported at the umbrella `MOADyna` namespace; access as
+# `MOADyna.Spectroscopy.re_broaden(...)`, etc.
 #
 # Note: these helpers all take `SpectraTensor` or `LanczosChunk` as
 # primary arguments — Spectroscopy-domain types. The corresponding
 # `LanczosResponse` / `PoleResponse` / `GridResponse` evaluation paths
-# live in `MOAD.Responses`; pulling these wrappers into Responses
+# live in `MOADyna.Responses`; pulling these wrappers into Responses
 # would create a Responses → Spectroscopy → Responses cycle.
 
 # ---------------------------------------------------------------------

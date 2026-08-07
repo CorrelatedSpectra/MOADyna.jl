@@ -1,5 +1,5 @@
 using Test
-using MOAD
+using MOADyna
 using LinearAlgebra: norm
 
 @testset "two-orbital Hubbard half-filled — Kanamori J vs density-density" begin
@@ -97,7 +97,7 @@ end
     #   w_up = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     m = ShellModel([:Ni_3d])
 
-    site = MOAD.Shells.site_of(m, :Ni_3d)
+    site = MOADyna.Shells.site_of(m, :Ni_3d)
     w_up = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]   # +1 on each up mode
 
     # Restrict to total 5 electrons AND all 5 are up-spin:

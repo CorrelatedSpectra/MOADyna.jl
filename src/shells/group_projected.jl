@@ -2,7 +2,7 @@
 #
 # Group-projected crystal-field operator on a shell.
 #
-# Wraps `MOAD.PointGroups.expand_clm(G, ℓ, irrep_coeffs)` — which returns
+# Wraps `MOADyna.PointGroups.expand_clm(G, ℓ, irrep_coeffs)` — which returns
 # the rank-k spherical-tensor expansion `[(k=k, m=m, coeff=A_km), ...]` —
 # and contracts it with the shell's `C^k_m` matrix elements (Wigner-Eckart)
 # to produce the second-quantized form
@@ -10,14 +10,14 @@
 #     V = Σ_{k,m} A_{km}  Σ_{m_a, m_b, σ}  ⟨ℓ m_b | C^k_m | ℓ m_a⟩
 #                          c†(b, m_b, σ) c(b, m_a, σ).
 #
-# We re-use `MOAD.PointGroups.Bkm_matrix(ℓ, k, m)` for the matrix
+# We re-use `MOADyna.PointGroups.Bkm_matrix(ℓ, k, m)` for the matrix
 # elements rather than re-deriving the Wigner-Eckart formula here. This
 # guarantees the C^k_m convention agrees with the one `expand_clm` uses
 # to *define* the A_km, so the round-trip is convention-consistent.
 #
-# Note on cross-module dependency: MOAD.PointGroups is included AFTER
-# MOAD.Shells in `src/MOAD.jl`, so we cannot `using ..PointGroups` here
-# at module-load time. Resolution via `MOAD.PointGroups.<name>` happens
+# Note on cross-module dependency: MOADyna.PointGroups is included AFTER
+# MOADyna.Shells in `src/MOADyna.jl`, so we cannot `using ..PointGroups` here
+# at module-load time. Resolution via `MOADyna.PointGroups.<name>` happens
 # inside the function body, which runs at call time when the
 # PointGroups submodule is fully loaded.
 
@@ -30,7 +30,7 @@ Crystal-field operator on a single shell, projected onto the irreducible
 representations of a point group.
 
 Builds the rank-k spherical-tensor expansion via
-`MOAD.PointGroups.expand_clm(G, ℓ, irrep_coeffs)` (with
+`MOADyna.PointGroups.expand_clm(G, ℓ, irrep_coeffs)` (with
 `G = pointgroup(group)`), then contracts each `(k, m, A_km)` triple with
 the shell's `C^k_m` matrix elements `⟨ℓ m_b | C^k_m | ℓ m_a⟩` to produce
 the second-quantized operator
@@ -71,7 +71,7 @@ function Akm(m::ShellModel, shell::Symbol, group::Symbol,
     ell  = ell_of(m, shell)
 
     # Late-bound resolution: PointGroups is included after Shells in
-    # src/MOAD.jl, so we look up these names at call time.
+    # src/MOADyna.jl, so we look up these names at call time.
     PG = getfield(parentmodule(@__MODULE__), :PointGroups)
     G = PG.pointgroup(group)
     clm_list = PG.expand_clm(G, ell, irrep_coeffs;
@@ -98,7 +98,7 @@ function Akm(m::ShellModel, shell::Symbol, group::Symbol,
     # accumulates roundoff in coefficients that should cancel in
     # Hermitian-conjugate pairs. Symmetrise + chop so the returned
     # operator is exactly equal to its adjoint and the assembled matrix
-    # passes `ishermitian` for the eigen contract in `MOAD.ED`.
+    # passes `ishermitian` for the eigen contract in `MOADyna.ED`.
     return chop((out + out') / 2; tol = 1e-12)
 end
 
@@ -110,7 +110,7 @@ Irrep-projected single-particle hybridization between two shells of
 **equal ℓ**.
 
 Given the IR projector `P_Γ` on the `(2ℓ+1)`-dim spherical-harmonic
-space (from `MOAD.PointGroups.project(G, Γ, ℓ)`), build
+space (from `MOADyna.PointGroups.project(G, Γ, ℓ)`), build
 
     H_proj = Σ_σ Σ_{j,k}  P_Γ[j, k]  c†(A, j, σ) c(B, k, σ)  +  h.c.
 

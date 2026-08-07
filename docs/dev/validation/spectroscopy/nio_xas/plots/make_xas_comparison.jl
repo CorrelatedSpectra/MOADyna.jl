@@ -1,8 +1,8 @@
 # =====================================================================
-# NiO L_{2,3} XAS — apples-to-apples comparison plot (MOAD ↔ PyQuanty ↔ Quanty)
+# NiO L_{2,3} XAS — apples-to-apples comparison plot (MOADyna ↔ PyQuanty ↔ Quanty)
 # =====================================================================
 #
-# Re-runs MOAD's Phase 7 NiO XAS calculation and compares the resulting
+# Re-runs MOADyna's Phase 7 NiO XAS calculation and compares the resulting
 # spectrum tensor to the two reference outputs:
 #
 #   - PyQuanty: `XAS_lanczos_cont_frac.txt` (Lanczos cont-frac on the
@@ -16,7 +16,7 @@
 # Output: three figures (XAS_x.png, XAS_y.png, XAS_z.png) in this
 # directory. Each figure has a top panel with all three spectra
 # overlaid (-Im of the complex tensor → physical absorption intensity)
-# and a bottom panel showing residuals MOAD-PyQuanty and Quanty-PyQuanty.
+# and a bottom panel showing residuals MOADyna-PyQuanty and Quanty-PyQuanty.
 #
 # Run from the package root:
 #   julia --project=docs/dev/validation/spectroscopy/nio_xas/plots \
@@ -26,9 +26,9 @@ using LinearAlgebra
 using SparseArrays
 using DelimitedFiles
 using Printf
-using MOAD
-using MOAD: xas, eigen
-using MOAD.Spectroscopy: polarise
+using MOADyna
+using MOADyna: xas, eigen
+using MOADyna.Spectroscopy: polarise
 using Plots
 
 # ---------------------------------------------------------------------
@@ -65,7 +65,7 @@ H_gs_sp = assemble(compile(H_gs_op, basis_gs), basis_gs)
 gs = eigen(H_gs_sp, basis_gs; n = 3, which = :SR)
 Eg = gs.values[1]
 ψg_in_gs = gs.vectors[:, 1]
-println("MOAD Eg = $(round(Eg; digits = 6)) eV")
+println("MOADyna Eg = $(round(Eg; digits = 6)) eV")
 
 # ---------------------------------------------------------------------
 # Step 2: XAS basis — covers (n_p=6) and (n_p=5) sectors; embed ψ_g
@@ -90,13 +90,13 @@ T_y = read_quanty_operator(joinpath(OP_DIR, "TXASy.txt"), h, map_fn)
 T_z = read_quanty_operator(joinpath(OP_DIR, "TXASz.txt"), h, map_fn)
 
 # ---------------------------------------------------------------------
-# Step 3: MOAD scalar XAS for x, y, z polarisations
+# Step 3: MOADyna scalar XAS for x, y, z polarisations
 # ---------------------------------------------------------------------
 
 Γ  = 0.6
 ωs = range(-15.0, 25.0; length = 801)
 
-println("Running MOAD xas() for x / y / z polarisations …")
+println("Running MOADyna xas() for x / y / z polarisations …")
 moad_x = xas(H_xas_sp, basis_xas, T_x, ψg_in_xas; ω_grid = ωs, Γ = Γ, Eg = Eg, krylovdim = 200)
 moad_y = xas(H_xas_sp, basis_xas, T_y, ψg_in_xas; ω_grid = ωs, Γ = Γ, Eg = Eg, krylovdim = 200)
 moad_z = xas(H_xas_sp, basis_xas, T_z, ψg_in_xas; ω_grid = ωs, Γ = Γ, Eg = Eg, krylovdim = 200)
@@ -161,13 +161,13 @@ function plot_one_polarisation(label::String, moad_y, pq_y, q_y, ω, savepath::A
                  title  = "NiO L₂,₃ XAS — polarisation $(label)$(label)",
                  framestyle = :box, legend = :topleft)
     plot!(upper, ωp, q; label = "Quanty",   lw = 1.5, lc = :red,    linestyle = :dash)
-    plot!(upper, ωp, m; label = "MOAD",     lw = 1.5, lc = :blue,   linestyle = :dot)
+    plot!(upper, ωp, m; label = "MOADyna",     lw = 1.5, lc = :blue,   linestyle = :dot)
 
-    # Residuals (MOAD − PyQuanty, Quanty − PyQuanty).
+    # Residuals (MOADyna − PyQuanty, Quanty − PyQuanty).
     peak = maximum(abs, p)
     res_moad = (m .- p) ./ peak
     res_quan = (q .- p) ./ peak
-    lower = plot(ωp, res_moad; label = "MOAD − PyQuanty", lw = 1.5, lc = :blue,
+    lower = plot(ωp, res_moad; label = "MOADyna − PyQuanty", lw = 1.5, lc = :blue,
                  xlabel = "ω (eV, above E_g)",
                  ylabel = "(Δχ) / max|χ|",
                  framestyle = :box, legend = :topright)
@@ -179,7 +179,7 @@ function plot_one_polarisation(label::String, moad_y, pq_y, q_y, ω, savepath::A
     savefig(fig, savepath)
     println("Saved: $(savepath)")
     # Print residual statistics for the headline numbers.
-    @printf("  max|MOAD − PyQuanty| / peak = %.2e\n", maximum(abs, res_moad))
+    @printf("  max|MOADyna − PyQuanty| / peak = %.2e\n", maximum(abs, res_moad))
     @printf("  max|Quanty − PyQuanty| / peak = %.2e\n", maximum(abs, res_quan))
 end
 
@@ -209,11 +209,11 @@ upper = plot(ωp, pq_iso[keep]; label = "PyQuanty", lw = 2, lc = :black,
              title  = "NiO L₂,₃ XAS — isotropic (x + y + z)",
              framestyle = :box, legend = :topleft)
 plot!(upper, ωp, q_iso[keep];   label = "Quanty", lw = 1.5, lc = :red,  linestyle = :dash)
-plot!(upper, ωp, moad_iso[keep]; label = "MOAD",  lw = 1.5, lc = :blue, linestyle = :dot)
+plot!(upper, ωp, moad_iso[keep]; label = "MOADyna",  lw = 1.5, lc = :blue, linestyle = :dot)
 
 peak = maximum(abs, pq_iso[keep])
 lower = plot(ωp, (moad_iso[keep] .- pq_iso[keep]) ./ peak;
-             label = "MOAD − PyQuanty", lw = 1.5, lc = :blue,
+             label = "MOADyna − PyQuanty", lw = 1.5, lc = :blue,
              xlabel = "ω (eV, above E_g)", ylabel = "Δχ / max|χ|",
              framestyle = :box, legend = :topright)
 plot!(lower, ωp, (q_iso[keep] .- pq_iso[keep]) ./ peak;

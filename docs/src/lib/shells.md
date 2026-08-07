@@ -1,6 +1,6 @@
 # Shells
 
 ```@autodocs
-Modules = [MOAD.Shells]
+Modules = [MOADyna.Shells]
 Private = false
 ```

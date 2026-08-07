@@ -8,7 +8,7 @@
 #
 #   H = H_e (Hubbard) +  ω Σ_i n^p_i  +  g Σ_i (b†_i + b_i) (n^e_i↑ + n^e_i↓)
 
-using MOAD
+using MOADyna
 
 const L = 3
 const Nmax_phonon = 4

@@ -9,7 +9,7 @@
 #
 #   H = -t Σ_<ij>,σ c†_iσ c_jσ  +  h.c.  +  U Σ_i n_i↑ n_i↓
 
-using MOAD
+using MOADyna
 using SparseArrays: nnz
 
 const L     = 4

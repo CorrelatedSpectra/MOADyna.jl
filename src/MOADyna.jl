@@ -1,5 +1,5 @@
 """
-    MOAD — Many-body Operators, Algebra, and Dynamics
+    MOADyna — Many-body Operators, Algebra, and Dynamics
 
 A Julia package for symbolic operator algebra, conserved-sector basis
 construction, and sparse Hamiltonian assembly on fermionic, bosonic, and spin
@@ -10,7 +10,7 @@ work.
 # Quick start
 
 ```julia
-using MOAD
+using MOADyna
 
 # Build a 2-orbital Hubbard model on a 4-site chain.
 sites = [FermionSite{2}(Symbol("s\$i")) for i in 1:4]
@@ -38,27 +38,27 @@ spectra, and time evolution.
 
 # Submodules
 
-Internal submodules; the names below are re-exported from `MOAD`, so users
+Internal submodules; the names below are re-exported from `MOADyna`, so users
 almost never reach for these directly.
 
-- [`MOAD.Algebra`](@ref) — symbolic operators, conserved quantities, `rotate`
-- [`MOAD.Bases`](@ref) — eager basis enumeration, sparse assembly
-- [`MOAD.ED`](@ref) — sparse eigensolver (`eigen(H, basis; n, which, …)`)
-- [`MOAD.Spectroscopy`](@ref) — `xas`, `rixs`, `fluorescence_yield`, broadening
-- [`MOAD.PointGroups`](@ref) — 42 groups with character tables, `expand_clm`
-- [`MOAD.Shells`](@ref) — shell registry, multiplet physics (L/J/LS, coulomb,
+- [`MOADyna.Algebra`](@ref) — symbolic operators, conserved quantities, `rotate`
+- [`MOADyna.Bases`](@ref) — eager basis enumeration, sparse assembly
+- [`MOADyna.ED`](@ref) — sparse eigensolver (`eigen(H, basis; n, which, …)`)
+- [`MOADyna.Spectroscopy`](@ref) — `xas`, `rixs`, `fluorescence_yield`, broadening
+- [`MOADyna.PointGroups`](@ref) — 42 groups with character tables, `expand_clm`
+- [`MOADyna.Shells`](@ref) — shell registry, multiplet physics (L/J/LS, coulomb,
   Akm, hop, dipole, to_real, to_jlmj, onsite_energies)
-- [`MOAD.Diagnostics`](@ref) — post-eigenstate analysis (`expectation_table`,
+- [`MOADyna.Diagnostics`](@ref) — post-eigenstate analysis (`expectation_table`,
   `configuration_weights`)
-- [`MOAD.QuantyIO`](@ref) — read Quanty operator dumps into `OperatorSum`s
-- [`MOAD.AtomicParameters`](@ref) — atomic Slater-Condon parameters
+- [`MOADyna.QuantyIO`](@ref) — read Quanty operator dumps into `OperatorSum`s
+- [`MOADyna.AtomicParameters`](@ref) — atomic Slater-Condon parameters
   (`atomic_parameters`, static Haverkort dict + optional Cowan)
-- [`MOAD.Units`](@ref) — energy-unit conversions (`convert_energy`, `Units.kB_eV`)
-- `MOAD.Gradients` — differentiable T=0 XAS forward model (`XASGradientModel`,
+- [`MOADyna.Units`](@ref) — energy-unit conversions (`convert_energy`, `Units.kB_eV`)
+- `MOADyna.Gradients` — differentiable T=0 XAS forward model (`XASGradientModel`,
   `spectrum`, `jacobian`, `spectrum_with_pullback`, `fit_spectrum`). Not
-  re-exported by `using MOAD`; reach it module-qualified as `MOAD.Gradients`.
+  re-exported by `using MOADyna`; reach it module-qualified as `MOADyna.Gradients`.
 """
-module MOAD
+module MOADyna
 
 include("units/Units.jl")
 include("algebra/Algebra.jl")
@@ -85,8 +85,8 @@ using .PointGroups
 using .Diagnostics
 using .AtomicParameters
 
-# `eigen` is added to LinearAlgebra by MOAD.ED; re-export the symbol so
-# `using MOAD` users can call `eigen(H, basis)` without an explicit
+# `eigen` is added to LinearAlgebra by MOADyna.ED; re-export the symbol so
+# `using MOADyna` users can call `eigen(H, basis)` without an explicit
 # `using LinearAlgebra`.
 import LinearAlgebra: eigen
 export eigen
@@ -142,7 +142,7 @@ export ConvergenceError, max_normres
 export save_eigensystem, load_eigensystem
 
 # From Responses (algorithm internals — block_lanczos, cf_block — stay
-# at submodule scope; reach via MOAD.Responses.<name>)
+# at submodule scope; reach via MOADyna.Responses.<name>)
 export AbstractResponse
 export LanczosResponse, PoleResponse, GridResponse, GreensFunction
 export correlator, to_pole, to_grid
@@ -152,7 +152,7 @@ export save_response, load_response
 # later phases). Algorithm internals (LanczosChunk, BlockTriDiagonal,
 # Defaults, block_lanczos, cf_block, evaluate_on_grid, pretty_step,
 # auto_grid) intentionally not re-exported here; reach via
-# MOAD.Spectroscopy.<name>.
+# MOADyna.Spectroscopy.<name>.
 export SpectraTensor
 export xas, rixs, fluorescence_yield
 export optical_conductivity, dynamical_structure_factor, kubo_response
@@ -165,7 +165,7 @@ export save_spectra, load_spectra
 
 # From PointGroups (`lift` / `LiftedRep` are module-qualified only;
 # the Fock-space apply path needs Layer-1 single-particle rotation
-# wiring not yet available — access via `MOAD.PointGroups.lift`)
+# wiring not yet available — access via `MOADyna.PointGroups.lift`)
 export GroupElement, IRrep, PointGroup
 export pointgroup
 export subduce, project, wignerd

@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Spectroscopy — finite-T core-level spectra (Item A, v0.2 closeout)
+# MOADyna.Spectroscopy — finite-T core-level spectra (Item A, v0.2 closeout)
 # =====================================================================
 #
 # The finite-T xas/rixs/fy wrappers Boltzmann-average the per-state spectra:
@@ -14,9 +14,9 @@
 using Test
 using LinearAlgebra
 using SparseArrays
-using MOAD
-using MOAD: xas
-using MOAD.Spectroscopy: SpectraTensor
+using MOADyna
+using MOADyna: xas
+using MOADyna.Spectroscopy: SpectraTensor
 
 @testset "Finite-T core-level spectra (Item A)" begin
 

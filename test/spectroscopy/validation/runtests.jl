@@ -1,5 +1,5 @@
 using Test
-using MOAD
+using MOADyna
 
 @testset "Spectroscopy — validation" begin
     include("test_nio_xas.jl")

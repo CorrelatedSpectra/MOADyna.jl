@@ -1,9 +1,9 @@
 # Index
 
-## The `MOAD` module
+## The `MOADyna` module
 
 ```@docs
-MOAD
+MOADyna
 ```
 
 ## All documented names

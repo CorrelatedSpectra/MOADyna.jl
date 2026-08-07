@@ -2,8 +2,8 @@
     using LinearAlgebra
     using SparseArrays
     using Random: MersenneTwister
-    using MOAD.Responses: block_lanczos, cf_block
-    using MOAD.Spectroscopy: evaluate_on_grid, LanczosChunk
+    using MOADyna.Responses: block_lanczos, cf_block
+    using MOADyna.Spectroscopy: evaluate_on_grid, LanczosChunk
 
     # ---------------------------------------------------------------
     # S4 — block Lanczos cf matches the exact dense resolvent
@@ -192,7 +192,7 @@
     # Krylov subspace was NOT exhausted (krylovdim < N).
     # ---------------------------------------------------------------
     @testset "retain_basis: V_basis has K+1 blocks; V_int sandwich uses K" begin
-        using MOAD.Spectroscopy: _build_T_K
+        using MOADyna.Spectroscopy: _build_T_K
         rng = MersenneTwister(123)
         N = 200                           # large enough that K = 50 < N
         A = randn(rng, ComplexF64, N, N)
@@ -246,8 +246,8 @@
     # non-diagonal H so T·ψ_g spreads over a multi-dimensional Krylov
     # subspace.
     @testset "rixs/FY survive krylovdim < dim(Krylov subspace) (regression)" begin
-        using MOAD: rixs, fluorescence_yield
-        using MOAD.Spectroscopy: SpectraTensor
+        using MOADyna: rixs, fluorescence_yield
+        using MOADyna.Spectroscopy: SpectraTensor
         using Random: MersenneTwister
 
         # 6 fermion modes with 1 particle → 6 states. Random Hermitian H

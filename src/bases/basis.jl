@@ -27,7 +27,7 @@ Typical workflow: build via `basis(hilbert, restrictions...)` or call the
 constructor directly; `length(b)` returns the sector dimension; then pass
 `b` to `compile` (producing a `CompiledHamiltonian`) and `assemble` (the
 dense matrix). For human-readable state inspection see `expectation_table`
-and `configuration_weights` in `MOAD.Diagnostics`.
+and `configuration_weights` in `MOADyna.Diagnostics`.
 """
 struct EagerBasis <: AbstractBasis
     hilbert::Hilbert
@@ -53,7 +53,7 @@ Return a read-only view of the bit-packed `UInt64` Fock word(s) for the
 `i`-th basis state (1-based). For a single-`UInt64` basis this is a
 length-1 view; multi-word bases return `nwords` words. The raw bit encoding
 is defined by `b.encoding`. For human-readable occupation numbers use
-`expectation_table` or `configuration_weights` in `MOAD.Diagnostics`.
+`expectation_table` or `configuration_weights` in `MOADyna.Diagnostics`.
 """
 @inline function get_state(b::EagerBasis, i::Int)
     o = state_offset(b, i)
@@ -707,7 +707,7 @@ Base.show(io::IO, b::EagerBasis) = print(io,
     basis(h::Hilbert, restrictions...; lazy::Bool = false) -> AbstractBasis
 
 Construct a basis enumerating all states in `h` that satisfy the given
-`restrictions` (which are `Restriction` objects from `MOAD.Algebra`).
+`restrictions` (which are `Restriction` objects from `MOADyna.Algebra`).
 
 By default returns an [`EagerBasis`](@ref): all states are enumerated
 upfront and stored as a sorted list of bit-packed states. Suitable for
@@ -724,7 +724,7 @@ b = basis(m.hilbert, n_fermion(m.hilbert) == 24,
 ```
 
 For shell-keyed restrictions see also the `basis(m::ShellModel, ...)`
-overload in `MOAD.Shells`.
+overload in `MOADyna.Shells`.
 """
 function basis(h::Hilbert, restrictions...; lazy::Bool = false)
     if lazy
@@ -757,7 +757,7 @@ Returns `v` (modified in place).
 
 This is the diagonal projector ``P_R · v`` where ``P_R`` keeps the
 components of `v` whose basis state satisfies `R` and zeros the rest. Used
-by `MOAD.Spectroscopy` for ``P · H · P`` projected dynamics inside the
+by `MOADyna.Spectroscopy` for ``P · H · P`` projected dynamics inside the
 block-Lanczos recurrence (called once per matvec, plus once on the source
 block before the recurrence).
 

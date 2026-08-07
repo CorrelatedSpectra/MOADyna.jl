@@ -1,15 +1,15 @@
 """
-    MOAD.ED
+    MOADyna.ED
 
-Exact diagonalization for `MOAD.Bases`-assembled sparse matrices.
+Exact diagonalization for `MOADyna.Bases`-assembled sparse matrices.
 
 A thin wrapper around `KrylovKit.eigsolve` and dense LAPACK exposed as a
 single extended `Base.eigen` method. See the **Exact diagonalization**
 chapter of the manual for the user-facing contract.
 
-This is an internal submodule of `MOAD`; the names below are
+This is an internal submodule of `MOADyna`; the names below are
 re-exported from the umbrella package, so users typically write `using
-MOAD` and call `eigen(H, basis)` directly.
+MOADyna` and call `eigen(H, basis)` directly.
 """
 module ED
 
@@ -29,13 +29,13 @@ include("eigen.jl")
 include("eigensystem_io.jl")
 
 # `eigen` is exported by LinearAlgebra; we add methods to it. Re-exporting
-# the symbol from MOAD.ED (and from MOAD itself) lets `using MOAD` provide
+# the symbol from MOADyna.ED (and from MOADyna itself) lets `using MOADyna` provide
 # `eigen` without forcing the user to also `using LinearAlgebra`.
 
 export ConvergenceError, max_normres
 export save_eigensystem, load_eigensystem
 # Note: `eigen` is intentionally NOT exported here — it lives in
 # LinearAlgebra and our methods extend the existing function. The umbrella
-# `MOAD.jl` module re-exports it explicitly.
+# `MOADyna.jl` module re-exports it explicitly.
 
 end # module

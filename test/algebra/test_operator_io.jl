@@ -1,5 +1,5 @@
-using Test, MOAD, HDF5
-using MOAD.Algebra: FermionSite, BosonSite, SpinSite, Hilbert,
+using Test, MOADyna, HDF5
+using MOADyna.Algebra: FermionSite, BosonSite, SpinSite, Hilbert,
                     c, cdag, n, b, bdag, Sx,
                     OperatorSum, OperatorTerm, LadderEntry
 

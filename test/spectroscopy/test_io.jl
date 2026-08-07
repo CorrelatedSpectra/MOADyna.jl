@@ -1,7 +1,7 @@
 @testset "Spectroscopy I/O — save / load round-trip" begin
     using LinearAlgebra
-    using MOAD: xas
-    using MOAD.Spectroscopy: SpectraTensor, save_spectra, load_spectra,
+    using MOADyna: xas
+    using MOADyna.Spectroscopy: SpectraTensor, save_spectra, load_spectra,
                               re_broaden
 
     function build_2level()
@@ -125,7 +125,7 @@
     end
 
     @testset "HDF5 metadata: Symbols / Bools / Nothing round-trip" begin
-        using MOAD.Spectroscopy: re_broaden, polarise
+        using MOADyna.Spectroscopy: re_broaden, polarise
 
         sys = build_2level()
         ωs  = -1.0:0.5:8.0

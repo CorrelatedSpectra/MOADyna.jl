@@ -1,6 +1,6 @@
 @testset "Spectroscopy types" begin
     using LinearAlgebra: I
-    using MOAD.Spectroscopy: SpectraTensor, LanczosChunk
+    using MOADyna.Spectroscopy: SpectraTensor, LanczosChunk
 
     @testset "LanczosChunk{ComplexF64} basic construction + show" begin
         K = 3

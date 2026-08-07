@@ -1,5 +1,5 @@
 using Test
-using MOAD
+using MOADyna
 
 @testset "Responses — validation" begin
     include("test_hubbard_dimer_gf.jl")

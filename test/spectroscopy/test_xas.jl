@@ -1,8 +1,8 @@
 @testset "Spectroscopy XAS smoke tests" begin
     using LinearAlgebra
     using SparseArrays
-    using MOAD: xas
-    using MOAD.Spectroscopy: SpectraTensor, LanczosChunk, DEFAULTS
+    using MOADyna: xas
+    using MOADyna.Spectroscopy: SpectraTensor, LanczosChunk, DEFAULTS
 
     # Closed-form XAS reference for an isolated two-level transition:
     # H = ε_c n_1 + ε_v n_2, T = c†_2 c_1, ψ_g = |10⟩ (mode 1 occupied).

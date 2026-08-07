@@ -1,7 +1,7 @@
 using Test
-using MOAD
-using MOAD.Algebra: OperatorSum
-using MOAD.Shells: Akm, hop
+using MOADyna
+using MOADyna.Algebra: OperatorSum
+using MOADyna.Shells: Akm, hop
 using LinearAlgebra: norm
 
 @testset "Akm — Oh d-shell eg/t2g splitting" begin

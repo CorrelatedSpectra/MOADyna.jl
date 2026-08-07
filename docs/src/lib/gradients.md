@@ -13,14 +13,14 @@ spectral measure*: ``\partial(\text{cluster energy},\ \text{summed
 residues})/\partial\theta``.
 
 !!! note "Accessing these names"
-    `MOAD.Gradients` is not re-exported by `using MOAD`, because several
+    `MOADyna.Gradients` is not re-exported by `using MOADyna`, because several
     of its names (`spectrum`, `jacobian`, `hamiltonian`, `groundstate`,
     …) are deliberately generic. Reach them module-qualified, or bind
     the module once:
 
     ```julia
-    using MOAD
-    const G = MOAD.Gradients
+    using MOADyna
+    const G = MOADyna.Gradients
 
     model = G.XASGradientModel(...)
     S     = G.spectrum(model, θ)
@@ -29,12 +29,12 @@ residues})/\partial\theta``.
 
 Parameter *inference* — the observation model (broadening, background,
 energy calibration, normalization, noise) and the Bayesian layer — lives
-in a separate sibling package that depends on MOAD; MOAD itself never
+in a separate sibling package that depends on MOADyna; MOADyna itself never
 hard-depends on an ML stack. The deterministic point-estimate fit
-[`MOAD.Gradients.fit_spectrum`](@ref) is available when `Optim` is
+[`MOADyna.Gradients.fit_spectrum`](@ref) is available when `Optim` is
 loaded (weak-dependency extension).
 
 ```@autodocs
-Modules = [MOAD.Gradients]
+Modules = [MOADyna.Gradients]
 Private = false
 ```

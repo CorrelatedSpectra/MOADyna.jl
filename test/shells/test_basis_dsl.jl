@@ -1,7 +1,7 @@
 using Test
-using MOAD
-using MOAD.Algebra: ParticleCount, Fermionic, Restriction
-using MOAD.Bases: EagerBasis
+using MOADyna
+using MOADyna.Algebra: ParticleCount, Fermionic, Restriction
+using MOADyna.Bases: EagerBasis
 
 @testset "basis-restriction DSL — nshells single-shell" begin
     m = ShellModel([:Ni_2p, :Ni_3d, :L_3d])

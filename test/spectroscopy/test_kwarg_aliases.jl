@@ -1,5 +1,5 @@
 @testset "Spectroscopy kwarg-alias resolver" begin
-    using MOAD.Spectroscopy: _resolve_pair
+    using MOADyna.Spectroscopy: _resolve_pair
 
     @testset "neither specified → default" begin
         @test _resolve_pair(nothing, nothing; default = 1.0,  name = "Γ") == 1.0

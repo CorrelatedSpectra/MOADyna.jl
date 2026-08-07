@@ -97,7 +97,7 @@ end
     @test length(b) == 6   # binomial(2,0)*binomial(2,0) + ... = 1+4+1 = 6
 
     # Verify each state satisfies the constraint.
-    enc = MOAD.Bases.encoding(b)
+    enc = MOADyna.Bases.encoding(b)
     @test all(begin
         bits = digits(Int(get_state(b, i)[1]), base=2, pad=4)
         bits[1] - bits[2] + bits[3] - bits[4] == 0

@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — arithmetic: evaluation, scalar multiplication,
+# MOADyna.Responses — arithmetic: evaluation, scalar multiplication,
 #                  adjoint, and addition
 # =====================================================================
 #

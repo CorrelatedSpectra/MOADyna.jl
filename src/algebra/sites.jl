@@ -4,7 +4,7 @@
 #
 # Generic site types with no domain-specific physics. Multiplet semantics
 # (atomic shells, orbital labels, point-group machinery) live in higher
-# modules (MOAD.Shells) and produce these primitive sites with auxiliary
+# modules (MOADyna.Shells) and produce these primitive sites with auxiliary
 # label maps.
 
 # --- Statistics tags ---

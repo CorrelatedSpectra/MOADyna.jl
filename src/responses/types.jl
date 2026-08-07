@@ -1,7 +1,7 @@
 """
     AbstractResponse{T <: Number}
 
-Abstract supertype for all matrix-of-ω response objects in `MOAD.Responses`.
+Abstract supertype for all matrix-of-ω response objects in `MOADyna.Responses`.
 
 Concrete subtypes:
 - [`LanczosResponse{T}`](@ref) — block-Lanczos tridiagonal representation

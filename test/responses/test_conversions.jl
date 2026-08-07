@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — conversion tests: Lanczos ↔ Pole ↔ Grid
+# MOADyna.Responses — conversion tests: Lanczos ↔ Pole ↔ Grid
 # =====================================================================
 #
 # Covers:
@@ -16,13 +16,13 @@
 #
 # Physical setup: Heisenberg dimer, H = J·S₁·S₂, J = 1, four-dim Hilbert
 # space {|↑↑⟩, |↑↓⟩, |↓↑⟩, |↓↓⟩}.  H is constructed as a plain
-# Matrix{Float64} so the test has no dependency on MOAD.Algebra / Bases —
+# Matrix{Float64} so the test has no dependency on MOADyna.Algebra / Bases —
 # the conversion path is the only thing under test.
 
 using Test
 using LinearAlgebra
-using MOAD: LanczosResponse, PoleResponse, GridResponse
-using MOAD.Responses: block_lanczos, to_pole, to_grid
+using MOADyna: LanczosResponse, PoleResponse, GridResponse
+using MOADyna.Responses: block_lanczos, to_pole, to_grid
 
 # =====================================================================
 # Heisenberg dimer fixture

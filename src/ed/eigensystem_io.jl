@@ -30,7 +30,7 @@ is intentionally NOT saved; rebuild it via
 `sys.vectors` (convertible to `ComplexF64`); a `LinearAlgebra.Eigen`
 returned by `eigen(H, basis)` qualifies. The optional `basis_id` keyword
 is written under `/basis_id` if provided (typically the `UInt64` token
-returned by `MOAD.Bases.basis_id(basis)`, but a `String` is also
+returned by `MOADyna.Bases.basis_id(basis)`, but a `String` is also
 accepted).
 
 Round-trips with [`load_eigensystem`](@ref).
@@ -63,7 +63,7 @@ function load_eigensystem(file::AbstractString)
         version = read(HDF5.attributes(f)["version"])
         version == _EIGENSYSTEM_IO_VERSION || throw(ArgumentError(
             "eigensystem I/O: unrecognized version \"$version\" " *
-            "(this MOAD supports \"$_EIGENSYSTEM_IO_VERSION\")"))
+            "(this MOADyna supports \"$_EIGENSYSTEM_IO_VERSION\")"))
 
         values  = read(f["values"])
         vectors = read(f["vectors"])

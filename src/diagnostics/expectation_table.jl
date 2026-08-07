@@ -7,7 +7,7 @@
 Pretty-printed table of `⟨ψ_i | O_j | ψ_i⟩` for each (eigenstate, operator)
 pair.
 
-`sys` is the result of `MOAD.ED.eigen(H, basis; n=...)` and provides
+`sys` is the result of `MOADyna.ED.eigen(H, basis; n=...)` and provides
 `sys.values::Vector{Float64}` and `sys.vectors::Matrix` (one eigenstate per
 column). `ops_list` maps a column-name string to an `OperatorSum`; each
 operator is `compile`d + `assemble`d on `basis` once. Each `OperatorSum` is

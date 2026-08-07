@@ -79,7 +79,7 @@ function load_operator(file::AbstractString, hilbert::Hilbert)
     HDF5.h5open(file, "r") do f
         version = read(HDF5.attributes(f)["version"])
         version == _OPERATOR_IO_VERSION || throw(ArgumentError(
-            "operator I/O: unrecognized version \"$version\" (this MOAD supports \"$_OPERATOR_IO_VERSION\")"))
+            "operator I/O: unrecognized version \"$version\" (this MOADyna supports \"$_OPERATOR_IO_VERSION\")"))
 
         coeffs = read(f["coefficients"])
         chains_grp = f["chains"]
@@ -93,7 +93,7 @@ function load_operator(file::AbstractString, hilbert::Hilbert)
             tg = chains_grp["term_$(i)"]
             label_kind = read(tg["label_kind"])
             label_kind == "int1" || throw(ArgumentError(
-                "operator I/O: unsupported label_kind \"$label_kind\" (this MOAD expects \"int1\" for FermionSite)"))
+                "operator I/O: unsupported label_kind \"$label_kind\" (this MOADyna expects \"int1\" for FermionSite)"))
 
             kinds      = read(tg["kinds"])
             site_names = read(tg["site_names"])

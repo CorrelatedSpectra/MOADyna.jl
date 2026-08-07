@@ -1,7 +1,7 @@
 @testset "re_broaden_table — energy-dependent Lorentzian" begin
     using LinearAlgebra
-    using MOAD: xas
-    using MOAD.Spectroscopy: SpectraTensor, re_broaden, re_broaden_table
+    using MOADyna: xas
+    using MOADyna.Spectroscopy: SpectraTensor, re_broaden, re_broaden_table
 
     # Reuse the 2-level XAS fixture from test_helpers.jl.
     function build_2level()
@@ -42,11 +42,11 @@
     end
 
     @testset "linear interpolation between two anchors" begin
-        # MOAD.Spectroscopy._interp_clamped is the internal helper; reach
+        # MOADyna.Spectroscopy._interp_clamped is the internal helper; reach
         # in via the submodule. With (ω₁, Γ₁) and (ω₂, Γ₂), Γ at the
         # midpoint must be (Γ₁ + Γ₂)/2; at the endpoints exactly Γ_i;
         # outside the table the values clamp.
-        interp = MOAD.Spectroscopy._interp_clamped
+        interp = MOADyna.Spectroscopy._interp_clamped
         ωs = [0.0, 4.0]
         Γs = [0.1, 0.5]
         @test interp(0.0, ωs, Γs) ≈ 0.1

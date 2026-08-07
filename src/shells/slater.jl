@@ -161,11 +161,11 @@ PREFACTORS (LOCKED, asymmetric direct vs exchange):
   is a symmetry of the summand). With distinct A/B labels that swap is
   not a symmetry, so no 1/2 — net +1. Matches Quanty's
   `CreateOperatorCoulombTwoShellsConstantOccupation` direct loop after
-  anticommuting the inner-pair (Quanty writes c(A) c(B); MOAD writes
-  c(B) c(A) → sign flip on canonicalization, then Quanty's −1 → MOAD's +1).
+  anticommuting the inner-pair (Quanty writes c(A) c(B); MOADyna writes
+  c(B) c(A) → sign flip on canonicalization, then Quanty's −1 → MOADyna's +1).
 - EXCHANGE: −1.  Quanty writes c(B) c(A) in the exchange loop — the
-  SAME order as MOAD — so canonicalization does NOT insert a sign flip.
-  Quanty's −1 stays −1 in MOAD. (This asymmetry vs the direct branch
+  SAME order as MOADyna — so canonicalization does NOT insert a sign flip.
+  Quanty's −1 stays −1 in MOADyna. (This asymmetry vs the direct branch
   is a real consequence of the operator-order difference between
   Quanty's two loops, not a sign-pinning oversight.)
 
@@ -283,7 +283,7 @@ function coulomb(m::ShellModel, shellA::Symbol, shellB::Symbol;
                 iszero(w_42) && continue
                 c_k_AB_13 = ((-1)^m1) * pre_AB * w_13
                 c_k_AB_42 = ((-1)^m4) * pre_AB * w_42
-                val = -G_k * c_k_AB_13 * c_k_AB_42   # NO 1/2; − because MOAD's c(B) c(A) order matches Quanty's exchange order (no anticommute sign flip)
+                val = -G_k * c_k_AB_13 * c_k_AB_42   # NO 1/2; − because MOADyna's c(B) c(A) order matches Quanty's exchange order (no anticommute sign flip)
                 iszero(val) && continue
                 d_A1, u_A1 = _orbital_mode_pair(ellA, m1)
                 d_A4, u_A4 = _orbital_mode_pair(ellA, m4)

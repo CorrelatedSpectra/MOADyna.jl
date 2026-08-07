@@ -1,6 +1,6 @@
-# MOAD.jl
+# MOADyna.jl
 
-**MOAD** — *Many-body Operators, Algebra, and Dynamics* — is a Julia package for the
+**MOADyna** — *Many-body Operators, Algebra, and Dynamics* — is a Julia package for the
 exact diagonalization and core-level spectroscopy of small, strongly correlated
 quantum systems: atomic multiplets, Anderson impurity and cluster models, and small
 lattices built from fermions, bosons, and spins. You write a Hamiltonian as a symbolic
@@ -10,10 +10,10 @@ XAS, RIXS, fluorescence yield, optical conductivity, the dynamical structure fac
 and single-particle Green's functions — all within a single package.
 
 !!! note "Installation"
-    MOAD is at **v0.3.0** and is not yet in the General registry, so install by URL:
+    MOADyna is at **v0.3.0** and is not yet in the General registry, so install by URL:
     ```julia
     using Pkg
-    Pkg.add(url = "https://github.com/CorrelatedSpectra/MOAD.jl")
+    Pkg.add(url = "https://github.com/CorrelatedSpectra/MOADyna.jl")
     ```
     Requires Julia 1.10 or newer. See the [Changelog](@ref) for what's new.
 
@@ -26,7 +26,7 @@ opaque solver. Every intermediate object — the [`OperatorSum`](@ref), the
 [`EagerBasis`](@ref), the assembled `SparseMatrixCSC`, the eigensystem, the response
 function — is an ordinary Julia value you can inspect, store, and reuse.
 
-MOAD ships as one package of submodules, each exercised by the test suite:
+MOADyna ships as one package of submodules, each exercised by the test suite:
 symbolic [operator algebra](@ref "Operator Algebra"), [conserved-sector bases](@ref "Hilbert Spaces & Bases"),
 [exact diagonalization](@ref "Exact Diagonalization"), dynamical [responses](@ref "Responses"),
 and [spectroscopy](@ref "Spectroscopy"), together with the multiplet-physics machinery —
@@ -36,16 +36,16 @@ transition-metal and lanthanide ions. The quick start below builds and solves a
 Hubbard chain; the tutorials carry a full ``L``-edge multiplet calculation end to end.
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
 ## Quick start
 
 ```@example quickstart
-using MOAD
+using MOADyna
 
 # ── Sites and Hilbert space ─────────────────────────────────────────────────
 # 4-site spinful Hubbard chain; each FermionSite{2} carries 2 modes (↑, ↓).
@@ -157,22 +157,22 @@ Depth = 2
 
 ## How the package is organised
 
-MOAD is one package of submodules in two groups: a **calculation pipeline** that
+MOADyna is one package of submodules in two groups: a **calculation pipeline** that
 carries a model from operators to a spectrum, and a **multiplet toolkit** that
 builds the operators and parameters the pipeline consumes (plus small utilities).
 
 - **Pipeline:** [Operator Algebra](@ref) → [Hilbert Spaces & Bases](@ref) →
   [Exact Diagonalization](@ref) → [Responses](@ref) → [Spectroscopy](@ref).
 - **Toolkit:** [Multiplets & Standard Operators](@ref), [Point Groups](@ref),
-  [Atomic Parameters](@ref), and [energy-unit conversions](@ref MOAD.Units).
+  [Atomic Parameters](@ref), and [energy-unit conversions](@ref MOADyna.Units).
 - **Utilities:** diagnostics for ground-state inspection and shared HDF5 I/O.
 
 The [Introduction](@ref) walks through this organisation in full.
 
 ## Status
 
-MOAD is tested with unit and end-to-end validation suites — covering operator
+MOADyna is tested with unit and end-to-end validation suites — covering operator
 algebra, bases, ED, response functions, spectroscopy, and multiplet workflows
 against analytic and independent references — that run on every push.
 Contributions are welcome — see
-[`CONTRIBUTING.md`](https://github.com/CorrelatedSpectra/MOAD.jl/blob/main/CONTRIBUTING.md).
+[`CONTRIBUTING.md`](https://github.com/CorrelatedSpectra/MOADyna.jl/blob/main/CONTRIBUTING.md).

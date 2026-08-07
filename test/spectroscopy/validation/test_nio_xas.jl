@@ -3,17 +3,17 @@
 # =====================================================================
 #
 # Drives a multiplet NiO L_{2,3}-edge XAS calculation end-to-end through
-# `MOAD.xas` and compares against an external reference:
+# `MOADyna.xas` and compares against an external reference:
 #
 #   - Read Hamiltonian.txt / XASHamiltonian.txt / TXASx.txt / TXASy.txt /
-#     TXASz.txt operator dumps via `MOAD.QuantyIO.read_quanty_operator`.
+#     TXASz.txt operator dumps via `MOADyna.QuantyIO.read_quanty_operator`.
 #   - Compute the lowest-eigenvalue state in the (n_p = 6, n_total = 24)
-#     sector via `MOAD.eigen`.
+#     sector via `MOADyna.eigen`.
 #   - Embed ψ_g into a larger basis covering both (n_p = 6) and
 #     (n_p = 5) sectors so the dipole operator can act on it.
 #   - Run `xas` over the same ω grid and Γ as the reference
 #     (Γ = 0.6 eV FWHM, ω ∈ [-15, 25] at 0.05 eV step).
-#   - Compare the MOAD spectrum tensor to the reference
+#   - Compare the MOADyna spectrum tensor to the reference
 #     (`XAS_lanczos_cont_frac.txt`, cols 2-3 = Re/Im x; 4-5 = y; 6-7 = z).
 #
 # Reference data lives at `docs/dev/validation/spectroscopy/nio_xas/`.
@@ -37,8 +37,8 @@
     using LinearAlgebra
     using SparseArrays
     using DelimitedFiles
-    using MOAD: xas, eigen
-    using MOAD.Spectroscopy: SpectraTensor, polarise, re_broaden
+    using MOADyna: xas, eigen
+    using MOADyna.Spectroscopy: SpectraTensor, polarise, re_broaden
 
     # ---------------------------------------------------------------
     # Reference-data presence check
@@ -70,7 +70,7 @@
     #   0..5  : 2p     (3 dn at 0,2,4 ; 3 up at 1,3,5)
     #   6..15 : 3d     (5 dn at 6,8,10,12,14 ; 5 up at 7,9,11,13,15)
     #   16..25: L_d    (5 dn at 16,18,20,22,24 ; 5 up at 17,19,21,23,25)
-    # MOAD: split into three FermionSites; mode label 1-indexed within each.
+    # MOADyna: split into three FermionSites; mode label 1-indexed within each.
     s_2p = FermionSite{6}(:p)
     s_3d = FermionSite{10}(:d)
     s_Ld = FermionSite{10}(:L)
@@ -89,11 +89,11 @@
     # naturally pulls in (d⁹L⁹) and (d¹⁰L⁸) admixtures. The final GS
     # therefore lives on the same multi-(n_d, n_L) manifold that
     # PyQuanty's looser `basisGS` (n_p=6, n_total=24) enumerates
-    # explicitly. MOAD's `EagerBasis` doesn't grow basis dynamically,
+    # explicitly. MOADyna's `EagerBasis` doesn't grow basis dynamically,
     # so we enumerate the loose basis directly to reproduce the
     # hybridised GS — equivalent end result, different bookkeeping.
     # (Using a hard `n_d=8` restriction here would CUT the hybridisation
-    # MOAD needs to match Quanty's actual GS, and miss it by ≈ 1.3 eV.)
+    # MOADyna needs to match Quanty's actual GS, and miss it by ≈ 1.3 eV.)
     basis_gs = EagerBasis(h,
         n_fermion([s_2p]) == 6,
         n_fermion([s_2p, s_3d, s_Ld]) == 24)
@@ -143,7 +143,7 @@
     # ---------------------------------------------------------------
     # PyQuanty xas_params: emin=-15, emax=25, ne=801, eta=0.3, ntri=100.
     # In Quanty/PyQuanty convention η = Γ/2 → Γ = 0.6 (FWHM), matching
-    # MOAD convention: G(z) = ((ω + Eg + iΓ/2)·I − H)⁻¹.
+    # MOADyna convention: G(z) = ((ω + Eg + iΓ/2)·I − H)⁻¹.
     Γ  = 0.6
     ωs = range(-15.0, 25.0; length = 801)
 
@@ -159,7 +159,7 @@
         @test size(ref, 1) == 801
         ref_x = complex.(ref[:, 2], ref[:, 3])
 
-        # Tolerances. MOAD ↔ PyQuanty both use Lanczos cont-frac on the
+        # Tolerances. MOADyna ↔ PyQuanty both use Lanczos cont-frac on the
         # SAME operator dump on the SAME basis; agreement is limited only
         # by Krylov truncation (≤ 1e-6 of peak, generally much tighter).
         peak = maximum(abs, ref_x)
@@ -239,7 +239,7 @@
         s_R_tensor = polarise(result_tensor, ε_R)
 
         # Explicit scalar form: T_R = (T_x - i T_y) / √2 acting on ψ_g.
-        # By linearity in the Lanczos starting block, MOAD scalar XAS with
+        # By linearity in the Lanczos starting block, MOADyna scalar XAS with
         # operator T_R should match the contracted tensor form to within
         # Krylov truncation tolerance.
         T_R = (T_x - im * T_y) / sqrt(2)

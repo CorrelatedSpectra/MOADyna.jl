@@ -11,11 +11,11 @@
         s = FermionSite{4}(:s)
         h = Hilbert(:s => s)
         bb = EagerBasis(h)                  # full 16-state Fock
-        # Quanty mode i (0..3) → MOAD (:s, i+1)
+        # Quanty mode i (0..3) → MOADyna (:s, i+1)
         mode_map = i -> (:s, i + 1)
 
         # Bit string "1100" = Quanty modes {0, 1} occupied.
-        # In MOAD encoding for FermionSite{4}, that's bits 0 and 1 set
+        # In MOADyna encoding for FermionSite{4}, that's bits 0 and 1 set
         # → state index for value 0b0011 = 3.
         dump = """
         WaveFunction: Wave Function
@@ -30,7 +30,7 @@
         ψ = read_quanty_wavefunction(_write_dump(dump), bb, mode_map;
                                      eltype = Float64)
         @test length(ψ) == length(bb)
-        # MOAD basis state with value 0b0011 = 3 → index in sorted basis is 4
+        # MOADyna basis state with value 0b0011 = 3 → index in sorted basis is 4
         # (since 0,1,2,3 are values 0..3 → indices 1..4 after lex sort).
         target_idx = get_index(bb, UInt64[0x0000_0000_0000_0003])
         @test target_idx > 0

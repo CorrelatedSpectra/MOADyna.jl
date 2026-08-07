@@ -9,7 +9,7 @@
 #
 # where G_i is the resolvent of the intermediate-state Hamiltonian (with
 # 2p core hole) and G_f is the resolvent of the final-state Hamiltonian
-# (no core hole). MOAD's `rixs` builds both resolvents via block Lanczos
+# (no core hole). MOADyna's `rixs` builds both resolvents via block Lanczos
 # and contracts them on the (ω_in, ω_out) grid.
 #
 # In this example: T_in = T_x (incident x-polarised), T_out = T_y
@@ -19,7 +19,7 @@
 #   nio_rixs_xy.txt  — (n_ω_in, n_ω_out) grid of -Im F values, plus a
 #                      header row of ω_out and a header column of ω_in.
 
-using MOAD
+using MOADyna
 using DelimitedFiles
 
 # ---------------------------------------------------------------------

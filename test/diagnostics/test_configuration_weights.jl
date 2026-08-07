@@ -1,8 +1,8 @@
 using Test
 using LinearAlgebra: norm
 using Random
-using MOAD
-using MOAD.Diagnostics: configuration_weights
+using MOADyna
+using MOADyna.Diagnostics: configuration_weights
 
 @testset "configuration_weights — single basis state has weight 1.0 on its own bucket" begin
     m = ShellModel([:Ni_3d, :L_3d])
@@ -16,7 +16,7 @@ using MOAD.Diagnostics: configuration_weights
     s = bas.states
     nw = bas.nwords
     function shell_pop(state_idx::Int, shell::Symbol)
-        n_modes = length(MOAD.range_of(m, shell))
+        n_modes = length(MOADyna.range_of(m, shell))
         off = (state_idx - 1) * nw + 1
         c = 0
         for k in 1:n_modes
@@ -59,7 +59,7 @@ end
     @test issorted([p.second for p in weights_subset]; rev = true)
 
     # Subset has at most (n_modes_of_Ni_3d + 1) buckets.
-    @test length(weights_subset) ≤ length(MOAD.range_of(m, :Ni_3d)) + 1
+    @test length(weights_subset) ≤ length(MOADyna.range_of(m, :Ni_3d)) + 1
 
     # Coarsening (drop :L_3d) cannot increase bucket count.
     @test length(weights_subset) ≤ length(weights_full)

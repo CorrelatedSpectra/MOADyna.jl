@@ -1,7 +1,7 @@
 using Test
-using MOAD
+using MOADyna
 
-@testset "MOAD — validation" begin
+@testset "MOADyna — validation" begin
     @testset "Shells" begin
         include("shells/validation/runtests.jl")
     end

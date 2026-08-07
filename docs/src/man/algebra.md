@@ -1,14 +1,14 @@
 # Operator Algebra
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
-`MOAD.Algebra` is the symbolic second-quantized layer: it defines the sites and their
-modes, the ladder operators, and the [`OperatorSum`](@ref) algebra in which every MOAD
+`MOADyna.Algebra` is the symbolic second-quantized layer: it defines the sites and their
+modes, the ladder operators, and the [`OperatorSum`](@ref) algebra in which every MOADyna
 Hamiltonian and observable is written. Expressions are built to read like the physics —
 `c'(s, 1) * c(s, 2)` *is* the operator ``\hat{c}^\dagger_{s\uparrow}\,\hat{c}_{s\downarrow}`` — with fermionic anticommutation
 tracked exactly and symbolically; nothing is materialized as a matrix until the
@@ -17,12 +17,12 @@ tracked exactly and symbolically; nothing is materialized as a matrix until the
 ## Sites and modes
 
 A site is a local Hilbert space with a fixed set of modes. Three kinds:
-[`FermionSite`](@ref MOAD.Algebra.FermionSite)`{N}` (N fermionic modes),
-[`BosonSite`](@ref MOAD.Algebra.BosonSite) (a truncated boson), and
-[`SpinSite`](@ref MOAD.Algebra.SpinSite) (a spin-`S`). Sites are named; modes are addressed by 1-based index.
+[`FermionSite`](@ref MOADyna.Algebra.FermionSite)`{N}` (N fermionic modes),
+[`BosonSite`](@ref MOADyna.Algebra.BosonSite) (a truncated boson), and
+[`SpinSite`](@ref MOADyna.Algebra.SpinSite) (a spin-`S`). Sites are named; modes are addressed by 1-based index.
 
 ```@example alg
-using MOAD
+using MOADyna
 
 s = FermionSite{2}(:imp)        # a 2-mode fermion site (e.g. ↑, ↓)
 (local_dim(s), statistics(s))
@@ -32,7 +32,7 @@ s = FermionSite{2}(:imp)        # a 2-mode fermion site (e.g. ↑, ↓)
 
 The fermionic ladder operators are [`c`](@ref) / [`cdag`](@ref) (also written `c'`), the
 bosonic ones [`b`](@ref) / [`bdag`](@ref), the number operator [`n`](@ref) (and `n_b`), and
-the spin operators [`Sx`](@ref MOAD.Algebra.Sx)/`Sy`/`Sz`/`Splus`/`Sminus`. A single ladder operator and any
+the spin operators [`Sx`](@ref MOADyna.Algebra.Sx)/`Sy`/`Sz`/`Splus`/`Sminus`. A single ladder operator and any
 sum/product of them is an [`OperatorSum`](@ref); arithmetic (`+`, `-`, `*`, scalar `*`) and
 the adjoint `'` are defined.
 
@@ -62,6 +62,6 @@ length(H)
 
 Particle-number and spin observables — [`n_fermion`](@ref), [`n_boson`](@ref),
 [`Sz_total`](@ref), and the general [`WeightedParticleCount`](@ref) — are
-[`QuantumNumber`](@ref MOAD.Algebra.QuantumNumber) objects. Compared against a value with `==` (or `∈` a range)
+[`QuantumNumber`](@ref MOADyna.Algebra.QuantumNumber) objects. Compared against a value with `==` (or `∈` a range)
 they produce a [`Restriction`](@ref) used to carve out a conserved sector; this is the
 subject of the [Hilbert Spaces & Bases](@ref) chapter.

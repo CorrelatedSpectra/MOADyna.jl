@@ -2,7 +2,7 @@
 # NiO RIXS — apples-to-apples comparison plot at fixed incident energies
 # =====================================================================
 #
-# Re-runs MOAD's RIXS calculation at the same `(ω_in, ω_out)` grid as
+# Re-runs MOADyna's RIXS calculation at the same `(ω_in, ω_out)` grid as
 # PyQuanty's reference (`RIXSxy.txt`) and Quanty's
 # (`RIXSxy_Quanty.txt`), and overlays line cuts at a handful of
 # incident energies across the L_3 peak.
@@ -19,8 +19,8 @@ using LinearAlgebra
 using SparseArrays
 using DelimitedFiles
 using Printf
-using MOAD
-using MOAD: rixs, eigen
+using MOADyna
+using MOADyna: rixs, eigen
 using Plots
 
 const HERE   = @__DIR__
@@ -48,7 +48,7 @@ H_gs_sp = assemble(compile(H_gs_op, basis_gs), basis_gs)
 gs = eigen(H_gs_sp, basis_gs; n = 3, which = :SR)
 Eg = gs.values[1]
 ψg_in_gs = gs.vectors[:, 1]
-println("MOAD Eg = $(round(Eg; digits = 6)) eV")
+println("MOADyna Eg = $(round(Eg; digits = 6)) eV")
 
 basis_xas = EagerBasis(h,
     n_fermion([s_2p]) ∈ 5:6,
@@ -70,7 +70,7 @@ H_final_sp = assemble(compile(H_op,     basis_xas), basis_xas)
 H_int_sp   = assemble(compile(H_xas_op, basis_xas), basis_xas)
 
 # ---------------------------------------------------------------------
-# Run MOAD rixs on the same grid as PyQuanty / Quanty
+# Run MOADyna rixs on the same grid as PyQuanty / Quanty
 # ---------------------------------------------------------------------
 # PyQuanty: inc_params(emin=-6, emax=0, ne=11, eta=0.3) → ω_in step 0.6,
 #                                                       Γ_int = 2·η = 0.6
@@ -82,7 +82,7 @@ H_int_sp   = assemble(compile(H_xas_op, basis_xas), basis_xas)
 Γ_int = 0.6
 Γ_fin = 0.1
 
-println("Running MOAD rixs() (T_in = T_x, T_out = T_y) over $(length(ω_in_grid)) ω_in × $(length(ω_out_grid)) ω_out points …")
+println("Running MOADyna rixs() (T_in = T_x, T_out = T_y) over $(length(ω_in_grid)) ω_in × $(length(ω_out_grid)) ω_out points …")
 @time moad_result = rixs(H_final_sp, H_int_sp, basis_xas, T_x, T_y, ψg_in_xas;
                          ω_in_grid       = ω_in_grid,
                          ω_out_grid      = ω_out_grid,
@@ -118,9 +118,9 @@ for k in 1:length(ω_in_grid)
     q_intensity[k, :] = -q_raw[:, 2k + 1]
 end
 
-# Sanity: MOAD vs PyQuanty residual at every ω_in.
+# Sanity: MOADyna vs PyQuanty residual at every ω_in.
 println("\nResiduals (max|Δχ| / max|χ|) per ω_in:")
-println(@sprintf("  %6s   %12s   %12s", "ω_in", "MOAD vs PQ", "Quanty vs PQ"))
+println(@sprintf("  %6s   %12s   %12s", "ω_in", "MOADyna vs PQ", "Quanty vs PQ"))
 for (k, ω_in) in enumerate(ω_in_grid)
     pk = maximum(abs, pq_intensity[k, :])
     pk == 0 && (pk = 1)
@@ -155,7 +155,7 @@ for ω_in_target in ω_in_picks
     plot!(p, ω_out_grid[keep], q_intensity[k, keep];
           label = "Quanty", lw = 1.5, lc = :red, linestyle = :dash)
     plot!(p, ω_out_grid[keep], moad_intensity[k, keep];
-          label = "MOAD",   lw = 1.5, lc = :blue, linestyle = :dot)
+          label = "MOADyna",   lw = 1.5, lc = :blue, linestyle = :dot)
     push!(panels, p)
 end
 
@@ -187,7 +187,7 @@ p_q  = heatmap(ω_out_p, ω_in_grid, q_intensity[:, keep];
                colorbar = false, framestyle = :box)
 p_m  = heatmap(ω_out_p, ω_in_grid, moad_intensity[:, keep];
                xlabel = "ω_out (eV)", ylabel = "",
-               title  = "MOAD", clim = (0, vmax),
+               title  = "MOADyna", clim = (0, vmax),
                colorbar = true, framestyle = :box)
 
 fig_2d = plot(p_pq, p_q, p_m; layout = (1, 3),

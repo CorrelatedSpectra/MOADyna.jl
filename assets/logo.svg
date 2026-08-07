@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 631 197" width="631" height="197">
   <!-- MOAD wordmark: [MÔAḊ] — commutator brackets (Algebra) wrap operator/dynamics-typed letters.
-       (c) Yi Lu, MIT-licensed with the rest of MOAD.jl.  Built by dev_scripts/build_logo.py;
+       (c) Yi Lu, MIT-licensed with the rest of MOADyna.jl.  Built by dev_scripts/build_logo.py;
        wordmark set in Roboto Bold (credit; see THIRD_PARTY_NOTICES.md).  Uses the font's
        GPOS kerning for letter spacing; hat / dot / brackets are anchored to each glyph's actual
        ink bounding box (computed via fontTools BoundsPen) so positions are deterministic. -->

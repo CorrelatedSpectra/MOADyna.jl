@@ -166,7 +166,7 @@
     # eigvec input within each cluster; verify the helper produces
     # orthonormal columns that remain eigenvectors of H.
     @testset "E0g: _orthonormalize_clusters! preserves eigenvector property" begin
-        using MOAD.ED: _orthonormalize_clusters!
+        using MOADyna.ED: _orthonormalize_clusters!
         using LinearAlgebra: Diagonal, qr
 
         # Spectrum: -1 (×3), 0 (×1), 0.5 (×2), 1 (×2).

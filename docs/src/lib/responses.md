@@ -1,6 +1,6 @@
 # Responses — API reference
 
 ```@autodocs
-Modules = [MOAD.Responses]
+Modules = [MOADyna.Responses]
 Private = false
 ```

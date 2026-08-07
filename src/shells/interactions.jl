@@ -19,7 +19,7 @@
 Density-density (Ising-like Hubbard-Kanamori) Coulomb interaction on one
 shell. Resolves `shell` to its full orbital-pair list and delegates to
 `density_density(site::FermionSite, orbital_pairs; U, J, Up)` in
-MOAD.Algebra.
+MOADyna.Algebra.
 
 The conventional spin-rotation-invariant relation `Up = U − 2J` is used
 by default; pass `Up=` explicitly to override.
@@ -51,7 +51,7 @@ end
 Full (spin-rotation invariant) Kanamori interaction on one shell:
 density-density + spin-flip + pair-hop. Resolves `shell` to its full
 orbital-pair list and delegates to `kanamori(site::FermionSite, orbital_pairs;
-U, J, Up)` in MOAD.Algebra.
+U, J, Up)` in MOADyna.Algebra.
 
     H = H_DD + H_SF + H_PH
 

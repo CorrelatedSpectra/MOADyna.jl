@@ -1,7 +1,7 @@
 using Test
-using MOAD
-using MOAD.Algebra: FermionSite
-using MOAD.Shells: ShellModel, ell_of, range_of, site_of
+using MOADyna
+using MOADyna.Algebra: FermionSite
+using MOADyna.Shells: ShellModel, ell_of, range_of, site_of
 
 @testset "ShellModel — single shell, d-shell" begin
     m = ShellModel([:Ni_3d])

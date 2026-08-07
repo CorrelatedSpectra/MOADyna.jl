@@ -1,7 +1,7 @@
 using Test
-using MOAD
+using MOADyna
 
-@testset "MOAD" begin
+@testset "MOADyna" begin
     @testset "Units" begin
         include("units/test_units.jl")
     end

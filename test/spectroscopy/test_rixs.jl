@@ -1,8 +1,8 @@
 @testset "Spectroscopy RIXS smoke tests" begin
     using LinearAlgebra
     using SparseArrays
-    using MOAD: rixs
-    using MOAD.Spectroscopy: SpectraTensor
+    using MOADyna: rixs
+    using MOADyna.Spectroscopy: SpectraTensor
 
     # Closed-form RIXS reference for a 3-level system:
     # Modes 1, 2, 3 = |g⟩ (ground), |i⟩ (intermediate), |f⟩ (final).

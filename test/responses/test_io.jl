@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — HDF5 round-trip per-type tests
+# MOADyna.Responses — HDF5 round-trip per-type tests
 # =====================================================================
 #
 # Round-trip coverage for every concrete `AbstractResponse` type: write to a
@@ -13,8 +13,8 @@
 
 @testset "Responses I/O — round-trip per type" begin
     using HDF5
-    using MOAD: LanczosResponse, PoleResponse, GridResponse, GreensFunction
-    using MOAD.Responses: save_response, load_response
+    using MOADyna: LanczosResponse, PoleResponse, GridResponse, GreensFunction
+    using MOADyna.Responses: save_response, load_response
 
     # --- builders: small but non-trivial responses of each concrete type ---
 
@@ -158,5 +158,5 @@
         end
     end
 
-    @test MOAD.Responses._RESPONSES_IO_FORMAT_VERSION == "2"
+    @test MOADyna.Responses._RESPONSES_IO_FORMAT_VERSION == "2"
 end

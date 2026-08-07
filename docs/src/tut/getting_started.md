@@ -1,25 +1,25 @@
 # Getting Started
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
 This walkthrough builds a small many-body model from scratch and diagonalizes it, touching
-each layer of MOAD in turn: define the sites and Hilbert space, write the Hamiltonian with
+each layer of MOADyna in turn: define the sites and Hilbert space, write the Hamiltonian with
 the operator DSL, restrict to a conserved sector, assemble the sparse matrix, and solve.
 The running example is the half-filled 4-site spinful Hubbard chain.
 
 ## Sites and the Hilbert space
 
-A model is a collection of named [`FermionSite`](@ref MOAD.Algebra.FermionSite)/[`BosonSite`](@ref MOAD.Algebra.BosonSite)/[`SpinSite`](@ref MOAD.Algebra.SpinSite)
+A model is a collection of named [`FermionSite`](@ref MOADyna.Algebra.FermionSite)/[`BosonSite`](@ref MOADyna.Algebra.BosonSite)/[`SpinSite`](@ref MOADyna.Algebra.SpinSite)
 sites gathered into a [`Hilbert`](@ref) space. A `FermionSite{N}` carries `N` fermionic
 modes; here each site has two modes, read as spin ↑ (mode 1) and ↓ (mode 2).
 
 ```@example gs
-using MOAD
+using MOADyna
 
 const L = 4
 const UP, DN = 1, 2
@@ -65,7 +65,7 @@ length(basis)
 ## Assemble and diagonalize
 
 [`compile`](@ref) resolves the symbolic operator against the basis, [`assemble`](@ref)
-builds the sparse `SparseMatrixCSC`, and `eigen` (the MOAD extension, dispatching to dense or
+builds the sparse `SparseMatrixCSC`, and `eigen` (the MOADyna extension, dispatching to dense or
 `KrylovKit` automatically; see [Exact Diagonalization](@ref)) returns the eigensystem.
 
 ```@example gs

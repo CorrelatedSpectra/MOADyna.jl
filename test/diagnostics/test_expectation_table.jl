@@ -1,7 +1,7 @@
 using Test
 using LinearAlgebra: dot
-using MOAD
-using MOAD.Diagnostics: expectation_table
+using MOADyna
+using MOADyna.Diagnostics: expectation_table
 
 @testset "expectation_table — round-trip on a diagonal Hamiltonian" begin
     s = FermionSite{2}(:s)

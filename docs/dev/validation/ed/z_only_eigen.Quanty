@@ -3,7 +3,7 @@
 -- Loads the same Hamiltonian as `z_only_print.Quanty`, restricts to the
 -- 8-fermion sector (Ni²⁺ with full ligand shell, C(10, 8) = 45 states),
 -- and dumps the lowest 5 eigenvalues + eigenvectors in machine-readable
--- form for the MOAD-side comparison script `z_only_eigen_compare.jl`.
+-- form for the MOADyna-side comparison script `z_only_eigen_compare.jl`.
 --
 -- Output files (relative to where Quanty is invoked):
 --   z_only_quanty_eigvals.txt   — one eigenvalue per line, ascending

@@ -1,7 +1,7 @@
-module MOADOptimExt
+module MOADynaOptimExt
 
-# Package extension activated automatically when both `MOAD` and `Optim` are loaded.
-# Provides `MOAD.Gradients.fit_spectrum`, a deterministic gradient-driven least-squares
+# Package extension activated automatically when both `MOADyna` and `Optim` are loaded.
+# Provides `MOADyna.Gradients.fit_spectrum`, a deterministic gradient-driven least-squares
 # direct fit of the affine-model parameters `θ` to a target XAS spectrum. The gradient
 # is the analytic step-6 VJP (pullback) — no finite differences, no AD-through-eigensolver.
 # This is a baseline / diagnostic; calibrated inference lives in the sibling package.
@@ -9,9 +9,9 @@ module MOADOptimExt
 # Loss:     L(θ) = ½ ‖ w ∘ (S(θ) − target) ‖²,   S = spectrum(model, θ) = −Im C/π
 # Gradient: ∂L/∂θ = pullback( w² ∘ (S(θ) − target) )      (the real-cotangent VJP)
 
-using MOAD
+using MOADyna
 using Optim
-const G = MOAD.Gradients
+const G = MOADyna.Gradients
 
 function G.fit_spectrum(model::G.XASGradientModel, target::AbstractArray,
                         θ0::AbstractVector; optimizer = Optim.LBFGS(),
@@ -47,4 +47,4 @@ function G.fit_spectrum(model::G.XASGradientModel, target::AbstractArray,
     return (θ = Optim.minimizer(res), loss = Optim.minimum(res), result = res)
 end
 
-end # module MOADOptimExt
+end # module MOADynaOptimExt

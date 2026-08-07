@@ -1,17 +1,17 @@
 # Exact Diagonalization
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
-`MOAD.ED` extends `LinearAlgebra.eigen` with two methods — one taking a symbolic
+`MOADyna.ED` extends `LinearAlgebra.eigen` with two methods — one taking a symbolic
 [`OperatorSum`](@ref), one taking an already-assembled `SparseMatrixCSC` — each with an
 [`EagerBasis`](@ref). It diagonalizes the Hamiltonian in that conserved sector and returns a
 standard `LinearAlgebra.Eigen` (so `.values` and `.vectors` work as usual). `eigen` is re-exported
-from `MOAD`, so `using MOAD` is enough — no explicit `using LinearAlgebra`.
+from `MOADyna`, so `using MOADyna` is enough — no explicit `using LinearAlgebra`.
 
 ## Diagonalizing
 
@@ -19,7 +19,7 @@ from `MOAD`, so `using MOAD` is enough — no explicit `using LinearAlgebra`.
 already-assembled sparse matrix plus the basis it was built on.
 
 ```@example ed
-using MOAD
+using MOADyna
 
 sites = [FermionSite{2}(Symbol("s$i")) for i in 1:4]
 h = Hilbert(s.name => s for s in sites)

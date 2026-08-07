@@ -11,7 +11,7 @@ updates:
     commit-message:
       prefix: "compat"
     ignore:
-      # Optim 2.x removed `only_fg!`, which MOADOptimExt uses. Re-enable
+      # Optim 2.x removed `only_fg!`, which MOADynaOptimExt uses. Re-enable
       # once the extension is migrated and tested against 2.x.
       - dependency-name: "Optim"
         update-types: ["version-update:semver-major"]

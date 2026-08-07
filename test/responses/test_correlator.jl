@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — correlator(...) kernel correctness + API contract
+# MOADyna.Responses — correlator(...) kernel correctness + API contract
 # =====================================================================
 #
 # Tests:
@@ -11,9 +11,9 @@ using Test
 using LinearAlgebra
 using SparseArrays
 import Logging
-using MOAD
-using MOAD: LanczosResponse, GridResponse, PoleResponse
-using MOAD.Responses: to_pole, to_grid
+using MOADyna
+using MOADyna: LanczosResponse, GridResponse, PoleResponse
+using MOADyna.Responses: to_pole, to_grid
 
 # ---------------------------------------------------------------------------
 # Dense reference correlator: χ(ω) = ⟨ψ₀|O†(ω·I + Eg − H + iΓ/2)⁻¹ O|ψ₀⟩
@@ -627,7 +627,7 @@ end
 
     # 1. T = 0: only the nondegenerate singlet survives, weight 1.0.
     states0, energies0, weights0, E0_0 =
-        MOAD.Responses._thermal_states(d.H_sp, d.basis, 0.0, nothing, degen_tol)
+        MOADyna.Responses._thermal_states(d.H_sp, d.basis, 0.0, nothing, degen_tol)
     @test length(states0) == 1
     @test weights0[1] ≈ 1.0 atol = 1e-12
 
@@ -635,14 +635,14 @@ end
     T = 0.5
     β = 1 / T
     states_T, energies_T, weights_T, E0_T =
-        MOAD.Responses._thermal_states(d.H_sp, d.basis, T, nothing, degen_tol)
+        MOADyna.Responses._thermal_states(d.H_sp, d.basis, T, nothing, degen_tol)
     raw = exp.(-β .* (energies_T .- E0_T))
     @test weights_T ≈ raw ./ sum(raw)
 
     # 3. N_states = 1 (singlet nondegenerate) does NOT raise; N_states = 2
     #    cuts the 3-fold triplet (states 2,3,4 degenerate) → raises.
-    @test MOAD.Responses._thermal_states(d.H_sp, d.basis, T, 1, degen_tol) isa Tuple
-    @test_throws ArgumentError MOAD.Responses._thermal_states(
+    @test MOADyna.Responses._thermal_states(d.H_sp, d.basis, T, 1, degen_tol) isa Tuple
+    @test_throws ArgumentError MOADyna.Responses._thermal_states(
         d.H_sp, d.basis, T, 2, degen_tol)
 end
 

@@ -1,7 +1,7 @@
 using Test
-using MOAD
-using MOAD.Algebra: FermionSite, Hilbert, c, cdag, n, rotate, OperatorSum
-using MOAD.Shells: ShellModel, to_real, to_jlmj, ell_of, site_of
+using MOADyna
+using MOADyna.Algebra: FermionSite, Hilbert, c, cdag, n, rotate, OperatorSum
+using MOADyna.Shells: ShellModel, to_real, to_jlmj, ell_of, site_of
 using LinearAlgebra: I as LinAlgI, Diagonal, diag
 
 # A handful of fixed real-K transforms are tested at the matrix level
@@ -188,7 +188,7 @@ end
     @test maximum(abs, sort(real.(diag(LS_j))) - expected) < 1e-12
 end
 
-# LS one-body cross-check (using MOAD's `LS(m, shell)`) deferred until
+# LS one-body cross-check (using MOADyna's `LS(m, shell)`) deferred until
 # Plan 2 Task 8 ships. When ready, U' * LS_M * U should be diagonal with
 # eigenvalues {-1, -1, 1/2, 1/2, 1/2, 1/2} on the 1-particle 2p basis,
 # and {-3/2, -3/2, -3/2, -3/2, 1, 1, 1, 1, 1, 1} on the 1-particle 2d

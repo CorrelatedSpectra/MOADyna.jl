@@ -1,5 +1,5 @@
 """
-    MOAD.Responses
+    MOADyna.Responses
 
 Foundational layer for matrix-of-ω response objects.
 
@@ -10,10 +10,10 @@ Provides:
 - [`GridResponse{T, N}`](@ref) — sampled on an ω-grid
 - [`GreensFunction{T, R}`](@ref) — parametric single-particle Green's function
 
-In `MOAD.Responses`, all matrix-of-ω response objects live here. The
+In `MOADyna.Responses`, all matrix-of-ω response objects live here. The
 spectroscopy-domain wrappers and post-processing (polarisation, dipole
 bookkeeping, `re_broaden`, spectrum algebra, Plots ext) remain in
-`MOAD.Spectroscopy`.
+`MOADyna.Spectroscopy`.
 
 See the **Responses** chapter of the manual for the user-facing contract.
 """

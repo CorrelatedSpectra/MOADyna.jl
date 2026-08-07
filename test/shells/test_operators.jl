@@ -1,7 +1,7 @@
 using Test
-using MOAD
-using MOAD.Algebra: OperatorSum
-using MOAD.Shells: ShellModel
+using MOADyna
+using MOADyna.Algebra: OperatorSum
+using MOADyna.Shells: ShellModel
 
 @testset "shell-keyed n — single shell" begin
     m = ShellModel([:Ni_3d])

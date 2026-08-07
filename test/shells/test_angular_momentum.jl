@@ -1,9 +1,9 @@
 using Test
-using MOAD
-using MOAD.Algebra: OperatorSum
-using MOAD.Shells: ShellModel, Lz, Lplus, Lminus, Lx, Ly, Lsqr, site_of, ell_of
-using MOAD.Shells: Jx, Jy, Jz, Jplus, Jminus, Jsqr
-using MOAD.Shells: LS
+using MOADyna
+using MOADyna.Algebra: OperatorSum
+using MOADyna.Shells: ShellModel, Lz, Lplus, Lminus, Lx, Ly, Lsqr, site_of, ell_of
+using MOADyna.Shells: Jx, Jy, Jz, Jplus, Jminus, Jsqr
+using MOADyna.Shells: LS
 using LinearAlgebra: eigvals
 using LinearAlgebra: Hermitian
 

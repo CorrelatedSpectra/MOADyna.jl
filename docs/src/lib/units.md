@@ -1,6 +1,6 @@
 # Units
 
 ```@autodocs
-Modules = [MOAD.Units]
+Modules = [MOADyna.Units]
 Private = false
 ```

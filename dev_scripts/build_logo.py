@@ -3,6 +3,11 @@ Build the MOAD wordmark logo by extracting M, O, A, D outlines from Roboto-Bold,
 applying the font's GPOS kerning + small custom corrections, then anchoring the
 hat / dot / brackets to each glyph's actual rendered ink geometry.
 
+The mark stays the four-letter acronym [MÔAḊ] even though the package is named
+MOADyna: the hat marks Operators, the dot marks Dynamics (a time derivative),
+and the commutator brackets mark Algebra.  Do not "correct" WORD to the package
+name — that would regenerate a different logo than the one committed.
+
 One-off generator.  Run from the repo root:
 
     python3 dev_scripts/build_logo.py
@@ -25,14 +30,14 @@ from fontTools.ttLib import TTFont
 # Configuration
 
 # Roboto-Bold (Apache-2.0; see THIRD_PARTY_NOTICES.md). Override with
-# MOAD_ROBOTO_BOLD, else try the usual install locations.
+# MOADYNA_ROBOTO_BOLD, else try the usual install locations.
 _FONT_CANDIDATES = (
     "/Library/Fonts/Roboto-Bold.ttf",
     "/System/Library/Fonts/Supplemental/Roboto-Bold.ttf",
     "/usr/share/fonts/truetype/roboto/Roboto-Bold.ttf",
     os.path.expanduser("~/Library/Fonts/Roboto-Bold.ttf"),
 )
-FONT_PATH = os.environ.get("MOAD_ROBOTO_BOLD") or next(
+FONT_PATH = os.environ.get("MOADYNA_ROBOTO_BOLD") or next(
     (p for p in _FONT_CANDIDATES if os.path.isfile(p)), _FONT_CANDIDATES[0]
 )
 WORD = "MOAD"
@@ -245,7 +250,7 @@ letter_paths = [extract_glyph_path(names[i], origin_px(i)) for i in range(len(na
 
 svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {VIEWBOX_W:.0f} {VIEWBOX_H:.0f}" width="{VIEWBOX_W:.0f}" height="{VIEWBOX_H:.0f}">
   <!-- MOAD wordmark: [MÔAḊ] — commutator brackets (Algebra) wrap operator/dynamics-typed letters.
-       (c) Yi Lu, MIT-licensed with the rest of MOAD.jl.  Built by dev_scripts/build_logo.py;
+       (c) Yi Lu, MIT-licensed with the rest of MOADyna.jl.  Built by dev_scripts/build_logo.py;
        wordmark set in Roboto Bold (credit; see THIRD_PARTY_NOTICES.md).  Uses the font's
        GPOS kerning for letter spacing; hat / dot / brackets are anchored to each glyph's actual
        ink bounding box (computed via fontTools BoundsPen) so positions are deterministic. -->

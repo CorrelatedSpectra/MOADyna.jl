@@ -1,5 +1,5 @@
 using Test
-using MOAD
+using MOADyna
 
 @testset "ED — validation" begin
     include("test_bh_quspin.jl")

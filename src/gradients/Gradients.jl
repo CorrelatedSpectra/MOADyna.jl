@@ -1,8 +1,8 @@
 # src/gradients/Gradients.jl
 #
-# MOAD.Gradients — the v0.3 differentiable forward model (T=0 only).
+# MOADyna.Gradients — the v0.3 differentiable forward model (T=0 only).
 #
-# Makes MOAD's `(physical parameters θ → XAS spectrum)` map differentiable in θ,
+# Makes MOADyna's `(physical parameters θ → XAS spectrum)` map differentiable in θ,
 # forward-mode + analytic-resolvent — NOT reverse-AD through the eigensolver. The
 # whole layer is built on an AFFINE Hamiltonian model
 #
@@ -25,11 +25,11 @@
 #     `jacobian`, `spectrum_with_pullback` (S = −Im C/π, cotangent W = −iλ/π); plus a
 #     degeneracy-clustered spectral measure (`freeze_windows`, `spectral_clusters`).
 #   • `fit_spectrum`: a deterministic direct-fit baseline (the `Optim` weakdep
-#     extension `MOADOptimExt`).
+#     extension `MOADynaOptimExt`).
 #
 # Scope: T=0 only (finite-T dropped by design). Parameter INFERENCE (observation
-# model, NPE/HMC/SBC/OOD) lives in a separate sibling package that depends on MOAD;
-# MOAD never hard-depends on the ML stack.
+# model, NPE/HMC/SBC/OOD) lives in a separate sibling package that depends on MOADyna;
+# MOADyna never hard-depends on the ML stack.
 
 module Gradients
 
@@ -1131,7 +1131,7 @@ end
 # `fit_spectrum` is a gradient-driven least-squares baseline: minimize
 # ½‖w∘(spectrum(model,θ) − target)‖² with the analytic VJP (step-6 pullback). It is a
 # DIAGNOSTIC / sanity baseline — calibrated inference (NPE/HMC/SBC) lives in the sibling
-# package, not here. The method is provided by the `MOADOptimExt` package extension; the
+# package, not here. The method is provided by the `MOADynaOptimExt` package extension; the
 # variadic fallback below errors helpfully when `Optim` is not loaded (it is strictly
 # less specific than the extension's 3-positional-argument method, so no collision).
 
@@ -1141,12 +1141,12 @@ end
 Deterministic least-squares direct fit of `θ` to a `target` spectrum (same shape as
 `spectrum(model, θ0)`), gradient-driven via the analytic pullback. Returns a NamedTuple
 `(θ, loss, result)`. **Requires `Optim.jl`** — run `using Optim` to activate the method
-(provided by `MOADOptimExt`). This is a baseline/diagnostic; calibrated parameter
+(provided by `MOADynaOptimExt`). This is a baseline/diagnostic; calibrated parameter
 inference belongs to the sibling inference package.
 """
 function fit_spectrum end
 
 fit_spectrum(::XASGradientModel, args...; kwargs...) = error(
-    "fit_spectrum requires Optim.jl — run `using Optim` to load the MOADOptimExt extension.")
+    "fit_spectrum requires Optim.jl — run `using Optim` to load the MOADynaOptimExt extension.")
 
 end # module Gradients

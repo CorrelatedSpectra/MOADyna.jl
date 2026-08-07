@@ -1,6 +1,6 @@
 using Test
-using MOAD
-using MOAD.Algebra: OperatorSum
+using MOADyna
+using MOADyna.Algebra: OperatorSum
 
 @testset "density_density — single d-shell, J=0" begin
     m = ShellModel([:Ni_3d])
@@ -125,7 +125,7 @@ end
 
 @testset "kanamori — structural match against the standard decomposition" begin
     # Build the standard rotationally-invariant Kanamori Hamiltonian
-    # term-by-term, independently of MOAD's builder, and require the two
+    # term-by-term, independently of MOADyna's builder, and require the two
     # operators to be ==-equal at the OperatorSum level.
     #
     #   H = U Σ_i n_i↑ n_i↓
@@ -140,21 +140,21 @@ end
     #
     # The mode ordering below follows the m-major convention (2k = dn_k,
     # 2k+1 = up_k) used by Quanty and other multiplet codes.
-    # In MOAD's _orbital_mode_pair(ell, m_value), with ms = -ell..ell, the
+    # In MOADyna's _orbital_mode_pair(ell, m_value), with ms = -ell..ell, the
     # k-th orbital (0-indexed) corresponds to m_value = -ell + k. Both
     # conventions produce the same (dn, up) mode-index pair for orbital k.
 
     m = ShellModel([:Ni_3d])    # ℓ=2, 5 orbitals
-    site = MOAD.Shells.site_of(m, :Ni_3d)
+    site = MOADyna.Shells.site_of(m, :Ni_3d)
     Norb = 5
     U, J = 5.0, 0.5
 
     # Mode-pair lookup matching Quanty's 1-indexed loop:
     # orbinds[k] = k-1 (0-indexed orbital), so dn_k = 2*(k-1)+1, up_k = 2*(k-1)+2 in 1-based.
-    # For ℓ=2 in MOAD's convention: orbital k has m_value = -2 + (k-1).
+    # For ℓ=2 in MOADyna's convention: orbital k has m_value = -2 + (k-1).
     function quanty_pair(k)
         m_value = -2 + (k - 1)   # k = 1..5
-        return MOAD.Shells._orbital_mode_pair(2, m_value)
+        return MOADyna.Shells._orbital_mode_pair(2, m_value)
     end
 
     # Seed accumulator
@@ -200,7 +200,7 @@ end
         H_quanty += (-J) * cdag(site, ui) * c(site, di) * cdag(site, dj) * c(site, uj)
     end
 
-    # MOAD's kanamori
+    # MOADyna's kanamori
     H_moad = kanamori(m, :Ni_3d; U = U, J = J)
 
     # Structural equality: both must canonicalize to the exact same OperatorSum.

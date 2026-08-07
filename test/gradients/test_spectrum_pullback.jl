@@ -1,17 +1,17 @@
 # test/gradients/test_spectrum_pullback.jl
 #
-# Build-step 6a of the v0.3 differentiable forward model (MOAD.Gradients): the
+# Build-step 6a of the v0.3 differentiable forward model (MOADyna.Gradients): the
 # grid-spectrum pullback API. The spectrum is S = −Im C_AB(ω)/π; this file checks
 # spectrum / spectrum_and_jvp / jacobian and — the key test — the VJP pullback
 # adjoint identity g[k] = Σ λ·dS_k = Σ Re(conj(W)·dC_k) with W = −iλ/π. Reuses the
 # step-4 synthetic coupled fixture (H_g 4-dim, H_f 6-dim complex, shared θ=[a,b]).
 # Reproducible (no RNG).
 
-using MOAD
+using MOADyna
 using LinearAlgebra
 using Test
 
-const G = MOAD.Gradients
+const G = MOADyna.Gradients
 
 # Step-4 coupled fixture (verbatim from test_xas_jvp.jl) wrapped as an XASGradientModel.
 function _fixture()

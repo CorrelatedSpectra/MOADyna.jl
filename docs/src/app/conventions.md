@@ -1,6 +1,6 @@
 # Conventions
 
-This appendix collects the cross-cutting conventions used throughout MOAD.
+This appendix collects the cross-cutting conventions used throughout MOADyna.
 
 ## Resolvent and broadening
 
@@ -44,6 +44,6 @@ Condon–Shortley convention (the ``(-1)^m`` that makes the dipole Cartesian ass
 
 ## Units
 
-There are no hard-wired physical units — MOAD works in whatever energy unit the inputs use
+There are no hard-wired physical units — MOADyna works in whatever energy unit the inputs use
 (eV throughout the examples and the atomic-parameter tables). The atomic radial moments
 ``\langle r^k\rangle`` are in `Å^k`. Temperatures in the finite-`T` paths are in energy units (`k_B = 1`).

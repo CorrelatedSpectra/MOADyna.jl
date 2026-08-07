@@ -1,5 +1,5 @@
 """
-    MOAD.Diagnostics
+    MOADyna.Diagnostics
 
 Post-eigenstate analysis utilities. Public API:
 

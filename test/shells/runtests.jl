@@ -1,5 +1,5 @@
 using Test
-using MOAD
+using MOADyna
 
 @testset "Shells" begin
     include("test_parse_tag.jl")

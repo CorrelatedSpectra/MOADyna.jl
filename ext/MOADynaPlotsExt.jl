@@ -1,6 +1,6 @@
-module MOADPlotsExt
+module MOADynaPlotsExt
 
-# Package extension activated automatically when both `MOAD` and a
+# Package extension activated automatically when both `MOADyna` and a
 # plot package built on RecipesBase (e.g. `Plots.jl`) are loaded in the
 # user's session. Provides a `plot(spec::SpectraTensor; …)` recipe that
 # converts a spectroscopy result into either a 1-D line plot
@@ -11,8 +11,8 @@ module MOADPlotsExt
 # backend is supplied by the user's `Plots.jl` install. This keeps the
 # extension lightweight and backend-agnostic.
 
-using MOAD: SpectraTensor
-using MOAD.Spectroscopy: polarise
+using MOADyna: SpectraTensor
+using MOADyna.Spectroscopy: polarise
 using RecipesBase
 
 # ---------------------------------------------------------------------
@@ -40,7 +40,7 @@ using RecipesBase
 function _xas_intensity(spec::SpectraTensor, polarisation)
     md = spec.metadata
     md[:ψ_is_list_input]::Bool && throw(ArgumentError(
-        "MOADPlotsExt: SpectraTensor was built from a list of ψ; " *
+        "MOADynaPlotsExt: SpectraTensor was built from a list of ψ; " *
         "select a single ψ slice (e.g. average / weighted_sum / " *
         "explicit indexing) before plotting."))
     T_is_vector = md[:T_is_vector_input]::Bool
@@ -67,7 +67,7 @@ function _xas_intensity(spec::SpectraTensor, polarisation)
         return out
     else
         throw(ArgumentError(
-            "MOADPlotsExt: unsupported `polarisation` for XAS — " *
+            "MOADynaPlotsExt: unsupported `polarisation` for XAS — " *
             "expected an AbstractVector or :isotropic, got $(polarisation)."))
     end
 end
@@ -75,10 +75,10 @@ end
 function _fy_intensity(spec::SpectraTensor, polarisation)
     md = spec.metadata
     md[:ψ_is_list_input]::Bool && throw(ArgumentError(
-        "MOADPlotsExt: fluorescence_yield SpectraTensor with a ψ " *
+        "MOADynaPlotsExt: fluorescence_yield SpectraTensor with a ψ " *
         "list axis; select a single ψ before plotting."))
     polarisation === :isotropic || throw(ArgumentError(
-        "MOADPlotsExt: `polarisation` is not meaningful for " *
+        "MOADynaPlotsExt: `polarisation` is not meaningful for " *
         "fluorescence_yield (already polarisation-summed); " *
         "leave it at :isotropic."))
     return polarise(spec)              # identity for FY
@@ -87,7 +87,7 @@ end
 function _rixs_intensity(spec::SpectraTensor, polarisation)
     md = spec.metadata
     md[:ψ_is_list_input]::Bool && throw(ArgumentError(
-        "MOADPlotsExt: RIXS SpectraTensor with a ψ list axis; " *
+        "MOADynaPlotsExt: RIXS SpectraTensor with a ψ list axis; " *
         "select a single ψ before plotting."))
     T_in_vec  = md[:T_in_is_vector_input]::Bool
     T_out_vec = md[:T_out_is_vector_input]::Bool
@@ -99,14 +99,14 @@ function _rixs_intensity(spec::SpectraTensor, polarisation)
             return polarise(spec)              # already (n_in, n_out)
         else
             throw(ArgumentError(
-                "MOADPlotsExt: RIXS result has polarisation axes " *
+                "MOADynaPlotsExt: RIXS result has polarisation axes " *
                 "(T_in/T_out vector); supply " *
                 "`polarisation = (ε_in, ε_out)` or call " *
                 "`polarise` upstream."))
         end
     else
         throw(ArgumentError(
-            "MOADPlotsExt: unsupported `polarisation` for RIXS — " *
+            "MOADynaPlotsExt: unsupported `polarisation` for RIXS — " *
             "expected (ε_in, ε_out) tuple or :isotropic, got $(polarisation)."))
     end
 end
@@ -164,8 +164,8 @@ end
         end
     else
         throw(ArgumentError(
-            "MOADPlotsExt: unsupported SpectraTensor metadata[:function] = $(fn)"))
+            "MOADynaPlotsExt: unsupported SpectraTensor metadata[:function] = $(fn)"))
     end
 end
 
-end # module MOADPlotsExt
+end # module MOADynaPlotsExt

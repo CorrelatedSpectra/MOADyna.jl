@@ -1,8 +1,8 @@
 # =====================================================================
-# MOAD.Spectroscopy — optical_conductivity (2e)
+# MOADyna.Spectroscopy — optical_conductivity (2e)
 # =====================================================================
 #
-# Thin wrapper over MOAD.Responses.correlator(...; channel = :neutral):
+# Thin wrapper over MOADyna.Responses.correlator(...; channel = :neutral):
 # the regular optical conductivity Re σ_αβ(ω > 0) from the one-sided
 # current–current correlator, with the finite-T detailed-balance factor.
 # One-sided / regular
@@ -10,7 +10,7 @@
 # current operator (no current-operator / position machinery in 2e).
 #
 # The method is added in 2e Task 1; this file holds the generic-function
-# declaration so `using MOAD` loads with the symbol exported (matching the
+# declaration so `using MOADyna` loads with the symbol exported (matching the
 # `function xas end` idiom).
 
 # --- shared 2e helpers (used by optical_conductivity + dynamical_structure_factor) ---

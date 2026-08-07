@@ -1,6 +1,6 @@
 # test/shells/test_parse_tag.jl
 using Test
-using MOAD.Shells: _parse_shell_tag
+using MOADyna.Shells: _parse_shell_tag
 
 @testset "shell-tag parser" begin
     @testset "standard atomic shell tags" begin
@@ -38,7 +38,7 @@ using MOAD.Shells: _parse_shell_tag
     end
 end
 
-using MOAD.Shells: _shell_mode_labels, _orbital_mode_pair, _m_values
+using MOADyna.Shells: _shell_mode_labels, _orbital_mode_pair, _m_values
 
 @testset "m-major mode layout" begin
     @testset "m_values for ℓ" begin

@@ -1,6 +1,6 @@
 # QuantyIO
 
 ```@autodocs
-Modules = [MOAD.QuantyIO]
+Modules = [MOADyna.QuantyIO]
 Private = false
 ```

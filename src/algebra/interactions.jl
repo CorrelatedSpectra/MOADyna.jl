@@ -2,7 +2,7 @@
 #
 # Algebra-level interaction primitives for fermionic multi-orbital sites.
 # These take a FermionSite + a list of (dn, up) orbital-mode pairs as input.
-# Shell-keyed forms in MOAD.Shells are sugar that resolve a shell to its
+# Shell-keyed forms in MOADyna.Shells are sugar that resolve a shell to its
 # orbital pairs and delegate here.
 #
 # Covered: density_density, kanamori (Hubbard-Kanamori interactions),

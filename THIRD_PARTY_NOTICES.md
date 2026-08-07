@@ -1,7 +1,7 @@
 # Third-party notices
 
-MOAD.jl is released under the MIT License (see [`LICENSE`](LICENSE)). That
-license covers the MOAD-authored material in this repository; it does **not**
+MOADyna.jl is released under the MIT License (see [`LICENSE`](LICENSE)). That
+license covers the MOADyna-authored material in this repository; it does **not**
 relicense the third-party material listed below, which remains under its own
 terms.
 
@@ -24,20 +24,20 @@ Derived from the NiO ligand-field XAS L₂,₃ tutorial on the Quanty website:
   <https://www.quanty.org/copyright>. Full text in
   [`licenses/CC-BY-4.0.txt`](licenses/CC-BY-4.0.txt).
 
-**Changes made:** adapted to emit the operator dumps that MOAD's validation
+**Changes made:** adapted to emit the operator dumps that MOADyna's validation
 suite reads — operator definitions retained, with added `Print`/write calls for
 the Hamiltonian, XAS Hamiltonian, and the three XAS transition operators, and
 verbosity and basis-index bookkeeping adjusted for that purpose.
 
 This script is a *regeneration* tool for reference data. It is not part of the
-MOAD package: it runs under Quanty, not Julia, and nothing in `src/` loads it.
+MOADyna package: it runs under Quanty, not Julia, and nothing in `src/` loads it.
 
 ## 2. Logo — typeface credit (courtesy, not a license obligation)
 
 **Files:** `assets/logo.svg`, `docs/src/assets/logo.svg`
 (generator: `dev_scripts/build_logo.py`)
 
-The MOAD logo is an original work of this project, © Yi Lu, under the same MIT
+The MOADyna logo is an original work of this project, © Yi Lu, under the same MIT
 license as the rest of the repository. Its wordmark letterforms were set in
 **Roboto Bold** (Christian Robertson and the Roboto Project Authors,
 <https://github.com/googlefonts/roboto-2>, licensed Apache-2.0), and we credit

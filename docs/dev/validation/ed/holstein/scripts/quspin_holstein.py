@@ -1,9 +1,9 @@
 """
-QuSpin reference for spinless Holstein validation in MOAD.
+QuSpin reference for spinless Holstein validation in MOADyna.
 
 Generates `holstein_reference.h5` (committed under `reference/`).
 The test `test/ed/validation/test_holstein_quspin.jl` loads it and
-compares to MOAD. Spinless because QuSpin's tensor_basis pairs
+compares to MOADyna. Spinless because QuSpin's tensor_basis pairs
 `boson_basis_1d` with `spinless_fermion_basis_1d` cleanly via the `|`
 separator (cf. `ref/QuSpin/examples/scripts/example10.py`); the
 spinful Hubbard piece is independently validated by Plan 2 / NiO XAS.

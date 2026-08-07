@@ -153,7 +153,7 @@ function _run_cowan(element::Symbol, charge::Int, edge::Symbol;
     # 1. Validate binary path.
     isfile(binary) || throw(ArgumentError(
         "Cowan binary not found at $(binary). " *
-        "Set ENV[\"MOAD_COWAN\"] / ENV[\"TTMULT\"] or pass `cowan = ...`."))
+        "Set ENV[\"MOADYNA_COWAN\"] / ENV[\"TTMULT\"] or pass `cowan = ...`."))
 
     haskey(ATOMIC_NUMBER, element) || throw(ArgumentError(
         "Cowan runner: no atomic number registered for element=$element. " *

@@ -1,10 +1,10 @@
 """
-    MOAD.Shells
+    MOADyna.Shells
 
-Shell-registry + multiplet-physics layer over `MOAD.Algebra` and
-`MOAD.PointGroups`.
+Shell-registry + multiplet-physics layer over `MOADyna.Algebra` and
+`MOADyna.PointGroups`.
 
-**Direct exports** (names you get from `using MOAD.Shells`):
+**Direct exports** (names you get from `using MOADyna.Shells`):
 
 - `ShellModel` registry and accessors `ell_of`, `range_of`, `site_of`.
 - Basis-restriction DSL: `nshells(m, :s, …)`, `total(m)`.
@@ -27,14 +27,14 @@ Shell-registry + multiplet-physics layer over `MOAD.Algebra` and
   per Questaal) and `to_jlmj(m, :s)` (j-coupled via Clebsch-Gordan).
 - Anchor-based onsite-energy solver: `onsite_energies(m; anchors, U, pairs, shells)`.
 
-**Method extensions** (function lives in `MOAD.Algebra`, this module adds
+**Method extensions** (function lives in `MOADyna.Algebra`, this module adds
 `ShellModel` dispatch):
 
 - Number `n`, spin `Sx, Sy, Sz, Splus, Sminus, Ssqr`.
 - Density-density `density_density` and full `kanamori`.
 
-For users, `using MOAD` re-exports the public API. The cross-basis state
-embedding `embed(psi, basis_a => basis_b)` lives in `MOAD.Bases`.
+For users, `using MOADyna` re-exports the public API. The cross-basis state
+embedding `embed(psi, basis_a => basis_b)` lives in `MOADyna.Bases`.
 
 See the **Multiplets & standard operators** chapter of the manual for the
 user-facing specification.

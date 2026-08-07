@@ -1,13 +1,13 @@
 # Spectroscopy
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
-`MOAD.Spectroscopy` turns an assembled Hamiltonian and a ground (or thermal) state into a
+`MOADyna.Spectroscopy` turns an assembled Hamiltonian and a ground (or thermal) state into a
 frequency-resolved spectrum. It covers two families:
 
 - **Core-level spectroscopy** — [`xas`](@ref) (X-ray absorption), [`rixs`](@ref)
@@ -100,7 +100,7 @@ full ω grid for a momentum-resolved operator `O_q`; the **nIXS** spectrum is ex
 with `O_q = ` [`nixs`](@ref)`(…)`. The example below is small enough to run at build time.
 
 ```@example spec
-using MOAD
+using MOADyna
 
 # 2-site, 2-orbital Hubbard dimer.
 s = [FermionSite{2}(:a), FermionSite{2}(:b)]

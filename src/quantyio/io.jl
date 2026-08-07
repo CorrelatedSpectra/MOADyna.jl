@@ -6,7 +6,7 @@
     read_quanty_operator(path, hilbert, mode_map) -> OperatorSum
 
 Read a Quanty operator dump from a file and build the corresponding
-MOAD `OperatorSum`. Equivalent to:
+MOADyna `OperatorSum`. Equivalent to:
 
     parsed = parse_quanty_operator(read(path, String))
     build_operator(parsed, hilbert, mode_map)
@@ -20,7 +20,7 @@ end
     read_quanty_operators(dir, hilbert, mode_map; pattern=r".*") -> Dict{String, OperatorSum}
 
 Read every file in `dir` whose name matches `pattern`, build the
-corresponding MOAD operator for each. Returned dict is keyed by
+corresponding MOADyna operator for each. Returned dict is keyed by
 filename (basename, without directory).
 
 Useful for the PyQuanty pattern: dump observables from Quanty into

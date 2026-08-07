@@ -8,10 +8,10 @@
 #
 #   H = J Σ_<ij> S_i · S_j
 
-using MOAD
+using MOADyna
 
 # Heisenberg dot product on the (Sx, Sy, Sz) bundle returned by S(site).
-# This will eventually live in MOAD; for now define locally.
+# This will eventually live in MOADyna; for now define locally.
 ⋅(a::NTuple{3, OperatorSum}, b::NTuple{3, OperatorSum}) =
     a[1]*b[1] + a[2]*b[2] + a[3]*b[3]
 

@@ -1,5 +1,5 @@
 @testset "Spectroscopy pretty_step + auto_grid" begin
-    using MOAD.Spectroscopy: pretty_step, auto_grid, DEFAULTS
+    using MOADyna.Spectroscopy: pretty_step, auto_grid, DEFAULTS
 
     @testset "pretty_step: snap target to {1, 2, 5}·10^n" begin
         # The spec says: largest value of {1, 2, 5} · 10^n that is ≤ target.

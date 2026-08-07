@@ -1,4 +1,4 @@
--- NiO L2,3 XAS operator dump for MOAD's validation suite.
+-- NiO L2,3 XAS operator dump for MOADyna's validation suite.
 --
 -- Derived from the Quanty website's NiO ligand-field XAS L2,3 tutorial:
 --   https://www.quanty.org/documentation/tutorials/nio_ligand_field/xas_l23
@@ -6,7 +6,7 @@
 -- Full license text: licenses/CC-BY-4.0.txt in this repository.
 --
 -- Changes from the original tutorial: adapted to emit the operator dumps read
--- by MOAD's validation tests -- operator definitions retained, with added
+-- by MOADyna's validation tests -- operator definitions retained, with added
 -- Print/write calls for the Hamiltonian, the XAS Hamiltonian and the three XAS
 -- transition operators, and verbosity/basis-index bookkeeping adjusted for that
 -- purpose. See THIRD_PARTY_NOTICES.md.

@@ -1,7 +1,7 @@
 using Test
 using Random
 using LinearAlgebra
-using MOAD
+using MOADyna
 
 # Algebraic self-consistency tests on the seeded generator set.
 # Covers BFS closure, multable associativity, conjugacy class partition,
@@ -87,9 +87,9 @@ end
     # `REFERENCE_CHARACTER_TABLES` (using S4's generators with a fake
     # name) — the auto-namer fires, expand_clm rejects without
     # `experimental=true`, accepts with it.
-    G_auto = MOAD.PointGroups._construct_pointgroup(
+    G_auto = MOADyna.PointGroups._construct_pointgroup(
         :_test_unknown, :default,
-        MOAD.PointGroups.POINTGROUP_GENERATORS[:S4])
+        MOADyna.PointGroups.POINTGROUP_GENERATORS[:S4])
     @test all(ir.provenance === :computed_auto for ir in G_auto.irreps)
     sub = subduce(G_auto, 2)
     blocks = [Matrix{Float64}(I, m, m) for (_, m) in sub]
@@ -173,7 +173,7 @@ end
 end
 
 @testset "Internal consistency: C4v ℓ=3 multiplicity-aware (M_e mixing)" begin
-    # MOAD's canonical multiplicity-frame is the deterministic output of
+    # MOADyna's canonical multiplicity-frame is the deterministic output of
     # the §9.2 pipeline. It is gauge-equivalent to other conventions
     # (Quanty, libmsym) but not necessarily bit-exact. This testset
     # verifies internal-consistency properties that any valid
@@ -270,9 +270,9 @@ end
 @testset "expand_clm experimental: auto-named group ℓ=2 internal consistency" begin
     # Build an auto-named group by giving S4's generators a name absent
     # from REFERENCE_CHARACTER_TABLES; the auto-namer fires.
-    G = MOAD.PointGroups._construct_pointgroup(
+    G = MOADyna.PointGroups._construct_pointgroup(
         :_test_unknown, :default,
-        MOAD.PointGroups.POINTGROUP_GENERATORS[:S4])
+        MOADyna.PointGroups.POINTGROUP_GENERATORS[:S4])
     @test all(ir.provenance === :computed_auto for ir in G.irreps)
     np = nparams(G, 2)
 
@@ -317,12 +317,12 @@ end
 end
 
 # ─── Oracle 4: Quanty Akm bit-exact regression ──────────────────────────────
-# Compares MOAD's expand_clm output against Quanty's hardcoded closed forms
+# Compares MOADyna's expand_clm output against Quanty's hardcoded closed forms
 # transcribed in test/pointgroups/quanty_akm_oracle.jl.
 #
 # Only (group, ℓ) cells that are:
 #   (a) implemented (non-stub) in Quanty, AND
-#   (b) have reference labels in MOAD (has_reference_labels == true), AND
+#   (b) have reference labels in MOADyna (has_reference_labels == true), AND
 #   (c) not marked broken in the fixture
 # contribute passing tests.  Broken/skipped cells are counted and reported.
 
@@ -374,7 +374,7 @@ include("quanty_akm_oracle.jl")
         gname = fix.group
         ell   = fix.ell
 
-        # Skip groups without reference labels (MOAD cannot run expand_clm
+        # Skip groups without reference labels (MOADyna cannot run expand_clm
         # in production mode).
         if !has_reference_labels(gname)
             n_skip += 1
@@ -397,7 +397,7 @@ include("quanty_akm_oracle.jl")
         G = pointgroup(gname)
         np = nparams(G, ell)
 
-        # Sanity: fixture param count must match MOAD nparams.
+        # Sanity: fixture param count must match MOADyna nparams.
         @testset "$(gname) ℓ=$ell nparams" begin
             @test length(fix.param_names) == np
         end
@@ -408,7 +408,7 @@ include("quanty_akm_oracle.jl")
             for trial in 1:3
                 params = randn(rng, np)
 
-                # MOAD output.
+                # MOADyna output.
                 moad_out = expand_clm(G, ell, params)
                 moad_dict = Dict{Tuple{Int,Int},Float64}(
                     (e.k, e.m) => real(e.coeff) for e in moad_out)
@@ -442,7 +442,7 @@ end
 # CF-reachable full-block expansion (trigonal/pentagonal/C1/Ci fix).
 # ─────────────────────────────────────────────────────────────────────
 @testset "CF-reachable expansion" begin
-    PG = MOAD.PointGroups
+    PG = MOADyna.PointGroups
 
     @testset "Hermitian CF generators span even-k multiplicative CF" begin
         for ℓ in 1:3
@@ -547,14 +547,14 @@ end
             V = sum(c * PG.Bkm_matrix(2, k, m) for ((k, m), c) in aq)
             V = (V + V') / 2
             moad = Dict((e.k, e.m) => e.coeff for e in PG._solve_Akm(V, 2))
-            for ((k, m), c) in aq                        # MOAD recovers Quanty bit-exact
+            for ((k, m), c) in aq                        # MOADyna recovers Quanty bit-exact
                 @test abs(get(moad, (k, m), 0.0im) - c) < 1e-9
             end
             for ((k, m), c) in moad                      # no spurious extra terms
                 @test abs(c) < 1e-9 || haskey(aq, (k, m))
             end
         end
-        # And a random MOAD CF has exactly the Quanty support + reality structure.
+        # And a random MOADyna CF has exactly the Quanty support + reality structure.
         allowed = Set([(0,0),(2,0),(4,0),(4,-3),(4,3)])
         for _ in 1:5
             d = Dict((e.k, e.m) => e.coeff for e in expand_clm(G, 2, randn(rng, 4)))

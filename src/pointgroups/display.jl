@@ -18,7 +18,7 @@ Return the character table of `G` as a `NamedTuple` with fields:
 
 `source=:reference` returns the curated published table for groups in
 `reference_label_groups()`; column order matches the canonical
-published convention. `source=:computed` returns the table in MOAD's
+published convention. `source=:computed` returns the table in MOADyna's
 internal BFS class-discovery order, with row labels exactly as they
 appear in `G.irreps`. `:auto` (default) picks `:reference` when
 available, else `:computed`.
@@ -48,7 +48,7 @@ function character_table(G::PointGroup; source::Symbol=:auto)
                 irreps=Symbol[ir.label for ir in G.irreps],
                 ir_dims=Int[ir.real_dim for ir in G.irreps],
                 characters=chars, source=:computed,
-                provenance="MOAD Burnside-Dixon class-operator algorithm; classes in BFS-discovery order")
+                provenance="MOADyna Burnside-Dixon class-operator algorithm; classes in BFS-discovery order")
     else
         throw(ArgumentError(
             "character_table: source must be :reference, :computed, or :auto, got :$src"))
@@ -108,7 +108,7 @@ Pretty-print the character table of `G` — irrep rows against
 conjugacy-class columns — to `stdout` (or to `io`).
 
 The table itself comes from [`character_table`](@ref
-MOAD.PointGroups.character_table); `source` selects its provenance and is
+MOADyna.PointGroups.character_table); `source` selects its provenance and is
 forwarded unchanged (`:auto` by default).
 
 # Example
@@ -144,10 +144,10 @@ end
 
 Print the curated reference character table and the Burnside-computed
 table side by side. Useful as a teaching diagnostic — for
-reference-listed groups, MOAD already cross-validates the two tables
+reference-listed groups, MOADyna already cross-validates the two tables
 at construction (mismatch raises), so this primarily highlights the
 class-permutation alignment between published canonical order and
-MOAD's BFS-discovery order. Throws if `G` has no reference table.
+MOADyna's BFS-discovery order. Throws if `G` has no reference table.
 """
 function character_table_compare(io::IO, G::PointGroup)
     haskey(REFERENCE_CHARACTER_TABLES, G.name) || throw(ArgumentError(

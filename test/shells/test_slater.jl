@@ -1,27 +1,27 @@
 using Test
-using MOAD
-using MOAD.Algebra: OperatorSum, n_fermion
-using MOAD.Shells: ShellModel, coulomb, ell_of, site_of
-using MOAD.Bases: EagerBasis, compile, assemble
+using MOADyna
+using MOADyna.Algebra: OperatorSum, n_fermion
+using MOADyna.Shells: ShellModel, coulomb, ell_of, site_of
+using MOADyna.Bases: EagerBasis, compile, assemble
 using LinearAlgebra: eigvals, tr
 
 @testset "slater" begin
 
     @testset "F^0 intra correction (3j-derived a^k_intra)" begin
         # p shell: a² = 2/25
-        @test MOAD.Shells._compute_F0_intra(1, 0.0, (1.0,)) ≈ 2 / 25 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_intra(1, 0.0, (1.0,)) ≈ 2 / 25 atol = 1e-12
         # d shell: a² = a⁴ = 2/63
-        @test MOAD.Shells._compute_F0_intra(2, 0.0, (1.0, 0.0)) ≈ 2 / 63 atol = 1e-12
-        @test MOAD.Shells._compute_F0_intra(2, 0.0, (0.0, 1.0)) ≈ 2 / 63 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_intra(2, 0.0, (1.0, 0.0)) ≈ 2 / 63 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_intra(2, 0.0, (0.0, 1.0)) ≈ 2 / 63 atol = 1e-12
         # f shell: a² = 4/195, a⁴ = 2/143, a⁶ = 100/5577
-        @test MOAD.Shells._compute_F0_intra(3, 0.0, (1.0, 0.0, 0.0)) ≈ 4 / 195 atol = 1e-12
-        @test MOAD.Shells._compute_F0_intra(3, 0.0, (0.0, 1.0, 0.0)) ≈ 2 / 143 atol = 1e-12
-        @test MOAD.Shells._compute_F0_intra(3, 0.0, (0.0, 0.0, 1.0)) ≈ 100 / 5577 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_intra(3, 0.0, (1.0, 0.0, 0.0)) ≈ 4 / 195 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_intra(3, 0.0, (0.0, 1.0, 0.0)) ≈ 2 / 143 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_intra(3, 0.0, (0.0, 0.0, 1.0)) ≈ 100 / 5577 atol = 1e-12
         # Linearity: a generic combination matches the per-k sum
         F = (11.14, 6.87)
         U = 7.3
         expected = U + (2 / 63) * F[1] + (2 / 63) * F[2]
-        @test MOAD.Shells._compute_F0_intra(2, U, F) ≈ expected atol = 1e-12
+        @test MOADyna.Shells._compute_F0_intra(2, U, F) ≈ expected atol = 1e-12
     end
 
     @testset "Hermiticity — d shell" begin
@@ -66,7 +66,7 @@ using LinearAlgebra: eigvals, tr
         # [H_C, N_shell] = 0. Verify via an assembled commutator at N=2.
         m = ShellModel([:Ni_3d])
         H = coulomb(m, :Ni_3d; U = 7.3, F = (11.14, 6.87))
-        Nshell = MOAD.Shells.n(m, :Ni_3d)
+        Nshell = MOADyna.Shells.n(m, :Ni_3d)
         bas = EagerBasis(m.hilbert, n_fermion(m.hilbert) == 2)
         Hmat = Matrix(assemble(compile(H, bas), bas))
         Nmat = Matrix(assemble(compile(Nshell, bas), bas))
@@ -78,20 +78,20 @@ using LinearAlgebra: eigvals, tr
     # ----------------------------------------------------------------
     @testset "F^0 inter correction (3j-derived, exchange-only)" begin
         # p–d (ℓ=1, ℓ'=2): k=1 → 1/15; k=3 → 3/70.
-        @test MOAD.Shells._compute_F0_inter(1, 2, 0.0, (), (1.0, 0.0)) ≈ 1 / 15 atol = 1e-12
-        @test MOAD.Shells._compute_F0_inter(1, 2, 0.0, (), (0.0, 1.0)) ≈ 3 / 70 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_inter(1, 2, 0.0, (), (1.0, 0.0)) ≈ 1 / 15 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_inter(1, 2, 0.0, (), (0.0, 1.0)) ≈ 3 / 70 atol = 1e-12
         # d–d' (ℓ=2, ℓ'=2): k=0 → 1/10; k=2 → 1/35; k=4 → 1/35.
-        @test MOAD.Shells._compute_F0_inter(2, 2, 0.0, (), (1.0, 0.0, 0.0)) ≈ 1 / 10 atol = 1e-12
-        @test MOAD.Shells._compute_F0_inter(2, 2, 0.0, (), (0.0, 1.0, 0.0)) ≈ 1 / 35 atol = 1e-12
-        @test MOAD.Shells._compute_F0_inter(2, 2, 0.0, (), (0.0, 0.0, 1.0)) ≈ 1 / 35 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_inter(2, 2, 0.0, (), (1.0, 0.0, 0.0)) ≈ 1 / 10 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_inter(2, 2, 0.0, (), (0.0, 1.0, 0.0)) ≈ 1 / 35 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_inter(2, 2, 0.0, (), (0.0, 0.0, 1.0)) ≈ 1 / 35 atol = 1e-12
         # p–f (ℓ=1, ℓ'=3): k=2 → 3/70; k=4 → 2/63.
-        @test MOAD.Shells._compute_F0_inter(1, 3, 0.0, (), (1.0, 0.0)) ≈ 3 / 70 atol = 1e-12
-        @test MOAD.Shells._compute_F0_inter(1, 3, 0.0, (), (0.0, 1.0)) ≈ 2 / 63 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_inter(1, 3, 0.0, (), (1.0, 0.0)) ≈ 3 / 70 atol = 1e-12
+        @test MOADyna.Shells._compute_F0_inter(1, 3, 0.0, (), (0.0, 1.0)) ≈ 2 / 63 atol = 1e-12
         # Linearity: U baseline + exchange contributions add.
         U = 8.5
         Gs = (4.92, 2.80)
         expected = U + (1 / 15) * Gs[1] + (3 / 70) * Gs[2]
-        @test MOAD.Shells._compute_F0_inter(1, 2, U, (), Gs) ≈ expected atol = 1e-12
+        @test MOADyna.Shells._compute_F0_inter(1, 2, U, (), Gs) ≈ expected atol = 1e-12
     end
 
     @testset "coulomb two-shell — Hermiticity (NiO 2p–3d Upd)" begin
@@ -103,8 +103,8 @@ using LinearAlgebra: eigvals, tr
     @testset "coulomb two-shell — number conservation per shell" begin
         m = ShellModel([:Ni_2p, :Ni_3d])
         H = coulomb(m, :Ni_2p, :Ni_3d; U = 8.5, F = (6.67,), G = (4.92, 2.80))
-        n_p = MOAD.Shells.n(m, :Ni_2p)
-        n_d = MOAD.Shells.n(m, :Ni_3d)
+        n_p = MOADyna.Shells.n(m, :Ni_2p)
+        n_d = MOADyna.Shells.n(m, :Ni_3d)
         # Restrict to a fixed total-N sector; cross-shell term must
         # commute with each shell's number operator separately.
         bas = EagerBasis(m.hilbert, n_fermion(m.hilbert) == 3)
@@ -127,8 +127,8 @@ using LinearAlgebra: eigvals, tr
         m = ShellModel([:Ni_2p, :Ni_3d])
         U = 1.7
         H = coulomb(m, :Ni_2p, :Ni_3d; U = U)
-        n_p = MOAD.Shells.n(m, :Ni_2p)
-        n_d = MOAD.Shells.n(m, :Ni_3d)
+        n_p = MOADyna.Shells.n(m, :Ni_2p)
+        n_d = MOADyna.Shells.n(m, :Ni_3d)
         function _max_dev_at_N(N::Int)
             bas = EagerBasis(m.hilbert, n_fermion(m.hilbert) == N)
             Hmat = Matrix(assemble(compile(H, bas), bas))

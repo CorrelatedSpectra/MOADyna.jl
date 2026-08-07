@@ -4,7 +4,7 @@
 #
 # Headline validation fixture for Plan 2c (responses, `:addition` /
 # `:removal` / `:both` channels). Compares the block-Lanczos /
-# continued-fraction kernel exposed by `MOAD.correlator(...)` against an
+# continued-fraction kernel exposed by `MOADyna.correlator(...)` against an
 # independent dense-Lehmann reference built by direct diagonalisation
 # (`eigen` on the dense (N±1)-sector Hamiltonians) at every grid point.
 #
@@ -208,7 +208,7 @@
         n_per_state = round.(Int, real.(diag(Matrix(Nf_sp))))
 
         # Build c_{1↑}, c_{2↑} as dense matrices on basis_full. Use
-        # MOAD's assemble path so the basis-encoding and fermion-sign
+        # MOADyna's assemble path so the basis-encoding and fermion-sign
         # conventions match the kernel exactly.
         c1_mat  = Matrix(assemble(compile(c_1up,    basis_full), basis_full))
         c2_mat  = Matrix(assemble(compile(c_2up,    basis_full), basis_full))

@@ -1,5 +1,5 @@
 # =====================================================================
-# T1 — first end-to-end MOAD calculation
+# T1 — first end-to-end MOADyna calculation
 # =====================================================================
 # 10-mode FermionSite{10} z_only model (same setup as z_only_compare.jl):
 # build the Hamiltonian symbolically, enumerate the n_fermion == 8 sector
@@ -11,7 +11,7 @@
 # in z_only_compare.jl (operator-algebra layer); the matrix-element check
 # here will come once we have a Quanty matrix dump to compare against.
 
-using MOAD
+using MOADyna
 using SparseArrays
 using LinearAlgebra: eigvals, eigen, ishermitian, Hermitian
 

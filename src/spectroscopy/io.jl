@@ -15,7 +15,7 @@
 # through HDF5 only; the ASCII writer rejects RIXS with a clear message
 # (a directory-of-files 2-D-map variant is on the to-do list).
 
-const _MOAD_VERSION       = v"0.1.0-dev"
+const _MOADYNA_VERSION       = v"0.1.0-dev"
 const _IO_FORMAT_VERSION  = 1
 
 # ---------------------------------------------------------------------
@@ -113,9 +113,9 @@ function _save_spectra_txt(result::SpectraTensor, filename::AbstractString)
 
     open(filename, "w") do io
         # ---- Header --------------------------------------------------
-        println(io, "# MOAD.Spectroscopy output")
+        println(io, "# MOADyna.Spectroscopy output")
         println(io, "# Created: ", Dates.format(now(UTC), dateformat"yyyy-mm-ddTHH:MM:SSZ"))
-        println(io, "# MOAD version: ", _MOAD_VERSION)
+        println(io, "# MOADyna version: ", _MOADYNA_VERSION)
         println(io, "# Format version: ", _IO_FORMAT_VERSION, " (txt)")
         println(io, "# Function: ", result.metadata[:function])
         println(io, "# Tensor shape: ", size(tensor),
@@ -309,7 +309,7 @@ function _parse_header_line!(line::AbstractString, meta::Dict{Symbol,Any})
     parts = split(body, ":"; limit = 2)
     length(parts) == 2 || return
     key, val = strip(parts[1]), strip(parts[2])
-    if key == "MOAD version"
+    if key == "MOADyna version"
         meta[:moad_version] = val
     elseif key == "Created"
         meta[:created] = val
@@ -349,7 +349,7 @@ end
 function _save_spectra_h5(result::SpectraTensor, filename::AbstractString)
     HDF5.h5open(filename, "w") do f
         HDF5.attributes(f)["format_version"] = _IO_FORMAT_VERSION
-        HDF5.attributes(f)["moad_version"]   = string(_MOAD_VERSION)
+        HDF5.attributes(f)["moad_version"]   = string(_MOADYNA_VERSION)
 
         # Tensor (raw numerical array).
         f["tensor"] = result.tensor
@@ -481,7 +481,7 @@ function _load_spectra_h5(filename::AbstractString)
         format_version == _IO_FORMAT_VERSION ||
             throw(ErrorException(
                 "load_spectra: unsupported HDF5 format version $format_version " *
-                "(this MOAD supports v$_IO_FORMAT_VERSION)"))
+                "(this MOADyna supports v$_IO_FORMAT_VERSION)"))
 
         tensor = read(f["tensor"])
 

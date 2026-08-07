@@ -1,18 +1,18 @@
 # test/gradients/test_xas_jvp.jl
 #
-# Build-step 4 of the v0.3 differentiable forward model (MOAD.Gradients): the full
+# Build-step 4 of the v0.3 differentiable forward model (MOADyna.Gradients): the full
 # coupled XAS JVP. C_AB(ω)=X_A† G X_B with θ entering BOTH H_g (initial state) and
 # H_f (resolvent), so the derivative threads dE0 (Hellmann–Feynman), dψ0
 # (Sternheimer) → dX, and dH_f. Validated on a synthetic coupled fixture against a
 # dense resolvent, the dense explicit oracle, and the end-to-end finite difference
 # of the fully coupled response. Reproducible (no RNG).
 
-using MOAD
+using MOADyna
 using LinearAlgebra
 using SparseArrays
 using Test
 
-const G = MOAD.Gradients
+const G = MOADyna.Gradients
 
 @testset "Gradients build-step 4: coupled XAS JVP" begin
     names = [:a, :b]

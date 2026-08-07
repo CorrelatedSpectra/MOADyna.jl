@@ -1,18 +1,18 @@
 # test/gradients/test_fit_spectrum.jl
 #
-# Build-step 7 of the v0.3 differentiable forward model (MOAD.Gradients): the
+# Build-step 7 of the v0.3 differentiable forward model (MOADyna.Gradients): the
 # deterministic direct-fit baseline `fit_spectrum` (Optim weakdep extension). Loads
-# Optim to activate MOADOptimExt, then checks that the gradient-driven fit recovers a
+# Optim to activate MOADynaOptimExt, then checks that the gradient-driven fit recovers a
 # synthetic-truth θ, validates inputs (the VJP cotangent must be real), and that the
 # fallback errors helpfully when Optim is NOT loaded (checked in a separate process).
 # Reproducible (no RNG).
 
-using MOAD
+using MOADyna
 using LinearAlgebra
 using Test
-using Optim                                   # activates MOADOptimExt → fit_spectrum
+using Optim                                   # activates MOADynaOptimExt → fit_spectrum
 
-const Gr = MOAD.Gradients
+const Gr = MOADyna.Gradients
 
 # Step-6 synthetic coupled fixture (H_g 4-dim, H_f 6-dim complex, shared θ=[a,b]).
 function _fit_fixture()
@@ -69,9 +69,9 @@ end
     #     depend on this suite having already loaded Optim) ---
     proj = Base.active_project()
     script = raw"""
-    using MOAD
+    using MOADyna
     using LinearAlgebra
-    const G = MOAD.Gradients
+    const G = MOADyna.Gradients
     gm = G.AffineModel([ComplexF64[0 0; 0 1]], G.AffineMap([1.0], zeros(1, 1)), [:x])
     II = Matrix{ComplexF64}(I, 2, 2)
     m = G.XASGradientModel(gm, gm, (II,), (II,), II, [0.0, 1.0]; Γ = 0.5)

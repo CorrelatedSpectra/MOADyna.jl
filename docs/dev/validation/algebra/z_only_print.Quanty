@@ -1,4 +1,4 @@
--- Standalone z_only Hamiltonian builder for MOAD validation.
+-- Standalone z_only Hamiltonian builder for MOADyna validation.
 -- Builds the same H as progressive_models/01_z_only/model.lua but using
 -- NewOperator directly (no external helpers), with print(H) at the end so
 -- we can parse and compare.

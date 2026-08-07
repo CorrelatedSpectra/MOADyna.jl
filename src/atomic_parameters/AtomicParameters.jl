@@ -1,5 +1,5 @@
 """
-    MOAD.AtomicParameters
+    MOADyna.AtomicParameters
 
 Atomic Slater-Condon parameters (Fᵏ, Gᵏ, ζ) and radial moments (⟨r²⟩, ⟨r⁴⟩)
 for transition-metal and lanthanide configurations.
@@ -82,7 +82,7 @@ follow `zeta.<orbital_letter>`:
 
   1. Static dict from Haverkort thesis (Cowan RCN36K HF, RAW).
      Returns `provenance = :Haverkort_thesis_2005`.
-  2. (Optional) live Cowan run if `MOAD_COWAN` (or `TTMULT`) env var
+  2. (Optional) live Cowan run if `MOADYNA_COWAN` (or `TTMULT`) env var
      is set OR the `cowan` kwarg points at a binary. Returns
      `provenance = :cowan_<basename>`.
   3. `ArgumentError` listing the available configurations.
@@ -99,7 +99,7 @@ Spectra* (UC Press, 1981).
 
 # Live Cowan binaries
 
-MOAD does NOT bundle Cowan binaries. Recommended sources:
+MOADyna does NOT bundle Cowan binaries. Recommended sources:
 
   - C. McGuinness's TCD distribution:
     https://www.tcd.ie/Physics/people/Cormac.McGuinness/Cowan
@@ -135,7 +135,7 @@ const _SHELL_CAPACITY = Dict{Char, Int}(
 """
     _normalize_config(s) -> String
 
-Canonicalise a user-supplied configuration string into MOAD's normalised
+Canonicalise a user-supplied configuration string into MOADyna's normalised
 form: lowercase shell letters, no `^`/`_` separators, single-space-
 separated shell groups, shells sorted in standard `(n, ℓ)` ascending
 order. Closed-shell tokens lying *below* an open valence shell are
@@ -364,7 +364,7 @@ end
                       scaling=:HF, cowan=nothing) -> NamedTuple
 
 Look up atomic Slater-Condon parameters and spin-orbit constants for the
-requested electron configuration. See the `MOAD.AtomicParameters` module
+requested electron configuration. See the `MOADyna.AtomicParameters` module
 docstring for the full return shape, naming rule, and lookup chain.
 
 # Lookup forms
@@ -395,7 +395,7 @@ docstring for the full return shape, naming rule, and lookup chain.
 - `scaling::Symbol = :HF` — `:HF` for raw Hartree-Fock; `:scaled_80`
   multiplies F^k(k>0) and G^k by 0.8.
 - `cowan` — explicit path to a Cowan RCN binary. If unset, falls back
-  to `ENV["MOAD_COWAN"]` then `ENV["TTMULT"]`.
+  to `ENV["MOADYNA_COWAN"]` then `ENV["TTMULT"]`.
 - `keep_scratch::Bool = false` — forensic-debug flag, only meaningful
   on the live-Cowan path. When `true`, the scratch directory holding
   the in36 deck and out36 output is preserved and its absolute path is
@@ -450,7 +450,7 @@ function atomic_parameters(element::Symbol, configuration::AbstractString;
         (recommended: TCD archive at \
         https://www.tcd.ie/Physics/people/Cormac.McGuinness/Cowan or \
         cjtitus/ttmult at https://bitbucket.org/cjtitus/ttmult), then \
-        either set ENV[\"MOAD_COWAN\"] (or ENV[\"TTMULT\"]) to its path, \
+        either set ENV[\"MOADYNA_COWAN\"] (or ENV[\"TTMULT\"]) to its path, \
         or pass `cowan = \"...\"` as a kwarg.
         """))
 end
@@ -470,23 +470,23 @@ requested `configuration` (e.g. `"3d8"`). Returns a named tuple `(r, P)`:
 This is **opt-in**: it is the only entry point that reads the radial function
 (parsed from RCN's binary `tape2n`), and [`atomic_parameters`](@ref) never
 computes it. Typical use — build nIXS Bessel moments with
-[`radial_integral`](@ref MOAD.Shells.radial_integral):
+[`radial_integral`](@ref MOADyna.Shells.radial_integral):
 
 ```julia
-rw = radial_wavefunction(:Ni, "3d8")          # needs ENV["MOAD_COWAN"] or cowan=...
+rw = radial_wavefunction(:Ni, "3d8")          # needs ENV["MOADYNA_COWAN"] or cowan=...
 Rj = Dict(k => radial_integral(rw.P["3d"], rw.P["3d"], rw.r, k;
                                kind = :bessel, q = 4.5, weight = :reduced)
           for k in (0, 2, 4))
 ```
 
-Requires a Cowan RCN binary: set `ENV["MOAD_COWAN"]` (or `ENV["TTMULT"]`) to
+Requires a Cowan RCN binary: set `ENV["MOADYNA_COWAN"]` (or `ENV["TTMULT"]`) to
 its path, or pass `cowan = "..."`.
 """
 function radial_wavefunction(element::Symbol, configuration::AbstractString;
                              cowan = nothing)
     cowan_path = _resolve_cowan_path(cowan)
     cowan_path === nothing && throw(ArgumentError(
-        "radial_wavefunction needs a Cowan RCN binary: set ENV[\"MOAD_COWAN\"] " *
+        "radial_wavefunction needs a Cowan RCN binary: set ENV[\"MOADYNA_COWAN\"] " *
         "(or ENV[\"TTMULT\"]) to its path, or pass cowan = \"...\"."))
     norm_config = _normalize_config(configuration)
     res = _run_cowan_by_config(element, norm_config;
@@ -538,7 +538,7 @@ function atomic_parameters(element::Symbol;
         $hint
 
         Alternatively, provide a Cowan binary \
-        (`ENV[\"MOAD_COWAN\"]` / `ENV[\"TTMULT\"]` / `cowan = \"...\"`).
+        (`ENV[\"MOADYNA_COWAN\"]` / `ENV[\"TTMULT\"]` / `cowan = \"...\"`).
         """))
 end
 
@@ -640,7 +640,7 @@ error path. The sugar form is restricted to ground states; core-hole
 templates are unreachable from this entry point.
 """
 function _cowan_template_ground_config(element::Symbol, charge::Int)
-    Z = get(MOAD_AP_ATOMIC_NUMBER(), element, nothing)
+    Z = get(MOADYNA_AP_ATOMIC_NUMBER(), element, nothing)
     Z === nothing && return nothing
     # 3d block
     if 19 <= Z <= 30
@@ -665,7 +665,7 @@ end
 
 # Indirection so the AtomicParameters module sees the runner's
 # ATOMIC_NUMBER without re-importing it.
-MOAD_AP_ATOMIC_NUMBER() = ATOMIC_NUMBER
+MOADYNA_AP_ATOMIC_NUMBER() = ATOMIC_NUMBER
 
 # ---------------------------------------------------------------------
 # Internal: Cowan binary resolution
@@ -675,12 +675,12 @@ MOAD_AP_ATOMIC_NUMBER() = ATOMIC_NUMBER
     _resolve_cowan_path(cowan_kwarg) -> Union{String, Nothing}
 
 Resolve the Cowan RCN binary path. Order: explicit kwarg, then
-`ENV["MOAD_COWAN"]`, then `ENV["TTMULT"]`. Returns `nothing` if none
+`ENV["MOADYNA_COWAN"]`, then `ENV["TTMULT"]`. Returns `nothing` if none
 are set.
 """
 function _resolve_cowan_path(cowan_kwarg)
     cowan_kwarg !== nothing && return cowan_kwarg
-    haskey(ENV, "MOAD_COWAN") && return ENV["MOAD_COWAN"]
+    haskey(ENV, "MOADYNA_COWAN") && return ENV["MOADYNA_COWAN"]
     haskey(ENV, "TTMULT")     && return ENV["TTMULT"]
     return nothing
 end

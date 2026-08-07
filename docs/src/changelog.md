@@ -7,7 +7,7 @@ dates.
 
 **Added**
 
-- **`MOAD.Gradients`** — the T=0 differentiable XAS forward model: affine
+- **`MOADyna.Gradients`** — the T=0 differentiable XAS forward model: affine
   Hamiltonian models, ground-state derivatives, resolvent JVP, spectrum
   VJP/pullback over a degeneracy-clustered spectral measure, and a
   deterministic direct-fit baseline (`Optim` weakdep extension). See the
@@ -16,7 +16,7 @@ dates.
 **Fixed**
 
 - **Crystal-field expansion now represents the true CF subspace per irrep.**
-  [`expand_clm`](@ref MOAD.PointGroups.expand_clm) previously parametrized each multiplicity block as a
+  [`expand_clm`](@ref MOADyna.PointGroups.expand_clm) previously parametrized each multiplicity block as a
   real-symmetric `m_Γ × m_Γ` matrix embedded as `H_Γ ⊗ I_{d_Γ}`. That silently
   mis-represented every point group whose multiplicity block carries an imaginary
   (e.g. trigonal `A_{4,±3}`) coupling — D3d, C3, C3v, D3, S6 (ℓ=2,3), C5, C5v, D5,
@@ -27,7 +27,7 @@ dates.
   and non-CF blocks are rejected. D3d ℓ=2 is validated bit-exact against Quanty
   D3dB/C. Real-coupling groups (C4v, D4h, D2h, O, Oh, Td) are byte-identical.
   **Breaking:** the flat-vector parameter *meaning* changed for the affected groups
-  (the parameter *count* is unchanged). Results are at MOAD's single canonical
+  (the parameter *count* is unchanged). Results are at MOADyna's single canonical
   orientation; multi-setting support is deferred.
 
 ## v0.2.1 — 2026-05-31
@@ -47,7 +47,7 @@ dates.
 - **[`kubo_response`](@ref)** — the full two-sided Kubo retarded susceptibility
   ``\chi_{AB}(\omega,T) = \sum_{m,n}(w_m-w_n)\,\langle m|A|n\rangle\langle n|B|m\rangle/(\omega+i\Gamma/2-(E_n-E_m))``
   from a direct eigenstate-pair Lehmann sum (cross-correlators allowed).
-- **[`MOAD.Units`](@ref)** — a dependency-free energy-unit converter
+- **[`MOADyna.Units`](@ref)** — a dependency-free energy-unit converter
   [`convert_energy`](@ref)`(x, :from => :to)` over `:J`/`:eV`/`:meV`/`:K`/
   `:invcm`/`:THz`/`:Ry`/`:Ha` (exact post-2019-SI factors; Rydberg CODATA-2018),
   plus `Units.kB_eV`. Turns a Kelvin temperature into the eV-based `temperature`
@@ -59,7 +59,7 @@ dates.
 
 - **Bosonic infrastructure** — `BosonSite`, bosonic occupation encoding, and
   Bose–Hubbard / Hubbard–Holstein validation.
-- **`MOAD.Responses` layer** — a matrix-of-ω response object
+- **`MOADyna.Responses` layer** — a matrix-of-ω response object
   `C_{ij}(\omega) = \langle\psi_0| A_i^\dagger\, G(\omega)\, B_j |\psi_0\rangle`
   with the `correlator(...)` constructor and three interchangeable
   representations (`LanczosResponse`, `PoleResponse`, `GridResponse`) plus the
@@ -97,7 +97,7 @@ dates.
   [`classify_state`](@ref)`(ψ, basis, m, G)` returns the spatial irrep of an
   ED eigenstate (e.g. the NiO ``d^8`` ground state as ``{}^3A_{2g}``).
 - **`ConservedQuantity` renamed to [`QuantumNumber`](@ref
-  MOAD.Algebra.QuantumNumber)** (alias `QN`).
+  MOADyna.Algebra.QuantumNumber)** (alias `QN`).
 - **Documentation** — full manual + tutorials site: a worked NiO XAS / RIXS /
   XMLD / nIXS tutorial, a Manual point-group chapter, and per-symbol Library
   reference. Every numerical result in the docs is computed live at build.

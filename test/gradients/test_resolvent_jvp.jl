@@ -1,17 +1,17 @@
 # test/gradients/test_resolvent_jvp.jl
 #
-# Build-step 3 of the v0.3 differentiable forward model (MOAD.Gradients): the
+# Build-step 3 of the v0.3 differentiable forward model (MOADyna.Gradients): the
 # resolvent JVP at fixed source X and fixed reference E0. Response
 # C(ω) = X† G(ω) X and its directional derivative dC = X† G dH G X, validated on
 # a toy Hubbard dimer against (i) a dense resolvent and (ii) central finite
 # differences. Reproducible (no RNG).
 
-using MOAD
+using MOADyna
 using LinearAlgebra
 using SparseArrays
 using Test
 
-const G = MOAD.Gradients
+const G = MOADyna.Gradients
 
 @testset "Gradients build-step 3: resolvent JVP" begin
     # --- toy Hubbard dimer, half-filled Sz=0 sector (4-dim) -----------------

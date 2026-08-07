@@ -1,13 +1,13 @@
 # Hilbert Spaces & Bases
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
-`MOAD.Bases` turns the symbolic [Operator Algebra](@ref) into numbers. It assembles named
+`MOADyna.Bases` turns the symbolic [Operator Algebra](@ref) into numbers. It assembles named
 sites into a [`Hilbert`](@ref) space, enumerates the basis of a conserved sector with
 [`EagerBasis`](@ref), and compiles a symbolic [`OperatorSum`](@ref) into a sparse matrix on
 that basis with [`compile`](@ref) / [`assemble`](@ref).
@@ -18,7 +18,7 @@ A [`Hilbert`](@ref) collects sites under their names; the tensor product `⊗` a
 `name => site` constructor both build one.
 
 ```@example bas
-using MOAD
+using MOADyna
 
 sites = [FermionSite{2}(Symbol("s$i")) for i in 1:4]
 h = Hilbert(s.name => s for s in sites)
@@ -29,7 +29,7 @@ h isa Hilbert
 
 Enumerating the full Fock space is exponential and almost never needed: physical
 Hamiltonians conserve particle number, `Sz`, etc., so work in one sector. A
-[`QuantumNumber`](@ref MOAD.Algebra.QuantumNumber) ([`n_fermion`](@ref), [`Sz_total`](@ref),
+[`QuantumNumber`](@ref MOADyna.Algebra.QuantumNumber) ([`n_fermion`](@ref), [`Sz_total`](@ref),
 [`WeightedParticleCount`](@ref)) compared with `==` (or `∈` a range) yields a
 [`Restriction`](@ref). [`EagerBasis`](@ref) enumerates exactly the states satisfying all
 restrictions.

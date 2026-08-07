@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — finite-T charged-channel Green's function (Item B)
+# MOADyna.Responses — finite-T charged-channel Green's function (Item B)
 # =====================================================================
 #
 # Finite-T single-particle GF: G(ω,T) = Σ_m ρ_m G_m(ω), summing the addition
@@ -16,8 +16,8 @@
 using Test
 using LinearAlgebra
 using SparseArrays
-using MOAD
-using MOAD: GridResponse, GreensFunction
+using MOADyna
+using MOADyna: GridResponse, GreensFunction
 
 @testset "Finite-T charged GF (Item B)" begin
     s = FermionSite{4}(:s)                       # 1↑,1↓,2↑,2↓

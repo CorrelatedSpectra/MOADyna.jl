@@ -1,8 +1,8 @@
 # =====================================================================
-# MOAD.Spectroscopy — dynamical_structure_factor (2e)
+# MOADyna.Spectroscopy — dynamical_structure_factor (2e)
 # =====================================================================
 #
-# Thin wrapper over MOAD.Responses.correlator(...; channel = :neutral):
+# Thin wrapper over MOADyna.Responses.correlator(...; channel = :neutral):
 # the dynamical structure factor S(q,ω) = −Im C(q,ω)/π from the one-sided
 # correlator of a caller-supplied q-phased operator O_q.
 # One-sided structure

@@ -3,8 +3,8 @@
 # =====================================================================
 #
 # Validates the two Layer-5 spectroscopy wrappers shipped in Plan 2e,
-#   MOAD.Spectroscopy.optical_conductivity(...)   → regular Re σ_αβ(ω>0)
-#   MOAD.Spectroscopy.dynamical_structure_factor(...) → S(q,ω) (full ω)
+#   MOADyna.Spectroscopy.optical_conductivity(...)   → regular Re σ_αβ(ω>0)
+#   MOADyna.Spectroscopy.dynamical_structure_factor(...) → S(q,ω) (full ω)
 # against INDEPENDENT dense Lehmann-sum references built here by direct
 # diagonalisation of the conserved sector (`eigen`), without touching the
 # block-Lanczos / continued-fraction path inside `correlator`.
@@ -54,8 +54,8 @@
 
 using Test
 using LinearAlgebra
-using MOAD
-using MOAD.Spectroscopy: optical_conductivity, dynamical_structure_factor
+using MOADyna
+using MOADyna.Spectroscopy: optical_conductivity, dynamical_structure_factor
 
 @testset "σ / S(q,ω) wrappers vs dense Lehmann (2e)" begin
 

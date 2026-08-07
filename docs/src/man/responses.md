@@ -1,16 +1,16 @@
 # Responses
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
-`MOAD.Responses` is the foundational layer beneath all of [Spectroscopy](@ref): it
+`MOADyna.Responses` is the foundational layer beneath all of [Spectroscopy](@ref): it
 represents a matrix-valued frequency response ``C_{ab}(\omega)`` and computes it from an
 assembled Hamiltonian with a block-Lanczos / continued-fraction kernel. Every spectrum in
-MOAD — XAS, RIXS, ``\sigma(\omega)``, ``S(\mathbf q,\omega)`` — is a thin wrapper over the one constructor
+MOADyna — XAS, RIXS, ``\sigma(\omega)``, ``S(\mathbf q,\omega)`` — is a thin wrapper over the one constructor
 [`correlator`](@ref).
 
 ## The response abstraction
@@ -53,7 +53,7 @@ The ground state is computed internally (`state = :ground_state`) or supplied as
 call [`to_grid`](@ref)) to evaluate.
 
 ```@example resp
-using MOAD
+using MOADyna
 
 # Hubbard dimer, half-filled.
 s = [FermionSite{2}(:a), FermionSite{2}(:b)]

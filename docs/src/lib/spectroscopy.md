@@ -1,6 +1,6 @@
 # Spectroscopy — API reference
 
 ```@autodocs
-Modules = [MOAD.Spectroscopy]
+Modules = [MOADyna.Spectroscopy]
 Private = false
 ```

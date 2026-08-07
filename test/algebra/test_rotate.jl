@@ -1,5 +1,5 @@
-using Test, MOAD
-using MOAD.Algebra: FermionSite, Hilbert, c, cdag, n
+using Test, MOADyna
+using MOADyna.Algebra: FermionSite, Hilbert, c, cdag, n
 using LinearAlgebra: I as LinAlgI, qr
 using Random: MersenneTwister, randn
 

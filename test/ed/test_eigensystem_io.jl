@@ -1,7 +1,7 @@
-using Test, MOAD, HDF5
-using MOAD.Algebra: FermionSite, Hilbert, n, n_fermion
-using MOAD.Bases: EagerBasis, basis_id
-using MOAD.ED: save_eigensystem, load_eigensystem
+using Test, MOADyna, HDF5
+using MOADyna.Algebra: FermionSite, Hilbert, n, n_fermion
+using MOADyna.Bases: EagerBasis, basis_id
+using MOADyna.ED: save_eigensystem, load_eigensystem
 
 @testset "save/load_eigensystem — round-trip without basis_id" begin
     # Diagonal 4-mode Hamiltonian on the half-filled (n=2) sector.

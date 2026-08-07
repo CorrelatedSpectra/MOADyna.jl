@@ -10,7 +10,7 @@
 #   - O 2p ligand band L_3d (10 modes), modeled as a single bath orbital
 #     per d-symmetry channel
 #
-# All operators are built from MOAD primitives — no QuantyIO crutch.
+# All operators are built from MOADyna primitives — no QuantyIO crutch.
 # Slater-Condon Coulomb on both 3d and 2p-3d, atomic spin-orbit on
 # both shells, octahedral crystal field on Ni and on the ligand,
 # eg/t2g hybridization with anchor-based ZSA onsite energies.
@@ -23,7 +23,7 @@
 #       three-column files with [ω, Re χ, Im χ] for each polarisation.
 #       The XAS intensity is -Im χ.
 
-using MOAD
+using MOADyna
 using DelimitedFiles
 
 # ---------------------------------------------------------------------

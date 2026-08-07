@@ -1,7 +1,7 @@
 # src/shells/operators.jl
 #
 # Shell-keyed operator dispatch. Each method here adds a new dispatch
-# for ShellModel arguments to functions imported from MOAD.Algebra
+# for ShellModel arguments to functions imported from MOADyna.Algebra
 # (n, Sx, Sy, Sz, Splus, Sminus). The functions themselves are
 # imported in Shells.jl with `import` (not `using`) so that the
 # methods we add here extend the original Algebra function rather
@@ -79,7 +79,7 @@ Total z-spin on a shell:
     Sz = (1/2) Σ_m (n(m, ↑) − n(m, ↓))
 
 where the sum runs over all 2ℓ+1 orbital m values of the shell.
-Delegates to `Sz(site::FermionSite, orbital_pairs)` in MOAD.Algebra.
+Delegates to `Sz(site::FermionSite, orbital_pairs)` in MOADyna.Algebra.
 """
 function Sz(m::ShellModel, shell::Symbol)
     site = site_of(m, shell)
@@ -138,7 +138,7 @@ Total raising operator on a shell:
     Splus = Σ_m c†(m, ↑) c(m, ↓)
 
 summed over all 2ℓ+1 orbital m values.
-Delegates to `Splus(site::FermionSite, orbital_pairs)` in MOAD.Algebra.
+Delegates to `Splus(site::FermionSite, orbital_pairs)` in MOADyna.Algebra.
 """
 function Splus(m::ShellModel, shell::Symbol)
     site = site_of(m, shell)
@@ -231,7 +231,7 @@ single shell `Symbol`, a `Pair{Symbol, Int}` (single orbital), a
 `Pair{Symbol, Vector{Int}}` (orbital subset), or several `Symbol`s
 (multi-shell sum).
 
-Extends `Ssqr(site::FermionSite, orbital_pairs)` from MOAD.Algebra.
+Extends `Ssqr(site::FermionSite, orbital_pairs)` from MOADyna.Algebra.
 """
 function Ssqr(m::ShellModel, args...)
     sx = Sx(m, args...)

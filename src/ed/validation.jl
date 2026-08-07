@@ -55,7 +55,7 @@
                 "subtypes of Number are supported."))
         if eltype(x0) <: Complex && !(eltype(H) <: Complex)
             throw(ArgumentError(
-                "x0 is Complex but H is real ($(eltype(H))). MOAD's " *
+                "x0 is Complex but H is real ($(eltype(H))). MOADyna's " *
                 "contract is that eigenvectors match eltype(H); a " *
                 "complex x0 would force the Krylov subspace complex. " *
                 "Pass `real.(x0)` or use a complex H if you genuinely " *

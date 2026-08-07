@@ -44,7 +44,7 @@ in this form; `source` must have `length == length(basis)`.
 
 ASCII Latin aliases are accepted for every Greek-named kwarg
 (`Γ ↔ Gamma`, `ω_grid ↔ omega_grid`); specifying both forms raises
-`ArgumentError`. Defaults route through `MOAD.Spectroscopy.DEFAULTS`.
+`ArgumentError`. Defaults route through `MOADyna.Spectroscopy.DEFAULTS`.
 
 | kwarg | default | role |
 |---|---|---|
@@ -62,7 +62,7 @@ ASCII Latin aliases are accepted for every Greek-named kwarg
 **Finite temperature.** Pass `ψ::Eigen` together with `temperature = …` to get
 the Boltzmann ensemble average over initial states (each referenced to its own
 `E_m`). The ensemble is the lowest `N_states` eigenstates of the supplied `Eigen`
-(in MOAD's single-`H` formulation these are the initial multiplet); the user is
+(in MOADyna's single-`H` formulation these are the initial multiplet); the user is
 responsible that they are. An explicit `ω_grid` is **required** (per-state `:auto`
 windows differ), and the result is grid-only (`chunks = nothing` ⇒ no
 `re_broaden`). The returned `SpectraTensor` carries `Eg = E₀` and metadata
@@ -264,7 +264,7 @@ end
 # wraps a single column into a 1-element list. The standard 4-arg form
 # normalises T_list × ψ_list into the same shape and routes here.
 #
-# The compute path delegates to `MOAD.Responses.correlator(...)` in
+# The compute path delegates to `MOADyna.Responses.correlator(...)` in
 # source_block mode (we have already done the T·ψ application up front,
 # so we feed the pre-built block straight to correlator). For each ψ we
 # obtain a `LanczosResponse`, harvest its α/β/R into a `LanczosChunk`

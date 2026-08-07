@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — construction tests for the four concrete types
+# MOADyna.Responses — construction tests for the four concrete types
 # =====================================================================
 #
 # Covers, per type:
@@ -10,7 +10,7 @@
 
 using Test
 using LinearAlgebra
-using MOAD: LanczosResponse, PoleResponse, GridResponse, GreensFunction
+using MOADyna: LanczosResponse, PoleResponse, GridResponse, GreensFunction
 
 function _lanczos_parts(; T::Type = Float64, K::Int = 2, B::Int = 2)
     α = [Matrix{T}(I, B, B) * k for k in 1:K]

@@ -89,7 +89,7 @@ Fields:
   outer block, useful for downstream sanity checks).
 - `metadata::Dict{Symbol,Any}` — non-numerical context: operator names,
   Γ values, edge label, convergence flag, restrictions, auto-range
-  diagnostics, MOAD version, timestamp, etc.
+  diagnostics, MOADyna version, timestamp, etc.
 """
 struct SpectraTensor{S<:Number, T<:Real, N, F}
     tensor::Array{S, N}

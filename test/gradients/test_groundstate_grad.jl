@@ -1,6 +1,6 @@
 # test/gradients/test_groundstate_grad.jl
 #
-# Build-step 2 of the v0.3 differentiable forward model (MOAD.Gradients):
+# Build-step 2 of the v0.3 differentiable forward model (MOADyna.Gradients):
 # ground-state derivatives — Hellmann–Feynman dE0 and the projected Sternheimer
 # dψ0 — validated against finite differences and the exact sum-over-states
 # response.
@@ -11,12 +11,12 @@
 # multiplet then provides the energy-gradient and degeneracy-guard checks.
 # Reproducible (no RNG).
 
-using MOAD
+using MOADyna
 using LinearAlgebra
 using SparseArrays
 using Test
 
-const G = MOAD.Gradients
+const G = MOADyna.Gradients
 
 @testset "Gradients build-step 2: ground-state derivatives" begin
 

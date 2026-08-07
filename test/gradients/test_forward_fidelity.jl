@@ -1,9 +1,9 @@
 # test/gradients/test_forward_fidelity.jl
 #
-# Build-step 7 of the v0.3 differentiable forward model (MOAD.Gradients): the
+# Build-step 7 of the v0.3 differentiable forward model (MOADyna.Gradients): the
 # forward-fidelity / "useful, not vacuum" gate. The differentiable XAS forward
 # (XASGradientModel.spectrum, built from preassembled operator matrices) must
-# reproduce MOAD's own validated physical xas()/Lanczos path on the SAME ingredients.
+# reproduce MOADyna's own validated physical xas()/Lanczos path on the SAME ingredients.
 #
 # B1 — 2-level system, embedding E = I (exact, single basis): the complex correlator
 #      and the intensity match xas() and the analytic single-pole result.
@@ -16,12 +16,12 @@
 # term is orbital-singlet, so a tiny Sz field gives a clean non-degenerate ground.)
 # Reproducible (no RNG).
 
-using MOAD
+using MOADyna
 using LinearAlgebra
 using SparseArrays
 using Test
 
-const Gr = MOAD.Gradients
+const Gr = MOADyna.Gradients
 
 @testset "Gradients build-step 7: forward-fidelity vs xas()" begin
 

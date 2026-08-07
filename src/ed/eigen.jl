@@ -78,8 +78,8 @@ function LinearAlgebra.eigen(H_sparse::SparseMatrixCSC, basis::EagerBasis;
     # the caller passed — better to fail loudly than guess.
     # `ishermitian` on a sparse matrix is O(nnz); cheap.
     ishermitian(H_sparse) || throw(ArgumentError(
-        "H is not Hermitian. MOAD's eigen contract requires Hermitian " *
-        "input (the assembled Hamiltonian from MOAD.Bases is always " *
+        "H is not Hermitian. MOADyna's eigen contract requires Hermitian " *
+        "input (the assembled Hamiltonian from MOADyna.Bases is always " *
         "Hermitian by construction). If you have a non-Hermitian " *
         "operator, use a different solver."))
     if length(basis) ≤ dense_below

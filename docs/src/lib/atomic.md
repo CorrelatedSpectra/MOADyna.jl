@@ -1,6 +1,6 @@
 # AtomicParameters
 
 ```@autodocs
-Modules = [MOAD.AtomicParameters]
+Modules = [MOADyna.AtomicParameters]
 Private = false
 ```

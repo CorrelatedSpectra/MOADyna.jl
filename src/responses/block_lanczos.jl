@@ -38,7 +38,7 @@ fly.
 # Keyword arguments
 
 Defaults shown here are the kernel-level literals used by
-`MOAD.Responses.block_lanczos`. The `MOAD.Spectroscopy` wrappers
+`MOADyna.Responses.block_lanczos`. The `MOADyna.Spectroscopy` wrappers
 (`xas`, `rixs`, `fluorescence_yield`) resolve domain defaults via
 `Spectroscopy.DEFAULTS` before calling this kernel.
 
@@ -93,7 +93,7 @@ When `restrictions !== nothing`:
    (`W -= V_k α_k`, `W -= V_{k-1} β_{k-1}†`) remain in the projected
    subspace because each `V_k` already lives there.
 
-This is what `MOAD.Bases.apply_restriction!` is for; the same projector
+This is what `MOADyna.Bases.apply_restriction!` is for; the same projector
 is reused by all three spectroscopy entry points when their respective
 `restrictions*` kwargs are non-`nothing`.
 """

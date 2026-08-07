@@ -1,8 +1,54 @@
 # Changelog
 
-All notable changes to MOAD are recorded here. The format follows
+All notable changes to MOADyna are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.3.1] — 2026-08-07
+
+**BREAKING — package renamed `MOAD` → `MOADyna`.** No functional changes: the
+code is identical to v0.3.0. The version number is a patch because nothing in
+the implementation moved, but the rename *is* source-breaking — `using MOAD`
+no longer works.
+
+The expansion is unchanged — **M**any-body **O**perators, **A**lgebra, and
+**D**ynamics — with the name now weighted toward the dynamical response
+functions the package computes.
+
+### Changed
+
+- Package, top-level module, and repository renamed to `MOADyna`; the
+  repository now lives at `github.com/CorrelatedSpectra/MOADyna.jl`.
+- Environment variables renamed to match: `MOAD_COWAN` → `MOADYNA_COWAN`,
+  `MOAD_QUANTY_ROOT` → `MOADYNA_QUANTY_ROOT`, `MOAD_ROBOTO_BOLD` →
+  `MOADYNA_ROBOTO_BOLD`. The `TTMULT` fallback for the Cowan binary is
+  unchanged.
+- Package extensions renamed `MOADOptimExt` → `MOADynaOptimExt` and
+  `MOADPlotsExt` → `MOADynaPlotsExt`.
+
+### Migration
+
+The UUID is unchanged (`5c3054dd-214e-41f9-9cf5-211a9fa316b3`), so Pkg will
+refuse to add `MOADyna` while `MOAD` is still present under the same UUID.
+Remove the old entry first:
+
+```julia
+pkg> rm MOAD
+pkg> add MOADyna        # by URL until the General registration completes
+```
+
+Then replace `using MOAD` with `using MOADyna`. Submodule paths are otherwise
+unchanged (`MOADyna.Algebra`, `MOADyna.Spectroscopy`, …). The HDF5 attribute
+key `moad_version` is deliberately left alone so previously written spectra
+files still read.
+
+The v0.3.0 tag and its archived DOI (10.5281/zenodo.21808797) are unchanged and
+remain under the name `MOAD`.
+
+### Added
+
+- README section disclosing AI assistance during development.
+- ORCID identifier in `CITATION.cff`.
 
 ## [0.3.0] — 2026-08-05
 
@@ -11,7 +57,7 @@ First public release.
 
 ### Added
 
-- **`MOAD.Gradients` — T=0 differentiable XAS forward model.**
+- **`MOADyna.Gradients` — T=0 differentiable XAS forward model.**
   The `(physical parameters → spectrum)` map made
   differentiable in θ, forward-mode + analytic-resolvent (no reverse-AD through the
   eigensolver). Built and finite-difference-validated in seven steps:
@@ -34,11 +80,11 @@ First public release.
     plus a **degeneracy-clustered spectral measure** over frozen windows
     (`freeze_windows`, `spectral_clusters`).
   - **Deterministic direct-fit baseline** `fit_spectrum` (an `Optim` weakdep
-    extension, `MOADOptimExt`), validated by synthetic-truth θ recovery and a
+    extension, `MOADynaOptimExt`), validated by synthetic-truth θ recovery and a
     forward-fidelity check that reproduces the physical `xas`/Lanczos path (including
     a Ni d⁸→2p⁵d⁹ L-edge multiplet through a real ground→core-hole embedding).
   Parameter inference (the observation model, NPE/HMC/SBC/OOD) lives in a separate
-  sibling package that depends on MOAD; MOAD never hard-depends on the ML stack.
+  sibling package that depends on MOADyna; MOADyna never hard-depends on the ML stack.
 
 ### Fixed
 
@@ -68,7 +114,7 @@ Finite-temperature closeout and units.
   caller-supplied initial ensemble (`ensemble_states` / `ensemble_energies`).
 - **`kubo_response`** — the full two-sided Kubo retarded χ from a dense
   eigenstate-pair Lehmann sum.
-- **`MOAD.Units`** (`convert_energy`, `Units.kB_eV`) — dependency-free
+- **`MOADyna.Units`** (`convert_energy`, `Units.kB_eV`) — dependency-free
   energy-unit conversion (exact post-2019 SI constants).
 
 ### Changed
@@ -79,14 +125,14 @@ Finite-temperature closeout and units.
 ## [0.2.0] — 2026-05-30
 
 Bosons, a foundational responses layer, spectroscopy completion, and the
-standard-operator surface — plus the first documentation site. MOAD now
+standard-operator surface — plus the first documentation site. MOADyna now
 covers the multiplet-spectroscopy bar end to end.
 
 ### Added
 
 - **Bosons & electron-phonon (2a)** — `BosonSite`, bosonic ladder operators,
   Bose-Hubbard and Hubbard-Holstein models validated against QuSpin.
-- **`MOAD.Responses` layer (2b/2c)** — a matrix-of-ω response abstraction
+- **`MOADyna.Responses` layer (2b/2c)** — a matrix-of-ω response abstraction
   (`AbstractResponse` with `LanczosResponse` / `PoleResponse` / `GridResponse`
   representations and a `GreensFunction` wrapper) computed by a block-Lanczos /
   continued-fraction kernel, with the single `correlator(H, basis, As, Bs; …)`
@@ -130,7 +176,7 @@ covers the multiplet-spectroscopy bar end to end.
 
 ## [0.1.0] — 2026-05-08
 
-First feature-complete release. MOAD covers operator algebra → Hilbert
+First feature-complete release. MOADyna covers operator algebra → Hilbert
 construction → exact diagonalization → core-level spectroscopy → point
 groups → atomic multiplet primitives → atomic Slater-Condon parameters,
 in seven internal layers. The NiO L_{2,3} XAS native acceptance test
@@ -139,7 +185,7 @@ Cartesian polarisations.
 
 ### Added — by layer
 
-- **`MOAD.Algebra`** — symbolic `OperatorSum` with id-keyed canonical
+- **`MOADyna.Algebra`** — symbolic `OperatorSum` with id-keyed canonical
   storage; fermion / boson / spin sites; Tier-2 canonicalization on
   construction (normal-ordering, Pauli-zero collapse, anticommutator
   constants); conserved-quantity observables (`ParticleCount`,
@@ -147,18 +193,18 @@ Cartesian polarisations.
   `rotate(op, h_in, U; h_out, project=false)` Sakurai-style basis
   change (square unitary) / projection (rectangular isometry);
   HDF5 operator I/O (`save_operator` / `load_operator`).
-- **`MOAD.Bases`** — `EagerBasis` with bit-packed states, partitioned
+- **`MOADyna.Bases`** — `EagerBasis` with bit-packed states, partitioned
   mixed-radix enumeration, k-combinations + suffix-pruned weighted-sum
   walks; `compile` + `assemble` produce
   `SparseMatrixCSC{T, Int32}` directly (auto-fallback to `Int`);
   `apply_restriction!(v, R, basis)` projector; cross-basis
   `embed(psi, basis_a => basis_b)`.
-- **`MOAD.ED`** — single `eigen(H, basis; n, which, …)` extending
+- **`MOADyna.ED`** — single `eigen(H, basis; n, which, …)` extending
   `Base.eigen`; auto-switches dense LAPACK vs `KrylovKit.eigsolve` at
   `dense_below = 1024`; cluster-scoped QR for degenerate Krylov blocks;
   `ConvergenceError` on non-convergence; Hermiticity check upfront;
   HDF5 eigensystem I/O (`save_eigensystem` / `load_eigensystem`).
-- **`MOAD.Spectroscopy`** — `xas`, `rixs`, `fluorescence_yield`;
+- **`MOADyna.Spectroscopy`** — `xas`, `rixs`, `fluorescence_yield`;
   `SpectraTensor{S, T, N, F}` result type with stored Lanczos data;
   hand-rolled block Lanczos with rectangular `R` from rank-revealing
   QR + ragged-block deflation; helpers `re_broaden`,
@@ -166,9 +212,9 @@ Cartesian polarisations.
   `restrict_to_window`, `average`, `weighted_sum`, `plot_range`,
   spectrum algebra; ASCII + HDF5 round-trip via `save_spectra` /
   `load_spectra`; `DEFAULTS` mutable struct with Greek↔ASCII alias
-  support; opt-in Plots.jl recipe via `ext/MOADPlotsExt.jl`
+  support; opt-in Plots.jl recipe via `ext/MOADynaPlotsExt.jl`
   (RecipesBase weakdep).
-- **`MOAD.PointGroups`** — 42 supported groups (32 crystallographic +
+- **`MOADyna.PointGroups`** — 42 supported groups (32 crystallographic +
   10 molecular incl. `I, Ih`); Mulliken-label character tables for
   every group; setting variant `:y` for D3h/D3d/C3v/D6h via 30°/15°
   rotation around z; `expand_clm` / `expand_clm_central` /
@@ -176,7 +222,7 @@ Cartesian polarisations.
   matrix-unit intertwiner; production-mode strict gate via
   `IRrep.provenance`; `character_table`, `print_character_table`,
   `character_table_compare`, `Base.show MIME"text/plain"` pretty-print.
-- **`MOAD.Shells`** — `ShellModel(tags)` registry parses
+- **`MOADyna.Shells`** — `ShellModel(tags)` registry parses
   `<atom>_<n><orbital>` to allocate `2(2ℓ+1)` fermionic modes per shell
   in m-major + dn-then-up order (one `FermionSite` per shell);
   accessors `ell_of`, `range_of`, `site_of`; shell-keyed dispatch
@@ -194,34 +240,34 @@ Cartesian polarisations.
   pairs, shells)` (NamedTuple keyed by shell symbol); legacy
   `density_density` and `kanamori` shell-keyed sugar; basis-restriction
   DSL (`nshells`, `total`, `basis(m, restrictions…)` factory).
-- **`MOAD.AtomicParameters`** — primary API
+- **`MOADyna.AtomicParameters`** — primary API
   `atomic_parameters(:elem, "config")` keyed by element +
   configuration string; ground-state sugar
   `atomic_parameters(:elem; charge=...)`. Static Haverkort thesis
   dictionary (184 entries: 3d / 4d block, ground + L_{2,3}
-  intermediate). Optional live Cowan runner via the `MOAD_COWAN`
+  intermediate). Optional live Cowan runner via the `MOADYNA_COWAN`
   environment variable. Provenance + scaling tags carried with each
   result.
-- **`MOAD.Diagnostics`** — `expectation_table(eigensystem, basis,
+- **`MOADyna.Diagnostics`** — `expectation_table(eigensystem, basis,
   ops_list)`, `configuration_weights(psi, basis; group_by)`.
-- **`MOAD.QuantyIO`** — `read_quanty_operator(path, hilbert,
+- **`MOADyna.QuantyIO`** — `read_quanty_operator(path, hilbert,
   mode_map)` parses real (`QComplex=0`) and complex (`QComplex=1`)
   operator dumps; `read_quanty_wavefunction`,
   `read_quanty_eigenvalues`.
 
 ### Validation
 
-- **NiO L_{2,3} XAS (native).** MOAD reproduces the PyQuanty
+- **NiO L_{2,3} XAS (native).** MOADyna reproduces the PyQuanty
   `XAS_lanczos_cont_frac.txt` reference at **1.5×10⁻¹² of peak** across
   three Cartesian polarisations on 801 ω points
   (`test/shells/validation/test_nio_xas_native.jl`, validation tier).
   Far below the originally-spec'd 1×10⁻⁴ target — the native build
   agrees with Quanty to LAPACK roundoff.
-- **NiO L_3 RIXS.** Three-code agreement (MOAD / Quanty / PyQuanty)
+- **NiO L_3 RIXS.** Three-code agreement (MOADyna / Quanty / PyQuanty)
   at 10⁻⁷ to 10⁻⁴ across 11 incident energies × 851 emission
   energies. Plots in
   `docs/dev/validation/spectroscopy/nio_xas/plots/`.
-- **Double-impurity cluster benchmark.** MOAD is 12× faster than Quanty and
+- **Double-impurity cluster benchmark.** MOADyna is 12× faster than Quanty and
   1.7× faster than QuSpin wall-clock on the 2.6M-state GS sector;
   eigenvalues match QuSpin to 4×10⁻¹³.
 - **PointGroups Akm vs Quanty.** 31/31 audited (group, ℓ) cells produce
@@ -239,17 +285,17 @@ Cartesian polarisations.
 
 ### Locked design decisions
 
-- Single `MOAD` package with internal submodules — no monorepo split.
+- Single `MOADyna` package with internal submodules — no monorepo split.
 - Tier-2 canonicalization on `OperatorSum` construction.
-- Eager-basis + sparse-assembly for `MOAD.Bases`; sorted-vector +
+- Eager-basis + sparse-assembly for `MOADyna.Bases`; sorted-vector +
   binary search for lookup.
-- `SparseMatrixCSC{T, Int32}` is the only product `MOAD.Bases` hands
-  `MOAD.ED`.
+- `SparseMatrixCSC{T, Int32}` is the only product `MOADyna.Bases` hands
+  `MOADyna.ED`.
 - Right-to-left chain application; per-column dedup via Dict in
   `_assemble_chunk`; direct-CSC build with per-chunk mini-CSCs
   stitched in pass-2.
 - `OhMyThreads.jl` for parallelism. `KrylovKit` is wrapped behind
-  `MOAD.ED`; no other module imports it.
+  `MOADyna.ED`; no other module imports it.
 - Layer 4: `G(ω) = ((ω + Eg + iΓ/2)·I − H)⁻¹`, `Γ` is FWHM. Three
   user-facing functions (`xas`, `rixs`, `fluorescence_yield`). FY
   uses the analytic ω_out integral. Hand-rolled block Lanczos with
@@ -259,7 +305,7 @@ Cartesian polarisations.
   by construction; Bilbao + Quanty are validation oracles, not the
   defining convention. `expand_clm` strict-mode requires `:reference`
   provenance + multiplicity-frame alignment; `experimental=true` opts
-  into MOAD's internal convention.
+  into MOADyna's internal convention.
 - Layer 6: primary form of `density_density`, `kanamori`, and all spin
   operators is the Algebra-level primitive
   `(site::FermionSite, orbital_pairs; …)`; shell-keyed forms are
@@ -316,9 +362,9 @@ Cartesian polarisations.
 
 The pre-release work (originally three monorepo packages
 `MOADAlgebra`, `MOADHilbert`, `MOADQuanty`) was consolidated into a
-single `MOAD` package with internal submodules `MOAD.Algebra`,
-`MOAD.Bases`, `MOAD.ED`, `MOAD.QuantyIO` before the v0.1.0 release.
-User-facing surface unchanged at consolidation time; `using MOAD`
+single `MOADyna` package with internal submodules `MOADyna.Algebra`,
+`MOADyna.Bases`, `MOADyna.ED`, `MOADyna.QuantyIO` before the v0.1.0 release.
+User-facing surface unchanged at consolidation time; `using MOADyna`
 brings in every public name. Internal design notes moved out of the
 user-facing tree; Quanty regression data lives under
 `docs/dev/validation/`.

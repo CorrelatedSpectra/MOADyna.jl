@@ -1,6 +1,6 @@
 # Point-Group Theory Primer
 
-This document introduces MOAD's `PointGroups` module for readers who know
+This document introduces MOADyna's `PointGroups` module for readers who know
 quantum mechanics but have not yet worked through a systematic group theory
 course. The level is roughly that of Atkins–Child–Phillips "Tables for Group
 Theory" or Cotton "Chemical Applications of Group Theory" — worked crystal-field
@@ -21,7 +21,7 @@ spectroscopy, the relevant group is determined by the coordination geometry:
 octahedral (O_h), tetrahedral (T_d), square-planar (C_4v or D_4h), trigonal
 bipyramidal (D_3h), and so on.
 
-`MOAD.PointGroups` converts a Schoenflies symbol into a computable object. Once
+`MOADyna.PointGroups` converts a Schoenflies symbol into a computable object. Once
 you call `pointgroup(:Oh)`, the module has done the following for you:
 
 - enumerated all 48 symmetry operations (elements) of O_h by BFS closure from
@@ -39,7 +39,7 @@ term-symbol classification — is built from those four ingredients.
 ### Quick start
 
 ```@example primer
-using MOAD
+using MOADyna
 
 G = pointgroup(:Oh)           # construct O_h; eager: all irreps computed now
 print_character_table(G)      # pretty-prints the canonical 10×10 table
@@ -105,7 +105,7 @@ number prefix is the class size.
 For groups not in the reference table (constructed from arbitrary generators or
 with `experimental=true`), classes are named by BFS-discovery order:
 `E`, `C3_111`, `C4z·C3_111`, … These names are deterministic and stable within
-a MOAD version but should not be treated as publication-quality Mulliken labels.
+a MOADyna version but should not be treated as publication-quality Mulliken labels.
 Use `has_reference_labels(:YourGroup)` to check which regime you are in.
 
 ### Irreducible representations and Frobenius–Schur folding
@@ -118,7 +118,7 @@ complex irreps $e^{2\pi i/3}$ and $e^{-2\pi i/3}$ which appear together as the 2
 real irrep E. (The 2D E irreps of groups like C_4v are genuinely irreducible over
 the reals — a single constituent, not a folded pair.)
 
-Internally, MOAD keeps track of `ComplexIR` objects (the absolutely irreducible
+Internally, MOADyna keeps track of `ComplexIR` objects (the absolutely irreducible
 complex constituents) and the displayed `IRrep` (the Mulliken view). This
 two-layer design is what makes projector formulas correct for both the simple
 A1g/T2g cases and the folded E cases. Users do not normally need to touch
@@ -176,7 +176,7 @@ print_character_table(pointgroup(:Oh))
 
 The key physical fact encoded here: T1g and T2g differ by the sign of their
 character on the face-diagonal C2 class (`6C2pr`). T1g has $\chi(C_2') = -1$,
-T2g has $\chi(C_2') = +1$. This is how MOAD (following Cotton's convention)
+T2g has $\chi(C_2') = +1$. This is how MOADyna (following Cotton's convention)
 distinguishes the two three-dimensional irreps of O_h. Readers sometimes confuse
 the T1/T2 labelling — always check the character at `6C2pr` or `6C4`.
 
@@ -186,7 +186,7 @@ For any two irreps $\Gamma$, $\Lambda$ of $G$:
 
 $$\frac{1}{|G|} \sum_{g \in G} \chi_\Gamma(g)^* \, \chi_\Lambda(g) = \delta_{\Gamma \Lambda}$$
 
-This inner product is the workhorse of projection theory. MOAD's `subduce` and
+This inner product is the workhorse of projection theory. MOADyna's `subduce` and
 `classify_subspace` both evaluate exactly this sum.
 
 ---
@@ -208,7 +208,7 @@ The multiplicity is computed by the character-orthogonality inner product:
 
 $$m_\Gamma = \frac{1}{|G|} \sum_{g \in G} \chi_\Gamma(g)^* \, \chi_{D^\ell}(g)$$
 
-In MOAD:
+In MOADyna:
 
 ```@example primer
 G = pointgroup(:Oh)
@@ -234,7 +234,7 @@ The projector onto the $\Gamma$ subspace of $V_\ell$ is:
 
 $$P_\Gamma = \frac{d_\Gamma}{|G|} \sum_{g \in G} \chi_\Gamma(g)^* \, D^\ell(g)$$
 
-where $d_\Gamma$ is the dimension of $\Gamma$. In MOAD:
+where $d_\Gamma$ is the dimension of $\Gamma$. In MOADyna:
 
 ```@example primer
 G = pointgroup(:Oh)
@@ -243,12 +243,12 @@ P_T2g = project(G, :T2g, 2)   # 5×5 complex Hermitian matrix
 ```
 
 Projectors satisfy $P_\Gamma^2 = P_\Gamma$ (idempotent) and
-$P_\Gamma^\dagger = P_\Gamma$ (Hermitian). MOAD enforces both at construction.
+$P_\Gamma^\dagger = P_\Gamma$ (Hermitian). MOADyna enforces both at construction.
 
 Quick proof of concept:
 
 ```@example primer
-using MOAD, LinearAlgebra
+using MOADyna, LinearAlgebra
 G = pointgroup(:Oh)
 P = project(G, :T2g, 2)
 
@@ -335,7 +335,7 @@ Example: octahedral d-shell with $\varepsilon_{E_g} = 0.6$ eV and
 $\varepsilon_{T_{2g}} = -0.4$ eV (so 10Dq = 1.0 eV):
 
 ```@example primer
-using MOAD
+using MOADyna
 G = pointgroup(:Oh)
 akm = expand_clm_central(G, 2, [0.6, -0.4])
 for a in akm
@@ -346,7 +346,7 @@ end
 For Oh symmetry with a d-shell only $k=4$ terms survive (Wigner–Eckart
 requires even $k$ with $k \le 2\ell$, and Oh's selection rule kills $k=2$).
 The relation $A_{4,\pm 4} = \sqrt{5/14} \, A_{4,0}$ is the famous cubic
-harmonic constraint enforced automatically by MOAD.
+harmonic constraint enforced automatically by MOADyna.
 
 ### `expand_clm` — the general multiplicity-aware interface
 
@@ -383,7 +383,7 @@ All multiplicities are 1, so four energies suffice. A physically reasonable
 parameter set (in eV, after subtracting the barycentre):
 
 ```@example primer
-using MOAD
+using MOADyna
 G = pointgroup(:C4v)
 # A1 ↔ d_z²,  B1 ↔ d_x²-y²,  B2 ↔ d_xy,  E ↔ {d_xz, d_yz}
 ε = Dict(:A1 => -0.6, :B1 => 1.2, :B2 => 0.3, :E => -0.5)
@@ -413,7 +413,7 @@ A1g/B1g/B2g/Eg Cartan structure is the same as A1/B1/B2/E in C_{4v}; the
 inversion label is added for free by the D_{4h} generator.
 
 ```@example primer
-using MOAD
+using MOADyna
 G = pointgroup(:D4h)
 sub = subduce(G, 2)
 # Tetragonal splitting: elongated octahedron squashes Eg → {A1g, B1g} and splits T2g → {B2g, Eg}
@@ -437,11 +437,11 @@ subduce(G, 2)
 Note the parameter order: E comes first in the reference table ordering. In a
 tetrahedral field the sign of the crystal splitting relative to octahedral is
 often discussed in terms of the ligand-field argument that 10Dq(Td) ≈ −(4/9)
-10Dq(Oh). In MOAD you simply supply the energies; the Akm coefficients carry
+10Dq(Oh). In MOADyna you simply supply the energies; the Akm coefficients carry
 the sign automatically via the geometry embedded in the generator matrices:
 
 ```@example primer
-using MOAD
+using MOADyna
 G_Oh = pointgroup(:Oh)
 G_Td = pointgroup(:Td)
 
@@ -474,7 +474,7 @@ The 2×2 E block has three independent real parameters: two diagonal energies
 $\varepsilon_{E_1}$, $\varepsilon_{E_2}$, and one off-diagonal mixing $M_E$.
 
 ```@example primer
-using MOAD
+using MOADyna
 G = pointgroup(:C4v)
 sub = subduce(G, 3)
 
@@ -502,7 +502,7 @@ central-projector limit.
 By default, `expand_clm` and `expand_clm_central` require that the group have
 curated reference Mulliken labels (`has_reference_labels(G.name) == true`). This
 ensures that the parameter ordering in your call matches a canonical published
-table, making results reproducible across MOAD versions.
+table, making results reproducible across MOADyna versions.
 
 For groups outside `reference_label_groups()`, you can opt in with:
 
@@ -511,9 +511,9 @@ G_custom = pointgroup(:SomeGroup)   # auto-named labels
 akm = expand_clm(G_custom, 2, energies; experimental=true)
 ```
 
-The `experimental=true` flag is a contract: you acknowledge that MOAD's internal
+The `experimental=true` flag is a contract: you acknowledge that MOADyna's internal
 IR ordering for this group is deterministic but may not match any published
-reference. Results are reproducible within a MOAD version but should be labelled
+reference. Results are reproducible within a MOADyna version but should be labelled
 as non-canonical in publications.
 
 ---
@@ -530,7 +530,7 @@ $G$.
 $$\chi_S(g) = \mathrm{Tr}_S \, U(g)$$
 
 ```@example primer
-using MOAD, LinearAlgebra
+using MOADyna, LinearAlgebra
 G = pointgroup(:Oh)
 
 # Compute D^2(g) for every element of Oh
@@ -584,11 +584,11 @@ D^2(g)$, which classify_subspace would return as `[:Eg => 1]`.
 ## 7. Conventions and gotchas
 
 Knowing these conventions prevents the most common sign errors when comparing
-MOAD's output to other codes or textbooks.
+MOADyna's output to other codes or textbooks.
 
 ### Active rotation convention
 
-MOAD uses the **active** convention: symmetry operations rotate the physical
+MOADyna uses the **active** convention: symmetry operations rotate the physical
 state while the coordinate axes are fixed. Under a rotation $R$, a state
 $|\ell, m\rangle$ becomes $\sum_{m'} D^\ell_{m'm}(R) |\ell, m'\rangle$.
 Some texts and codes (notably some Bilbao Crystallographic Server outputs) use
@@ -598,7 +598,7 @@ unit in a comparison, check this first.
 
 ### C^k_m: Racah-normalised spherical harmonics
 
-The $A_{km}$ coefficients in MOAD's `expand_clm` output are defined via the
+The $A_{km}$ coefficients in MOADyna's `expand_clm` output are defined via the
 Racah-normalised operators $C^k_m$ (also called "spherical tensor operators of
 rank $k$"):
 
@@ -606,7 +606,7 @@ $$C^k_m(\hat{r}) = \sqrt{\frac{4\pi}{2k+1}} Y^k_m(\hat{r})$$
 
 The key property is $C^k_0(z\text{-axis}) = 1$ (normalisation at the pole).
 This differs from the Wybourne or Stevens conventions by numerical prefactors.
-MOAD's matrix-element formula for $\langle \ell m_1 | C^k_m | \ell m_2\rangle$
+MOADyna's matrix-element formula for $\langle \ell m_1 | C^k_m | \ell m_2\rangle$
 uses 3j symbols via `WignerSymbols.jl`.
 
 The Hermiticity relation:
@@ -614,13 +614,13 @@ The Hermiticity relation:
 $$A_{k,-m} = (-1)^m A_{k,m}^*$$
 
 means that for real crystal fields (the current scope), $A_{k,m}$ and
-$A_{k,-m}$ are related by a sign and complex conjugation. The MOAD output
+$A_{k,-m}$ are related by a sign and complex conjugation. The MOADyna output
 respects this: you will see paired `m` and `-m` entries with the same real
 magnitude in most cases.
 
 ### Wigner D^ℓ: zyz Euler convention
 
-MOAD decomposes every group element into Euler angles via the zyz convention
+MOADyna decomposes every group element into Euler angles via the zyz convention
 ($R(\alpha, \beta, \gamma) = R_z(\alpha) R_y(\beta) R_z(\gamma)$) and evaluates
 the Wigner small-d function. For improper rotations ($\det R = -1$), the parity
 factor $(-1)^\ell$ multiplies the entire D-matrix:
@@ -643,10 +643,10 @@ non-zero — even though C_{4v} has lower symmetry than O_h.
 ### Multiplicity-space gauge
 
 For groups and shells with $m_\Gamma > 1$, the $m_\Gamma \times m_\Gamma$ block
-$H_\Gamma$ is specified in MOAD's canonical multiplicity-space basis (the
+$H_\Gamma$ is specified in MOADyna's canonical multiplicity-space basis (the
 deterministic output of the §9.2 tesseral-pivot algorithm in the architecture
 chapter). Other codes and standard published table parameterisations may use a
-different basis for the multiplicity space, related to MOAD's by an orthogonal
+different basis for the multiplicity space, related to MOADyna's by an orthogonal
 transform.
 
 Practical consequence: for ``m_\Gamma = 1`` (almost all d-shell cases in common
@@ -660,18 +660,18 @@ between the two conventions; this is not currently automated.
 
 ## 8. Further reading
 
-These texts are suggested as background; they are not cited inline in the MOAD
+These texts are suggested as background; they are not cited inline in the MOADyna
 documentation.
 
 - Cotton, *Chemical Applications of Group Theory*, 3rd ed. — the standard
-  chemistry reference; Cotton's IR labelling conventions are the ones MOAD
+  chemistry reference; Cotton's IR labelling conventions are the ones MOADyna
   follows for most groups.
 - Atkins, Child, and Phillips, *Tables for Group Theory* — concise Oxford
   pamphlet with character tables and direct-product tables for all common point
   groups.
 - Tinkham, *Group Theory and Quantum Mechanics* — more rigorous treatment,
   includes Wigner–Eckart theorem and Wigner D-matrices; the level closest to
-  MOAD's internal formalism.
+  MOADyna's internal formalism.
 - Bradley and Cracknell, *The Mathematical Theory of Symmetry in Solids* —
   authoritative reference for space groups and double groups; overkill for most
   crystal-field work but essential if you go beyond point groups.

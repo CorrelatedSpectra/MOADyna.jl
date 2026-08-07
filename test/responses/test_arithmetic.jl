@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — arithmetic surface tests
+# MOADyna.Responses — arithmetic surface tests
 # =====================================================================
 #
 # Covers per type, where applicable:
@@ -12,8 +12,8 @@
 
 using Test
 using LinearAlgebra
-using MOAD: LanczosResponse, PoleResponse, GridResponse, GreensFunction
-using MOAD.Responses: to_pole, cf_block
+using MOADyna: LanczosResponse, PoleResponse, GridResponse, GreensFunction
+using MOADyna.Responses: to_pole, cf_block
 
 # =====================================================================
 # Shared fixture builders

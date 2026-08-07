@@ -4,7 +4,7 @@
 #
 # Provides a small typed-expression vocabulary for conserved quantities
 # (particle counts, total Sz) and the comparisons that turn them into
-# Restriction objects. `MOAD.Bases` introspects Restrictions to drive
+# Restriction objects. `MOADyna.Bases` introspects Restrictions to drive
 # symmetry-sector enumeration when the conserved quantity is recognised;
 # otherwise it falls back to a predicate-filter pass over candidate states.
 
@@ -20,7 +20,7 @@ number), [`TotalSz`](@ref) (total ``S_z``), and [`WeightedParticleCount`](@ref)
 (a general ``\\sum_i w_i n_i``), with the convenience builders [`n_fermion`](@ref),
 [`n_boson`](@ref), [`Sz_total`](@ref).
 
-The comparison produces a [`Restriction`](@ref), which `MOAD.Bases` recognises to
+The comparison produces a [`Restriction`](@ref), which `MOADyna.Bases` recognises to
 enumerate exactly the Fock states of the selected subspace. Non-abelian conserved
 quantities (total ``S^2``,
 ``L^2``, ``J^2``, point-group irreps) are *not* `QuantumNumber`s — they are not
@@ -66,7 +66,7 @@ end
 
 Total z-component of spin summed over the given sites. Restricted to
 `SpinSite`s; bare `FermionSite`s carry no spin convention (the up/down
-labelling is provided by `MOAD.Shells`, not by layer 1), so a fermionic
+labelling is provided by `MOADyna.Shells`, not by layer 1), so a fermionic
 total-Sz is expressed via `WeightedParticleCount` instead — see the
 **Hilbert spaces & bases** chapter of the manual.
 """

@@ -25,7 +25,7 @@
 #   nio_xas_compact_x.txt, nio_xas_compact_y.txt, nio_xas_compact_z.txt
 #       three-column files with [ω, Re χ, Im χ] for each polarisation.
 
-using MOAD
+using MOADyna
 using DelimitedFiles
 
 # ---------------------------------------------------------------------
@@ -125,7 +125,7 @@ Eg = gs.values[1]
 #
 # `project_to_subset` below is a small downscope helper; the public
 # `embed` requires source ⊂ target, but here we need the opposite. Once
-# MOAD ships a built-in down-projection this can be replaced.
+# MOADyna ships a built-in down-projection this can be replaced.
 
 """
     project_to_subset(psi_full, basis_full, basis_sub) -> Vector

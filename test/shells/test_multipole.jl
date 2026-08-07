@@ -1,8 +1,8 @@
 using Test
-using MOAD
-using MOAD.Algebra: OperatorSum
-using MOAD.Shells: ShellModel, dipole, _ckq_coeff, _ckm_contract, site_of, _orbital_mode_pair
-using MOAD.PointGroups: Bkm_matrix
+using MOADyna
+using MOADyna.Algebra: OperatorSum
+using MOADyna.Shells: ShellModel, dipole, _ckq_coeff, _ckm_contract, site_of, _orbital_mode_pair
+using MOADyna.PointGroups: Bkm_matrix
 using LinearAlgebra: tr
 
 # Sub-phase 2h, Stage 0 — convention-oracle tests for the raw rank-k
@@ -133,7 +133,7 @@ end
     @testset "tesseral helper reproduces dipole Cartesian at k=1" begin
         m = ShellModel([:Ni_2p, :Ni_3d])
         comps = multipole(m, :Ni_2p => :Ni_3d, 1)
-        tess, tags = MOAD.Shells._real_tesseral_components(comps, 1)
+        tess, tags = MOADyna.Shells._real_tesseral_components(comps, 1)
         @test tags == [(0, '0'), (1, 'c'), (1, 's')]   # = [Tz, Tx, Ty]
         Td = dipole(m, :Ni_2p => :Ni_3d)
         @test isempty(chop(tess[1] - Td[3]; tol = 1e-12))   # (0,'0') = Tz
@@ -159,9 +159,9 @@ end
 
 @testset "nIXS (2h Stage B — scattering op + radial integrals + conjugation lock)" begin
 
-    SH = MOAD.Shells._spherical_harmonic_C
-    PL = MOAD.Shells._assoc_legendre
-    JB = MOAD.Shells._spherical_bessel_j
+    SH = MOADyna.Shells._spherical_harmonic_C
+    PL = MOADyna.Shells._assoc_legendre
+    JB = MOADyna.Shells._spherical_bessel_j
 
     cosγ(θ1, φ1, θ2, φ2) = sin(θ1) * sin(θ2) * cos(φ1 - φ2) + cos(θ1) * cos(θ2)
 
@@ -217,8 +217,8 @@ end
         @test JB(4, 1e-3) ≈ 1e-12 / 945 rtol = 1e-4
         @test JB(6, 1e-3) < 1e-20                          # not 9.46e5
         # series and recurrence agree in their overlap (x ≳ k, both valid).
-        @test MOAD.Shells._bessel_small_x_series(4, 6.0) ≈ JB(4, 6.0) rtol = 1e-10
-        @test MOAD.Shells._bessel_small_x_series(3, 5.0) ≈ JB(3, 5.0) rtol = 1e-10
+        @test MOADyna.Shells._bessel_small_x_series(4, 6.0) ≈ JB(4, 6.0) rtol = 1e-10
+        @test MOADyna.Shells._bessel_small_x_series(3, 5.0) ≈ JB(3, 5.0) rtol = 1e-10
     end
 
     @testset "radial_integral analytic checks" begin
@@ -238,9 +238,9 @@ end
     end
 
     @testset "_nixs_allowed_ranks (triangle + parity)" begin
-        @test MOAD.Shells._nixs_allowed_ranks(2, 2) == [0, 2, 4]   # d→d
-        @test MOAD.Shells._nixs_allowed_ranks(1, 2) == [1, 3]      # p→d
-        @test MOAD.Shells._nixs_allowed_ranks(0, 2) == [2]         # s→d (pure E2)
+        @test MOADyna.Shells._nixs_allowed_ranks(2, 2) == [0, 2, 4]   # d→d
+        @test MOADyna.Shells._nixs_allowed_ranks(1, 2) == [1, 3]      # p→d
+        @test MOADyna.Shells._nixs_allowed_ranks(0, 2) == [2]         # s→d (pure E2)
     end
 
     @testset "nixs operator — shape, selection, q̂ ∥ ẑ" begin
@@ -259,7 +259,7 @@ end
         only0 = OperatorSum{ComplexF64}()
         for (k, Rjk) in sort(collect(Rj))
             pref = (im^k) * (2k + 1) * Rjk * conj(SH(k, 0, 0.0, 0.0))
-            only0 += MOAD.Shells._ckm_contract(m, :Ni_3d, :Ni_3d, [(k, 0, pref)])
+            only0 += MOADyna.Shells._ckm_contract(m, :Ni_3d, :Ni_3d, [(k, 0, pref)])
         end
         @test isempty(chop(T - only0; tol = 1e-12))
     end
@@ -269,12 +269,12 @@ end
         # reduced radial function u_3d(r) from NiO_Radial/RnlNi_Atomic_Hartree_Fock
         # (cols: r 1S 2S 2P 3S 3P 3D) and prints the k=0,2,4 strength ratio at
         # q = 4.5 / a₀. We reproduce Rj_k with `radial_integral(weight=:reduced)`.
-        quanty_root = get(ENV, "MOAD_QUANTY_ROOT", "")
+        quanty_root = get(ENV, "MOADYNA_QUANTY_ROOT", "")
         path = joinpath(quanty_root,
                         "Tutorials/20_NiO_Crystal_Field/NiO_Radial",
                         "RnlNi_Atomic_Hartree_Fock")
         if isempty(quanty_root) || !isfile(path)
-            @info "Skipping Quanty nIXS radial check — set MOAD_QUANTY_ROOT to a Quanty checkout to enable."
+            @info "Skipping Quanty nIXS radial check — set MOADYNA_QUANTY_ROOT to a Quanty checkout to enable."
         else
             rs = Float64[]; u3d = Float64[]
             for ln in readlines(path)[2:end]

@@ -1,6 +1,6 @@
 # PointGroups
 
 ```@autodocs
-Modules = [MOAD.PointGroups]
+Modules = [MOADyna.PointGroups]
 Private = false
 ```

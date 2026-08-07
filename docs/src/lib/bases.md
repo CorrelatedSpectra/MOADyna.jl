@@ -1,6 +1,6 @@
 # Bases
 
 ```@autodocs
-Modules = [MOAD.Bases]
+Modules = [MOADyna.Bases]
 Private = false
 ```

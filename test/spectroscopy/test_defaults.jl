@@ -1,6 +1,6 @@
 @testset "Spectroscopy DEFAULTS" begin
-    using MOAD.Spectroscopy
-    using MOAD.Spectroscopy: DEFAULTS, Defaults
+    using MOADyna.Spectroscopy
+    using MOADyna.Spectroscopy: DEFAULTS, Defaults
 
     # Save and restore the live DEFAULTS so this test never bleeds into
     # other tests in the suite.

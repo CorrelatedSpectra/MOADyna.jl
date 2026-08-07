@@ -1,12 +1,12 @@
 """
-    MOAD.Units
+    MOADyna.Units
 
 Energy-unit conversions for spectroscopy work, plus the one physical constant
 the finite-temperature workflow needs (the Boltzmann constant in eV/K).
 
-MOAD's Hamiltonians carry no intrinsic unit — energies are in whatever units the
+MOADyna's Hamiltonians carry no intrinsic unit — energies are in whatever units the
 caller built `H` in, and the finite-temperature kwarg `temperature` is in those
-same units (`k_B = 1`; see [`xas`](@ref MOAD.Spectroscopy.xas), [`kubo_response`](@ref MOAD.Spectroscopy.kubo_response), …). This
+same units (`k_B = 1`; see [`xas`](@ref MOADyna.Spectroscopy.xas), [`kubo_response`](@ref MOADyna.Spectroscopy.kubo_response), …). This
 module is a small convenience for users who *do* work in physical units (most
 commonly eV) and want to convert a temperature in Kelvin, a broadening in meV, or
 a RIXS shift in cm⁻¹ into the working unit.
@@ -34,7 +34,7 @@ The Rydberg energy `Ry = 13.605693122990(15) eV` is a *measured* value (CODATA
 # Examples
 
 ```julia
-using MOAD.Units
+using MOADyna.Units
 
 convert_energy(300, :K => :eV)     # ≈ 0.02585  (k_B·300 K, in eV)
 convert_energy(1.0, :eV => :invcm) # ≈ 8065.54  (1 eV in cm⁻¹)

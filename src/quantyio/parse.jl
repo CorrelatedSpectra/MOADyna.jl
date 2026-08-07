@@ -60,7 +60,7 @@ The contents of one Quanty operator dump, returned by `parse_quanty_operator`.
   `0` if absent.
 
 Pass a `ParsedOperator` to `build_operator` (together with a `Hilbert` and a
-`mode_map`) to obtain a MOAD `OperatorSum`.  For the common single-file
+`mode_map`) to obtain a MOADyna `OperatorSum`.  For the common single-file
 workflow, `read_quanty_operator` wraps both steps.
 """
 struct ParsedOperator
@@ -86,7 +86,7 @@ The function runs a two-step pipeline:
    `max_length`, `nfermion`, and `nboson`.
 
 2. **`build_operator(parsed, hilbert, mode_map)`** — converts the
-   `ParsedOperator` into a MOAD `OperatorSum` using the supplied `Hilbert`
+   `ParsedOperator` into a MOADyna `OperatorSum` using the supplied `Hilbert`
    space and mode mapping.
 
 For the common single-file workflow, `read_quanty_operator(path, hilbert,
@@ -155,7 +155,7 @@ function parse_quanty_operator(io::IO)
             else
                 throw(ArgumentError(
                     "Quanty parse: block $block_label has QComplex=$qc; " *
-                    "MOAD.QuantyIO supports QComplex ∈ {0, 1}. Mixed (2) " *
+                    "MOADyna.QuantyIO supports QComplex ∈ {0, 1}. Mixed (2) " *
                     "blocks are not supported."))
             end
             continue

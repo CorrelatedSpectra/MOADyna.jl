@@ -1,6 +1,6 @@
 # test/gradients/test_clustered_measure.jl
 #
-# Build-step 6b of the v0.3 differentiable forward model (MOAD.Gradients): the
+# Build-step 6b of the v0.3 differentiable forward model (MOADyna.Gradients): the
 # degeneracy-clustered spectral measure. Moments of S = −Im C/π over FROZEN energy
 # windows. A controlled DIAGONAL final-state fixture (H_f(t) = diag(1+t, 1, 5, 6),
 # E0 = 0) gives an analytic pole spectrum C(ω) = Σ_n |X_n|²/(z − ε_n) for independent
@@ -9,11 +9,11 @@
 # windows (smooth even across a pole crossing), and that freeze_windows itself is the
 # θ-dependent (non-smooth) map. Reproducible (no RNG).
 
-using MOAD
+using MOADyna
 using LinearAlgebra
 using Test
 
-const G = MOAD.Gradients
+const G = MOADyna.Gradients
 
 # Diagonal fixture: 1 parameter t moves the first final-state pole. H_g = diag(0,3)
 # (E0 = 0, ψ0 = e1, non-degenerate). E = [I2; 0] (4×2 isometry). A = B = (T,) with the

@@ -1,6 +1,6 @@
 using Test
-using MOAD
-using MOAD.Bases: EagerBasis, get_state, get_index
+using MOADyna
+using MOADyna.Bases: EagerBasis, get_state, get_index
 
 @testset "embed — d⁸L¹⁰ into superset basis" begin
     m = ShellModel([:Ni_3d, :L_3d])

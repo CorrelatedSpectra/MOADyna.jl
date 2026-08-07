@@ -1,6 +1,6 @@
 # test/gradients/test_degeneracy_sector.jl
 #
-# Build-step 5 of the v0.3 differentiable forward model (MOAD.Gradients): the
+# Build-step 5 of the v0.3 differentiable forward model (MOADyna.Gradients): the
 # degeneracy gate + sector-aware ground state. Two layers:
 #   (1) matrix-only — groundstate_manifold (cluster + external-gap gate),
 #       manifold_gate (U†dH U ≈ αI splitting check), lowlying_spectrum;
@@ -13,12 +13,12 @@
 # except in the unresolved-cluster band); C — a real cubic d⁸ model whose ground
 # term is ³A₂g, labeled against the known irrep/multiplicity. Reproducible (no RNG).
 
-using MOAD
+using MOADyna
 using LinearAlgebra
 using SparseArrays
 using Test
 
-const G = MOAD.Gradients
+const G = MOADyna.Gradients
 
 @testset "Gradients build-step 5: degeneracy gate + sector-aware GS" begin
 

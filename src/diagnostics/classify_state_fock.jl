@@ -5,12 +5,12 @@
 # Implements the deferred "LiftedRep apply": given a many-body coefficient
 # vector ψ over an EagerBasis built from a ShellModel, compute the
 # point-group matrix elements ⟨ψ|Û(g)|ψ⟩ for every group element g, then
-# hand them to MOAD.PointGroups.classify_state(::AbstractVector, G).
+# hand them to MOADyna.PointGroups.classify_state(::AbstractVector, G).
 #
 # The single-particle rotation acts on creation operators as
 #   c†_a → Σ_r U_g[r, a] c†_r,
 # block-diagonal over (shell, spin): within a shell of orbital ℓ the spatial
-# Wigner matrix D^ℓ(g) (from MOAD.PointGroups.lift) acts on the 2ℓ+1 orbital
+# Wigner matrix D^ℓ(g) (from MOADyna.PointGroups.lift) acts on the 2ℓ+1 orbital
 # modes, identically for both spins (a spatial rotation does not touch the
 # spin label). For a Slater determinant |occ⟩ (occupied global modes in
 # ascending order) the rotated overlap with another determinant |tocc⟩ is
@@ -101,7 +101,7 @@ under the point group `G`. Returns the same
 [`classify_state`](@ref)`(matrix_elements, G)`.
 
 The method builds the Fock-space representation `Û(g)` of each group element
-from the single-particle Wigner matrices (`MOAD.PointGroups.lift`), forms
+from the single-particle Wigner matrices (`MOADyna.PointGroups.lift`), forms
 `⟨ψ|Û(g)|ψ⟩` for every `g`, and decomposes the resulting class function into
 Mulliken irreps.
 

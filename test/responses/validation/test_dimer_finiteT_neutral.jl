@@ -4,7 +4,7 @@
 #
 # Headline validation fixture for Plan 2d (responses, finite-temperature
 # `:neutral` one-sided thermal average). Compares the Boltzmann-weighted
-# per-state pole-fold exposed by `MOAD.correlator(...; T, channel=:neutral,
+# per-state pole-fold exposed by `MOADyna.correlator(...; T, channel=:neutral,
 # form=:pole)` against an INDEPENDENT dense single-sum reference built by
 # direct diagonalisation (`eigen` on the dense N=2-sector Hamiltonian) and
 # an explicit double Lehmann sum — i.e. without ever touching the

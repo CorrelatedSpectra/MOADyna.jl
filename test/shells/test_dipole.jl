@@ -1,7 +1,7 @@
 using Test
-using MOAD
-using MOAD.Algebra: OperatorSum
-using MOAD.Shells: ShellModel, dipole, ell_of, site_of
+using MOADyna
+using MOADyna.Algebra: OperatorSum
+using MOADyna.Shells: ShellModel, dipole, ell_of, site_of
 
 @testset "dipole" begin
 
@@ -62,7 +62,7 @@ using MOAD.Shells: ShellModel, dipole, ell_of, site_of
     @testset "regression — TXASx/y/z vs Quanty NiO fixtures (skip if missing)" begin
         # Quanty NiO L-edge XAS dumps live at
         # docs/dev/validation/spectroscopy/nio_xas/operators/{TXASx,TXASy,TXASz}.txt.
-        # If present, build the same operator via MOAD.dipole and compare on
+        # If present, build the same operator via MOADyna.dipole and compare on
         # an assembled-matrix level in a shared basis.
         op_dir = joinpath(@__DIR__, "..", "..", "docs", "dev", "validation",
                           "spectroscopy", "nio_xas", "operators")
@@ -83,20 +83,20 @@ using MOAD.Shells: ShellModel, dipole, ell_of, site_of
                       i < 16 ? (:Ni_3d, i - 5) :
                                (:L_3d,  i - 15)
 
-        Tx_q = MOAD.read_quanty_operator(joinpath(op_dir, "TXASx.txt"), h, map_fn)
-        Ty_q = MOAD.read_quanty_operator(joinpath(op_dir, "TXASy.txt"), h, map_fn)
-        Tz_q = MOAD.read_quanty_operator(joinpath(op_dir, "TXASz.txt"), h, map_fn)
+        Tx_q = MOADyna.read_quanty_operator(joinpath(op_dir, "TXASx.txt"), h, map_fn)
+        Ty_q = MOADyna.read_quanty_operator(joinpath(op_dir, "TXASy.txt"), h, map_fn)
+        Tz_q = MOADyna.read_quanty_operator(joinpath(op_dir, "TXASz.txt"), h, map_fn)
 
         T_moad = dipole(m, :Ni_2p => :Ni_3d)
         Tx_m, Ty_m, Tz_m = T_moad
 
         # Assembled-matrix comparison in a small basis covering
         # (n_p ∈ {5, 6}, n_total = 24) — enough to expose all p ↔ d hops.
-        using MOAD.Algebra: n_fermion
-        using MOAD.Bases: EagerBasis, assemble, compile
-        s_2p = MOAD.Shells.site_of(m, :Ni_2p)
-        s_3d = MOAD.Shells.site_of(m, :Ni_3d)
-        s_Ld = MOAD.Shells.site_of(m, :L_3d)
+        using MOADyna.Algebra: n_fermion
+        using MOADyna.Bases: EagerBasis, assemble, compile
+        s_2p = MOADyna.Shells.site_of(m, :Ni_2p)
+        s_3d = MOADyna.Shells.site_of(m, :Ni_3d)
+        s_Ld = MOADyna.Shells.site_of(m, :L_3d)
         bas = EagerBasis(h,
             n_fermion([s_2p]) ∈ 5:6,
             n_fermion([s_2p, s_3d, s_Ld]) == 24)
@@ -105,11 +105,11 @@ using MOAD.Shells: ShellModel, dipole, ell_of, site_of
         Tz_mat_q = Matrix(assemble(compile(Tz_q, bas), bas))
         Tz_mat_m = Matrix(assemble(compile(Tz_m, bas), bas))
         # Possible global-sign mismatch: Quanty's TXAS sign convention may
-        # differ from MOAD's by a constant phase. Compute the leading
+        # differ from MOADyna's by a constant phase. Compute the leading
         # entry-wise ratio and check it's unimodular and applied uniformly.
         peak_q = maximum(abs, Tz_mat_q)
         if peak_q > 0
-            # If MOAD == phase · Quanty, then |MOAD - phase·Quanty| ≈ 0.
+            # If MOADyna == phase · Quanty, then |MOADyna - phase·Quanty| ≈ 0.
             # Try phase ∈ {1, -1, i, -i}.
             best_err = Inf
             best_phase = 1.0 + 0.0im

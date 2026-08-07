@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Spectroscopy — kubo_response: full Kubo retarded susceptibility χ_AB(ω,T)
+# MOADyna.Spectroscopy — kubo_response: full Kubo retarded susceptibility χ_AB(ω,T)
 # =====================================================================
 #
 # The complete two-sided Kubo retarded response function

@@ -2,7 +2,7 @@
 
     s = FermionSite{4}(:s)
     h = Hilbert(:s => s)
-    # mode_map: Quanty 0-indexed → MOAD 1-indexed on the single site
+    # mode_map: Quanty 0-indexed → MOADyna 1-indexed on the single site
     map_fn = i -> (:s, i + 1)
 
     @testset "single hopping term" begin

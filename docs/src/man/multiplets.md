@@ -1,34 +1,34 @@
 # Multiplets & Standard Operators
 
 ```@meta
-CurrentModule = MOAD
+CurrentModule = MOADyna
 DocTestSetup  = quote
-    using MOAD
+    using MOADyna
 end
 ```
 
-`MOAD.Shells` is the multiplet layer: a [`ShellModel`](@ref) registry that names the
+`MOADyna.Shells` is the multiplet layer: a [`ShellModel`](@ref) registry that names the
 atomic shells of a problem, plus shell-keyed builders for every standard operator a
 ligand-field / multiplet calculation needs — Slater–Condon Coulomb, spin–orbit coupling,
 crystal field, hybridization, angular momentum, and the electromagnetic transition /
 moment operators. Each builder returns an [`OperatorSum`](@ref) (or a vector of them) in
-the same symbolic algebra as the rest of MOAD, so multiplet terms add directly to any
+the same symbolic algebra as the rest of MOADyna, so multiplet terms add directly to any
 other part of a Hamiltonian and assemble through the same [`compile`](@ref) /
 [`assemble`](@ref) path.
 
 This chapter is task-oriented: it walks the construction of a transition-metal
 multiplet Hamiltonian term by term, then the transition operators used for spectroscopy.
-It covers the standard multiplet and transition operators currently implemented in MOAD
+It covers the standard multiplet and transition operators currently implemented in MOADyna
 v0.2.
 
 ## The shell registry
 
 A [`ShellModel`](@ref) is built from a list of shell tags `:Element_nℓ`. Each tag fixes an
 orbital angular momentum ``\ell`` (`s`, `p`, `d`, `f` ``\to`` 0, 1, 2, 3) and lays out its ``2(2\ell+1)`` spin–orbitals
-on a [`FermionSite`](@ref MOAD.Algebra.FermionSite); ligand ("bath") shells are named like any other shell.
+on a [`FermionSite`](@ref MOADyna.Algebra.FermionSite); ligand ("bath") shells are named like any other shell.
 
 ```@example shells
-using MOAD
+using MOADyna
 
 # Ni L-edge problem: a 2p core shell, the Ni 3d valence shell, and a ligand
 # 3d-symmetry bath shell.
@@ -123,7 +123,7 @@ H_zeeman isa OperatorSum
 
 ### Single-particle basis transforms
 
-MOAD works internally in the spherical-harmonic ``|\ell m\sigma\rangle`` basis.
+MOADyna works internally in the spherical-harmonic ``|\ell m\sigma\rangle`` basis.
 [`to_real`](@ref) and [`to_jlmj`](@ref) return the per-shell single-particle change-of-basis
 matrices to the **real cubic harmonics** and to the **spin–orbit-coupled** ``|\ell, j, m_j\rangle``
 basis respectively — for reading or rotating single-particle operators and states into whichever
@@ -137,7 +137,7 @@ U_jmj  = to_jlmj(m, :Ni_3d)     # |ℓmσ⟩ → |j, m_j⟩
 
 ## Electromagnetic transition operators
 
-MOAD builds electric-multipole transition operators by Wigner–Eckart on Racah's
+MOADyna builds electric-multipole transition operators by Wigner–Eckart on Racah's
 normalized ``C^{k}_{q}`` tensor. The radial integral defaults to 1 and can be supplied via
 the `radial` keyword.
 

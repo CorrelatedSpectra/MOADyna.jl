@@ -1,6 +1,6 @@
 # Algebra
 
 ```@autodocs
-Modules = [MOAD.Algebra]
+Modules = [MOADyna.Algebra]
 Private = false
 ```

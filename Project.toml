@@ -1,6 +1,6 @@
-name = "MOAD"
+name = "MOADyna"
 uuid = "5c3054dd-214e-41f9-9cf5-211a9fa316b3"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Yi Lu <yilu@nju.edu.cn>"]
 
 [deps]
@@ -21,8 +21,8 @@ Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [extensions]
-MOADOptimExt = ["Optim"]
-MOADPlotsExt = ["RecipesBase"]
+MOADynaOptimExt = ["Optim"]
+MOADynaPlotsExt = ["RecipesBase"]
 
 [compat]
 DataStructures = "0.18, 0.19"

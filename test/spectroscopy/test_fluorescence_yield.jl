@@ -1,8 +1,8 @@
 @testset "Spectroscopy fluorescence_yield smoke tests" begin
     using LinearAlgebra
     using SparseArrays
-    using MOAD: fluorescence_yield, rixs
-    using MOAD.Spectroscopy: SpectraTensor
+    using MOADyna: fluorescence_yield, rixs
+    using MOADyna.Spectroscopy: SpectraTensor
 
     # Same 3-level system as test_rixs.jl. With T_excite, T_decay
     # producing |i⟩ and |f⟩ respectively, the analytic FY is a single

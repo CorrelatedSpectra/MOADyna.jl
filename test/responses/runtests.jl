@@ -1,5 +1,5 @@
 using Test
-using MOAD
+using MOADyna
 
 @testset "Responses" begin
     include("test_block_lanczos.jl")

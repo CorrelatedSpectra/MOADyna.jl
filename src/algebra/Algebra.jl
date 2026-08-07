@@ -1,13 +1,13 @@
 """
-    MOAD.Algebra
+    MOADyna.Algebra
 
 Symbolic operator algebra on second-quantized many-body Hilbert spaces. Generic
 over fermionic, bosonic, and spin local degrees of freedom. No basis enumeration,
 no diagonalization, no domain-specific physics.
 
-This is an internal submodule of `MOAD`; the names below are re-exported
-from the umbrella package, so users typically write `using MOAD` instead of
-reaching for `MOAD.Algebra` directly.
+This is an internal submodule of `MOADyna`; the names below are re-exported
+from the umbrella package, so users typically write `using MOADyna` instead of
+reaching for `MOADyna.Algebra` directly.
 """
 module Algebra
 

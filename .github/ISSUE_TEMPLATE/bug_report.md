@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a problem with MOAD (incorrect output, crash, or unexpected behavior).
+about: Report a problem with MOADyna (incorrect output, crash, or unexpected behavior).
 title: "[Bug] "
 labels: bug
 ---
@@ -25,7 +25,7 @@ someone else can copy, paste, and run). If it depends on a data file,
 mention which one.
 
 ```julia
-using MOAD
+using MOADyna
 
 # code here
 ```
@@ -45,6 +45,6 @@ include the reference (paper, Quanty output, hand calculation, etc.).
 
 ## Environment
 
-- MOAD commit / version: (paste output of `Pkg.status("MOAD")`)
+- MOADyna commit / version: (paste output of `Pkg.status("MOADyna")`)
 - Julia version: (paste output of `versioninfo()` first line)
 - OS:

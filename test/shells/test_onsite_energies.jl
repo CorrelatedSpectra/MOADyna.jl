@@ -1,6 +1,6 @@
 using Test
-using MOAD
-using MOAD.Shells: ShellModel, onsite_energies
+using MOADyna
+using MOADyna.Shells: ShellModel, onsite_energies
 
 @testset "onsite_energies" begin
 

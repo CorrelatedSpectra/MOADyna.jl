@@ -8,7 +8,7 @@
 #
 # where each A_m(ω) is the spectrum computed from initial state |m⟩ referenced
 # to its own E_m. The initial ensemble is supplied as a `LinearAlgebra.Eigen`
-# whose eigenvectors live in the propagation `basis` (in MOAD's single-`H`
+# whose eigenvectors live in the propagation `basis` (in MOADyna's single-`H`
 # core-spectroscopy formulation the initial multiplet ARE the lowest eigenstates
 # of `H` on `basis`; the dipole-like operator maps to the core-excited sector,
 # which sits hundreds of eV higher and carries negligible Boltzmann weight). The

@@ -1,10 +1,10 @@
-name = "MOAD_NiO_validation_plots"
+name = "MOADYNA_NiO_validation_plots"
 
 # Scratch environment for the NiO XAS comparison plots. Kept separate
-# from the main MOAD project so Plots.jl + GR_jll don't become hard
+# from the main MOADyna project so Plots.jl + GR_jll don't become hard
 # dependencies of the package itself.
 #
-# One-time install (six `..` segments up from this folder to MOAD root):
+# One-time install (six `..` segments up from this folder to MOADyna root):
 #   julia --project=. -e 'import Pkg; Pkg.develop(path="../../../../../..")'
 #   julia --project=. -e 'import Pkg; Pkg.instantiate()'
 #
@@ -13,6 +13,6 @@ name = "MOAD_NiO_validation_plots"
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
-MOAD = "5c3054dd-214e-41f9-9cf5-211a9fa316b3"
+MOADyna = "5c3054dd-214e-41f9-9cf5-211a9fa316b3"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"

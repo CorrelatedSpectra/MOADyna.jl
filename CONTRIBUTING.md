@@ -1,7 +1,7 @@
-# MOAD Contributor Workflow
+# MOADyna Contributor Workflow
 
 This document explains how students and collaborators should work with the
-MOAD repository. It assumes no prior Git experience.
+MOADyna repository. It assumes no prior Git experience.
 
 The short version:
 
@@ -58,14 +58,14 @@ Your local clone is a working copy. The public copy on GitHub is called the
 `git push -u origin my-branch` means "send `my-branch` from my local clone
 up to the remote."
 
-If you don't have push access to `CorrelatedSpectra/MOAD.jl` (most
+If you don't have push access to `CorrelatedSpectra/MOADyna.jl` (most
 contributors won't), first **fork** the repository on GitHub and clone your
 fork — then `origin` is your fork, and pull requests are opened against
-`CorrelatedSpectra/MOAD.jl`.
+`CorrelatedSpectra/MOADyna.jl`.
 
 ### Hosting
 
-`github.com/CorrelatedSpectra/MOAD.jl` is the canonical repository —
+`github.com/CorrelatedSpectra/MOADyna.jl` is the canonical repository —
 issues, pull requests, releases, and CI all live there. (A read-only
 backup copy is kept on an institutional GitLab server; it is not part of
 the contribution workflow.)
@@ -151,8 +151,8 @@ Some platforms call this a pull request. In this document, "merge request" and
 First, clone the repository:
 
 ```bash
-git clone https://github.com/CorrelatedSpectra/MOAD.jl.git
-cd MOAD.jl
+git clone https://github.com/CorrelatedSpectra/MOADyna.jl.git
+cd MOADyna.jl
 ```
 
 Check that Git knows where the remote repository is:
@@ -320,7 +320,7 @@ Use your actual branch name.
 After `git push -u origin your-branch`, GitHub will print a URL like
 
 ```text
-https://github.com/<owner>/MOAD.jl/pull/new/your-branch
+https://github.com/<owner>/MOADyna.jl/pull/new/your-branch
 ```
 
 Open that URL, fill in the description, and click "Create pull request".
@@ -499,7 +499,7 @@ The merge request updates automatically.
 
 ## Rules for Scientific Correctness
 
-MOAD is scientific software. A change is not complete just because the code
+MOADyna is scientific software. A change is not complete just because the code
 runs.
 
 For physics-facing changes, separate these clearly:
@@ -602,7 +602,7 @@ reproducible calculations.
 In Julia, a tagged version can be installed with:
 
 ```julia
-pkg> add https://github.com/CorrelatedSpectra/MOAD.jl#v0.3.0
+pkg> add https://github.com/CorrelatedSpectra/MOADyna.jl#v0.3.0
 ```
 
 ## Quick Command Reference
@@ -691,6 +691,6 @@ Ask before continuing if:
 - you need to change a public API;
 - you need to change a physics convention;
 - you are about to commit generated data;
-- you are unsure whether something belongs in MOAD.
+- you are unsure whether something belongs in MOADyna.
 
 Opening an issue early is better than fixing a large incorrect branch later.

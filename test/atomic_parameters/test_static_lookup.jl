@@ -43,7 +43,7 @@ end
 
     # Multi-shell: "3d8 2p5" reorders to "2p5 3d8".
     # (Ni "2p5 3d9" exists in the dict — this just exercises normalisation.)
-    norm = MOAD.AtomicParameters._normalize_config("3d9 2p5")
+    norm = MOADyna.AtomicParameters._normalize_config("3d9 2p5")
     @test norm == "2p5 3d9"
 end
 
@@ -63,9 +63,9 @@ end
 @testset "atomic_parameters — sugar miss points at primary form" begin
     # Ti⁴⁺ ground would be 3d⁰ (closed shell) — not tabulated. The error
     # should point at the primary form and list available ground configs.
-    saved_moad = get(ENV, "MOAD_COWAN", nothing)
+    saved_moad = get(ENV, "MOADYNA_COWAN", nothing)
     saved_ttmult = get(ENV, "TTMULT", nothing)
-    saved_moad   !== nothing && delete!(ENV, "MOAD_COWAN")
+    saved_moad   !== nothing && delete!(ENV, "MOADYNA_COWAN")
     saved_ttmult !== nothing && delete!(ENV, "TTMULT")
     try
         err = nothing
@@ -78,15 +78,15 @@ end
         @test occursin("ground", err.msg)
         @test occursin("atomic_parameters(:Ti", err.msg)
     finally
-        saved_moad   !== nothing && (ENV["MOAD_COWAN"] = saved_moad)
+        saved_moad   !== nothing && (ENV["MOADYNA_COWAN"] = saved_moad)
         saved_ttmult !== nothing && (ENV["TTMULT"]    = saved_ttmult)
     end
 end
 
 @testset "atomic_parameters — primary form rejects unknown config" begin
-    saved_moad = get(ENV, "MOAD_COWAN", nothing)
+    saved_moad = get(ENV, "MOADYNA_COWAN", nothing)
     saved_ttmult = get(ENV, "TTMULT", nothing)
-    saved_moad   !== nothing && delete!(ENV, "MOAD_COWAN")
+    saved_moad   !== nothing && delete!(ENV, "MOADYNA_COWAN")
     saved_ttmult !== nothing && delete!(ENV, "TTMULT")
     try
         err = nothing
@@ -98,7 +98,7 @@ end
         @test err isa ArgumentError
         @test occursin("Static coverage", err.msg)
     finally
-        saved_moad   !== nothing && (ENV["MOAD_COWAN"] = saved_moad)
+        saved_moad   !== nothing && (ENV["MOADYNA_COWAN"] = saved_moad)
         saved_ttmult !== nothing && (ENV["TTMULT"]    = saved_ttmult)
     end
 end
@@ -125,12 +125,12 @@ end
     @test isnan(p_with_2p.Gpd.G3)
     @test isnan(p_with_2p.zeta.p)
     # Direct stripping check on the normaliser.
-    @test MOAD.AtomicParameters._normalize_config("2p6 3d8") == "3d8"
-    @test MOAD.AtomicParameters._normalize_config("3d10 4f2") == "4f2"
+    @test MOADyna.AtomicParameters._normalize_config("2p6 3d8") == "3d8"
+    @test MOADyna.AtomicParameters._normalize_config("3d10 4f2") == "4f2"
     # Closed shells *above* an open shell are kept (e.g. 2p5 3d10 in
     # Cu-like core-hole intermediates, where 3d is fully occupied but
     # the 2p hole is open).
-    @test MOAD.AtomicParameters._normalize_config("2p5 3d10") == "2p5 3d10"
+    @test MOADyna.AtomicParameters._normalize_config("2p5 3d10") == "2p5 3d10"
 end
 
 @testset "atomic_parameters — configuration validation rejects malformed input" begin

@@ -1,5 +1,5 @@
 # =====================================================================
-# MOAD.Responses — correlator(...) constructor
+# MOADyna.Responses — correlator(...) constructor
 # =====================================================================
 #
 # High-level constructor: takes `(H, basis, As, Bs; ...)`, builds the
@@ -88,7 +88,7 @@ then wrap the result as one of `LanczosResponse`, `PoleResponse`, or
 | `ensemble_energies` | `nothing`  | thermal-only: the per-state energies `E_m` aligned with `ensemble_states`. |
 
 Any additional kwargs (e.g. `krylovdim`, `reorth`, `tol`, `restrictions`) are
-forwarded to the internal `block_lanczos` kernel (`MOAD.Responses.block_lanczos`).
+forwarded to the internal `block_lanczos` kernel (`MOADyna.Responses.block_lanczos`).
 
 # Return
 

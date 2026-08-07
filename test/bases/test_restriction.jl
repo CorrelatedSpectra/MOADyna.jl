@@ -1,5 +1,5 @@
 @testset "CompiledRestriction" begin
-    using MOAD.Bases: EncodingMap, compile_restriction, _check, POPCOUNT, BYTESUM, WEIGHTED_SUM
+    using MOADyna.Bases: EncodingMap, compile_restriction, _check, POPCOUNT, BYTESUM, WEIGHTED_SUM
 
     @testset "POPCOUNT (n_fermion == 2 on FermionSite{4})" begin
         s = FermionSite{4}(:s)

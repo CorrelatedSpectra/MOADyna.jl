@@ -1,12 +1,12 @@
 """
-    MOAD.QuantyIO
+    MOADyna.QuantyIO
 
 I/O bridge for the Quanty multiplet code. Reads the text format produced by
 Quanty's `print(operator)` and constructs the equivalent symbolic operator in
-[`MOAD.Algebra`](@ref), applying a user-supplied mapping from Quanty's
-0-indexed mode integers to MOAD `(site, label)` addresses.
+[`MOADyna.Algebra`](@ref), applying a user-supplied mapping from Quanty's
+0-indexed mode integers to MOADyna `(site, label)` addresses.
 
-This is an internal submodule of `MOAD`; the user-facing function
+This is an internal submodule of `MOADyna`; the user-facing function
 [`read_quanty_operator`](@ref) is re-exported from the umbrella package.
 """
 module QuantyIO
