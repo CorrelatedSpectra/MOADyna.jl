@@ -214,10 +214,10 @@ when it appears.
 
 ## AI assistance
 
-MOADyna was developed with substantial assistance from Anthropic's Claude Code,
-with OpenAI's Codex used for a second pass of code review. I directed the
-design, reviewed the resulting code by hand, and am responsible for the
-package. Correctness is checked by the test suite in CI and by cross-code
+MOADyna was developed with substantial assistance from a blend of LLM-based
+tools, used for both implementation and code review. I directed the design,
+reviewed the resulting code by hand, and am responsible for the package.
+Correctness is checked by the test suite in CI and by cross-code
 numerical validation against [Quanty](https://www.quanty.org/) and
 [QuSpin](https://quspin.github.io/QuSpin/) — see
 [`docs/dev/validation/`](docs/dev/validation/).
