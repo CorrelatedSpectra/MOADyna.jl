@@ -67,8 +67,8 @@ using Pkg
 Pkg.add(url = "https://github.com/CorrelatedSpectra/MOADyna.jl")   # not yet registered
 ```
 
-Requires Julia 1.10 or newer. Current development release: **v0.3.0** (install by
-URL until registration).
+Requires Julia 1.10 or newer. See [`CHANGELOG.md`](CHANGELOG.md) for what each
+release changed.
 
 ## Quick start
 

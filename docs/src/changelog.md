@@ -3,6 +3,17 @@
 A high-level summary of what each release adds. Dates are release (tag)
 dates.
 
+## v0.3.1 — 2026-08-07
+
+**Changed**
+
+- Renamed from `MOAD` to `MOADyna` — package, top-level module, repository, and
+  the `MOAD_*` environment variables. The code is unchanged; `using MOAD`
+  becomes `using MOADyna`. The UUID is the same, so Pkg needs the old entry
+  removed before the new one is added — see
+  [`CHANGELOG.md`](https://github.com/CorrelatedSpectra/MOADyna.jl/blob/main/CHANGELOG.md)
+  for the migration steps.
+
 ## v0.3.0 — 2026-08-05
 
 **Added**
