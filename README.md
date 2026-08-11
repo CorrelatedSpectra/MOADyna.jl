@@ -64,7 +64,7 @@ available where it helps.
 
 ```julia
 using Pkg
-Pkg.add(url = "https://github.com/CorrelatedSpectra/MOADyna.jl")   # not yet registered
+Pkg.add("MOADyna")
 ```
 
 Requires Julia 1.10 or newer. See [`CHANGELOG.md`](CHANGELOG.md) for what each
@@ -203,7 +203,8 @@ Each tagged release is archived on Zenodo with its own DOI:
 | | DOI |
 |---|---|
 | All versions (resolves to the latest) | [10.5281/zenodo.21808796](https://doi.org/10.5281/zenodo.21808796) |
-| v0.3.0 | [10.5281/zenodo.21808797](https://doi.org/10.5281/zenodo.21808797) |
+| v0.3.1 | [10.5281/zenodo.21881201](https://doi.org/10.5281/zenodo.21881201) |
+| v0.3.0 (as `MOAD`) | [10.5281/zenodo.21808797](https://doi.org/10.5281/zenodo.21808797) |
 
 Cite the **version-specific** DOI for reproducibility — it pins the exact code
 a calculation used.

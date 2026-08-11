@@ -10,10 +10,9 @@ XAS, RIXS, fluorescence yield, optical conductivity, the dynamical structure fac
 and single-particle Green's functions — all within a single package.
 
 !!! note "Installation"
-    MOADyna is not yet in the General registry, so install by URL:
     ```julia
     using Pkg
-    Pkg.add(url = "https://github.com/CorrelatedSpectra/MOADyna.jl")
+    Pkg.add("MOADyna")
     ```
     Requires Julia 1.10 or newer. See the [Changelog](@ref) for what's new.
 
