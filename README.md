@@ -203,6 +203,7 @@ Each tagged release is archived on Zenodo with its own DOI:
 | | DOI |
 |---|---|
 | All versions (resolves to the latest) | [10.5281/zenodo.21808796](https://doi.org/10.5281/zenodo.21808796) |
+| v0.3.2 | [10.5281/zenodo.22635658](https://doi.org/10.5281/zenodo.22635658) |
 | v0.3.1 | [10.5281/zenodo.21881201](https://doi.org/10.5281/zenodo.21881201) |
 | v0.3.0 (as `MOAD`) | [10.5281/zenodo.21808797](https://doi.org/10.5281/zenodo.21808797) |
 
