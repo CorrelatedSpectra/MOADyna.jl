@@ -1,6 +1,6 @@
 name = "MOADyna"
 uuid = "5c3054dd-214e-41f9-9cf5-211a9fa316b3"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Yi Lu <yilu@nju.edu.cn>"]
 
 [deps]

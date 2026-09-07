@@ -31,9 +31,12 @@ configuration has no 2p hole), `zeta` (fields `d`, `p` — the spin–orbit cons
 analogous `Fff`/`Fdf`/`Gdf` set.
 
 These plug straight into the multiplet builders — e.g.
-`coulomb(m, :Ni_3d; U, F = Tuple(p.Fdd))` and `p.zeta.d * LS(m, :Ni_3d)` (the `coulomb`
-keyword `F` takes a plain `Tuple`, so wrap the `Fdd` NamedTuple with `Tuple(...)`; see
-[Multiplets & Standard Operators](@ref)).
+`coulomb(m, :Ni_3d; U, F = p.Fdd)` and `p.zeta.d * LS(m, :Ni_3d)` (see
+[Multiplets & Standard Operators](@ref)). The `coulomb` keywords `F` and `G` take
+either a plain `Tuple`, in which the ranks are positional, or a `NamedTuple` such as
+`Fdd`/`Gpd`, whose fields are checked to be named `F2`, `F4`, … / `G1`, `G3`, … in
+ascending rank — an out-of-order `NamedTuple` is rejected rather than silently
+assigned to the wrong ranks.
 
 ## Coverage and provenance
 

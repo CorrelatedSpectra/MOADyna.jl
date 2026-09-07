@@ -4,6 +4,40 @@ All notable changes to MOADyna are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] — 2026-08-11
+
+Fixes the README examples, which never ran, and lets atomic parameters compose
+directly into the Coulomb builders.
+
+### Fixed
+
+- **The README's NiO L₂,₃ XAS example did not run.** It passed
+  `atomic_parameters(...).Fdd` — a `NamedTuple` — to `coulomb`'s `F` keyword,
+  which required a plain `Tuple`, so it failed with a `TypeError` on the first
+  Hamiltonian line. The example had never been executed by anything: the docs
+  tutorials are covered by Documenter's `@example` blocks and `examples/*.jl`
+  now run in CI, but `README.md` was unguarded. Reported by a user.
+- **The README shadowed two exported functions.** The NiO block bound
+  `xas = atomic_parameters(...)` and then called `xas(...)` 24 lines later; the
+  quick-start block bound `hop` and `basis`, which the NiO block calls. Pasting
+  both blocks into one session failed. The parameter tuples are now `p_gs` /
+  `p_xas`, and the quick-start locals are `hop_term` / `hub_basis`.
+
+### Changed
+
+- **`coulomb`'s `F` and `G` keywords accept a `NamedTuple`** as well as a
+  `Tuple`, so `coulomb(m, :Ni_3d; U, F = p.Fdd)` composes directly with
+  `atomic_parameters` output. `F` and `G` are rank-*positional*, so a
+  `NamedTuple` must have fields named `F2`, `F4`, … / `G1`, `G3`, … in strictly
+  ascending rank; anything else throws an `ArgumentError` rather than silently
+  assigning integrals to the wrong ranks. Plain tuples are unaffected.
+
+### Added
+
+- `test/test_readme.jl` executes every README block that begins with
+  `using MOADyna`, so the first thing a new user runs is covered by the suite.
+- A CI job runs each `examples/0*.jl` script.
+
 ## [0.3.1] — 2026-08-07
 
 **BREAKING — package renamed `MOAD` → `MOADyna`.** No functional changes: the

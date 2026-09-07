@@ -174,4 +174,32 @@ using LinearAlgebra: eigvals, tr
         @test centroid ≈ 0.0 atol=1e-10
     end
 
+
+    @testset "F/G accept a rank-ordered NamedTuple" begin
+        m = ShellModel([:Ni_2p, :Ni_3d])
+
+        # A NamedTuple in rank order is equivalent to the positional tuple.
+        @test coulomb(m, :Ni_3d; U = 7.3, F = (F2 = 11.14, F4 = 6.87)) ==
+              coulomb(m, :Ni_3d; U = 7.3, F = (11.14, 6.87))
+
+        # Same for the two-shell direct/exchange keywords.
+        @test coulomb(m, :Ni_2p, :Ni_3d; U = 8.5, F = (F2 = 6.68,),
+                      G = (G1 = 5.07, G3 = 2.88)) ==
+              coulomb(m, :Ni_2p, :Ni_3d; U = 8.5, F = (6.68,), G = (5.07, 2.88))
+
+        # `atomic_parameters` output composes directly -- the documented workflow.
+        p = atomic_parameters(:Ni, "3d8"; scaling = :scaled_80)
+        @test coulomb(m, :Ni_3d; U = 7.3, F = p.Fdd) ==
+              coulomb(m, :Ni_3d; U = 7.3, F = Tuple(p.Fdd))
+
+        # Out-of-rank-order keys are rejected rather than silently mis-assigned:
+        # F is rank-positional, so (F4, F2) would put F^4 where F^2 belongs.
+        @test_throws ArgumentError coulomb(m, :Ni_3d; U = 7.3,
+                                           F = (F4 = 6.87, F2 = 11.14))
+
+        # Keys that are not F<rank>/G<rank> at all are rejected.
+        @test_throws ArgumentError coulomb(m, :Ni_3d; U = 7.3, F = (a = 1.0, b = 2.0))
+        @test_throws ArgumentError coulomb(m, :Ni_2p, :Ni_3d; U = 8.5,
+                                           G = (G3 = 2.88, G1 = 5.07))
+    end
 end

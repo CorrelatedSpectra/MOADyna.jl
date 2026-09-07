@@ -82,15 +82,15 @@ L, t, U = 4, 1.0, 4.0
 sites   = [FermionSite{2}(Symbol("s$i")) for i in 1:L]   # modes 1,2 = ↑,↓
 hilbert = Hilbert(s.name => s for s in sites)
 
-hop = sum(c'(sites[i], σ) * c(sites[i+1], σ) for i in 1:L-1, σ in (1, 2))
-H   = -t * (hop + hop') + U * sum(n(sites[i], 1) * n(sites[i], 2) for i in 1:L)
+hop_term = sum(c'(sites[i], σ) * c(sites[i+1], σ) for i in 1:L-1, σ in (1, 2))
+H        = -t * (hop_term + hop_term') + U * sum(n(sites[i], 1) * n(sites[i], 2) for i in 1:L)
 
 # Half-filling, Sz = 0 (weights +1/−1 on the ↑/↓ modes give 2·Sz_total).
-basis = EagerBasis(hilbert,
-                   n_fermion(hilbert) == L,
-                   WeightedParticleCount(sites, repeat([1, -1], L)) == 0)
+hub_basis = EagerBasis(hilbert,
+                       n_fermion(hilbert) == L,
+                       WeightedParticleCount(sites, repeat([1, -1], L)) == 0)
 
-E = eigen(H, basis; n = 4)        # 4 lowest states; or assemble() for your own solver
+E = eigen(H, hub_basis; n = 4)        # 4 lowest states; or assemble() for your own solver
 ```
 
 ## A complete NiO L₂,₃ XAS calculation
@@ -102,9 +102,9 @@ spectrum:
 ```julia
 using MOADyna
 
-m   = ShellModel([:Ni_2p, :Ni_3d, :L_3d])
-gs  = atomic_parameters(:Ni, "3d8";     scaling = :scaled_80)   # Ni²⁺ ground
-xas = atomic_parameters(:Ni, "2p5 3d9"; scaling = :scaled_80)   # 2p core hole
+m     = ShellModel([:Ni_2p, :Ni_3d, :L_3d])
+p_gs  = atomic_parameters(:Ni, "3d8";     scaling = :scaled_80) # Ni²⁺ ground
+p_xas = atomic_parameters(:Ni, "2p5 3d9"; scaling = :scaled_80) # 2p core hole
 
 # ZSA onsite energies — solved from configuration anchors (Udd=7.3, Upd=8.5, Δ=4.7).
 es_gs  = onsite_energies(m; shells = (:Ni_3d, :L_3d), U = (Ni_3d = 7.3,),
@@ -117,15 +117,15 @@ es_xas = onsite_energies(m; U = (Ni_3d = 7.3,), pairs = ((:Ni_2p, :Ni_3d) => 8.5
 TenDq_Ni, TenDq_L = 0.56, 1.44      # 10Dq cubic crystal-field splittings (eV)
 V_eg, V_t2g       = 2.06, 1.21      # Ni 3d–O 2p hybridization, per irrep (eV)
 
-H_common = coulomb(m, :Ni_3d; U=7.3, F=gs.Fdd) + gs.zeta.d * LS(m, :Ni_3d) +
+H_common = coulomb(m, :Ni_3d; U=7.3, F=p_gs.Fdd) + p_gs.zeta.d * LS(m, :Ni_3d) +
            TenDq_Ni * Akm(m, :Ni_3d, :Oh, [0.6, -0.4]) +
            TenDq_L  * Akm(m, :L_3d,  :Oh, [0.6, -0.4]) +
            V_eg  * hop(m, :Ni_3d, :L_3d, :Oh; irrep=:Eg) +
            V_t2g * hop(m, :Ni_3d, :L_3d, :Oh; irrep=:T2g)
 
 H_GS  = H_common + es_gs.Ni_3d * n(m, :Ni_3d) + es_gs.L_3d * n(m, :L_3d)
-H_XAS = H_common + coulomb(m, :Ni_2p, :Ni_3d; U=8.5, F=xas.Fpd, G=xas.Gpd) +
-        xas.zeta.p * LS(m, :Ni_2p) +
+H_XAS = H_common + coulomb(m, :Ni_2p, :Ni_3d; U=8.5, F=p_xas.Fpd, G=p_xas.Gpd) +
+        p_xas.zeta.p * LS(m, :Ni_2p) +
         es_xas.Ni_2p * n(m, :Ni_2p) + es_xas.Ni_3d * n(m, :Ni_3d) + es_xas.L_3d * n(m, :L_3d)
 
 basis_gs  = basis(m, nshells(m, :Ni_2p) == 6,

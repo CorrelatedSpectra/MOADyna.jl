@@ -29,7 +29,40 @@
 using WignerSymbols: wigner3j
 
 """
-    coulomb(m::ShellModel, shell::Symbol; U, F::Tuple) -> OperatorSum
+    _slater_ranks(x, sym::Symbol) -> Tuple
+
+Normalise a Slater-integral keyword to a plain rank-ordered `Tuple`.
+
+`F` and `G` are rank-*positional*: entry `i` is the i-th higher-rank integral in
+ascending `k`. A `NamedTuple` is accepted because that is what
+[`atomic_parameters`](@ref) returns, but its fields must be named
+`F2`, `F4`, ... / `G1`, `G3`, ... in strictly ascending rank.
+Field order in a `NamedTuple` is whatever the author wrote, so validating it is
+what stops a mis-ordered `(F4 = ..., F2 = ...)` from being silently mapped onto
+the wrong ranks and producing a wrong Hamiltonian with no error.
+"""
+_slater_ranks(x::Tuple, ::Symbol) = x
+
+function _slater_ranks(x::NamedTuple, sym::Symbol)
+    isempty(x) && return ()
+    pat = Regex("^" * String(sym) * raw"(\d+)$")
+    ranks = map(keys(x)) do k
+        mt = match(pat, String(k))
+        mt === nothing && throw(ArgumentError(
+            "coulomb: when `$sym` is given as a NamedTuple its fields must be " *
+            "named $(sym)<rank> (e.g. $(sym)2, $(sym)4); got :$k. " *
+            "Pass a plain Tuple to supply ranks positionally."))
+        parse(Int, mt.captures[1])
+    end
+    all(ranks[i] < ranks[i + 1] for i in 1:(length(ranks) - 1)) || throw(ArgumentError(
+        "coulomb: `$sym` NamedTuple fields must be in strictly ascending rank; " *
+        "got $(keys(x)). `$sym` is rank-positional, so an out-of-order " *
+        "NamedTuple would assign the integrals to the wrong ranks."))
+    return values(x)
+end
+
+"""
+    coulomb(m::ShellModel, shell::Symbol; U, F) -> OperatorSum
 
 Single-shell Slater Coulomb interaction in standard normal-ordered form
 (Cowan eq 6.16). `F` is the tuple `(F^2, F^4, ...)` of higher-rank
@@ -53,7 +86,8 @@ with c^k(l1, m1; l2, m2) = (−1)^m1 · sqrt((2l1+1)(2l2+1))
 - `m::ShellModel` — shell registry.
 - `shell::Symbol` — shell tag, e.g. `:Ni_3d`.
 - `U` — spherical centroid (eV).
-- `F::Tuple` — `(F^2, F^4, ...)` higher-rank Slater integrals (eV).
+- `F` — `(F^2, F^4, ...)` higher-rank Slater integrals (eV), as a plain
+  `Tuple` or as a rank-ordered `NamedTuple` such as `atomic_parameters(...).Fdd`.
 
 # Example
 ```julia
@@ -61,7 +95,8 @@ m = ShellModel([:Ni_3d])
 H = coulomb(m, :Ni_3d; U = 7.3, F = (11.14, 6.87))
 ```
 """
-function coulomb(m::ShellModel, shell::Symbol; U, F::Tuple)
+function coulomb(m::ShellModel, shell::Symbol; U, F::Union{Tuple,NamedTuple})
+    F = _slater_ranks(F, :F)
     site = site_of(m, shell)
     ell  = ell_of(m, shell)
     F0   = _compute_F0_intra(ell, U, F)
@@ -187,11 +222,13 @@ with k = |ℓ_A − ℓ_B|, |ℓ_A − ℓ_B| + 2, ..., ℓ_A + ℓ_B.
 - `m::ShellModel` — shell registry.
 - `shellA`, `shellB` — distinct shell tags (e.g. `:Ni_2p`, `:Ni_3d`).
 - `U` — cross-shell spherical centroid `U_AB` (eV).
-- `F::Tuple` — direct higher Slater integrals `(F^2, F^4, ...)` in eV
-  (k > 0). Length up to `min(ℓ_A, ℓ_B)`.
-- `G::Tuple` — exchange Slater integrals
+- `F` — direct higher Slater integrals `(F^2, F^4, ...)` in eV (k > 0).
+  Length up to `min(ℓ_A, ℓ_B)`. A plain `Tuple` supplies the ranks
+  positionally; a rank-ordered `NamedTuple` such as
+  `atomic_parameters(...).Fpd` is also accepted.
+- `G` — exchange Slater integrals
   `(G^{|ℓ_A−ℓ_B|}, G^{|ℓ_A−ℓ_B|+2}, ...)` in eV. Length up to
-  `(ℓ_A + ℓ_B − |ℓ_A − ℓ_B|)/2 + 1`.
+  `(ℓ_A + ℓ_B − |ℓ_A − ℓ_B|)/2 + 1`. Same `Tuple` / `NamedTuple` rule as `F`.
 
 # Example: NiO 2p–3d core–valence Coulomb
 ```julia
@@ -200,7 +237,9 @@ H = coulomb(m, :Ni_2p, :Ni_3d; U = 8.5, F = (6.67,), G = (4.92, 2.80))
 ```
 """
 function coulomb(m::ShellModel, shellA::Symbol, shellB::Symbol;
-                 U, F::Tuple = (), G::Tuple = ())
+                 U, F::Union{Tuple,NamedTuple} = (), G::Union{Tuple,NamedTuple} = ())
+    F = _slater_ranks(F, :F)
+    G = _slater_ranks(G, :G)
     shellA == shellB && throw(ArgumentError(
         "coulomb two-shell: shellA and shellB must be distinct; got " *
         "$shellA == $shellB. Use the single-shell `coulomb(m, :s; U, F)`."))

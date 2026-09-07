@@ -60,3 +60,26 @@ jobs:
       # no external code (Quanty, QuSpin) is executed.
       - name: Run validation suite
         run: julia --project=. --color=yes test/validation_runtests.jl
+
+  examples:
+    name: Example scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v3
+      - uses: julia-actions/julia-buildpkg@v1
+      # examples/ is user-facing but exercised by nothing else; run each script
+      # so it cannot drift out of sync with the API. gen_nio_radial.jl is
+      # excluded: it shells out to a Cowan binary that CI does not have.
+      - name: Run examples
+        run: |
+          set -e
+          for f in examples/0*.jl; do
+            echo "::group::$f"
+            julia --project=. --color=yes "$f"
+            echo "::endgroup::"
+          done

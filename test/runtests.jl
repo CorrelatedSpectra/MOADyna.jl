@@ -90,4 +90,5 @@ using MOADyna
     end
 
     include("test_aqua.jl")
+    include("test_readme.jl")
 end
