@@ -86,9 +86,9 @@ hop_term = sum(c'(sites[i], σ) * c(sites[i+1], σ) for i in 1:L-1, σ in (1, 2)
 H        = -t * (hop_term + hop_term') + U * sum(n(sites[i], 1) * n(sites[i], 2) for i in 1:L)
 
 # Half-filling, Sz = 0 (weights +1/−1 on the ↑/↓ modes give 2·Sz_total).
-hub_basis = EagerBasis(hilbert,
-                       n_fermion(hilbert) == L,
-                       WeightedParticleCount(sites, repeat([1, -1], L)) == 0)
+hub_basis = basis(hilbert,
+                  n_fermion(hilbert) == L,
+                  WeightedParticleCount(sites, repeat([1, -1], L)) == 0)
 
 E = eigen(H, hub_basis; n = 4)        # 4 lowest states; or assemble() for your own solver
 ```

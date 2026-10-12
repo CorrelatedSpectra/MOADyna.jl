@@ -12,12 +12,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   occupations, including interleaved site orders and multiword encodings.
 - RIXS convergence metadata includes intermediate and final Lanczos runs.
 - Sx/Sy expansion limits are checked before allocating the expanded chains.
+- README examples are extracted correctly with Windows line endings.
 
 ### Changed
 
 - RIXS intermediate resolvents preserve the block-tridiagonal Krylov structure.
 - XAS spectrum derivatives share ground-state and resolvent calculations
   across parameter directions.
+- The README quick start uses the public `basis(...)` constructor.
 
 ### Added
 

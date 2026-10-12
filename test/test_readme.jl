@@ -12,12 +12,20 @@
 
 using Test
 
+function _readme_runnable_blocks(readme)
+    normalized = replace(readme, "\r\n" => "\n")
+    blocks = [m.captures[1] for m in eachmatch(r"```julia\n(.*?)```"s, normalized)]
+    return filter(b -> startswith(strip(b), "using MOADyna"), blocks)
+end
+
 @testset "README" begin
     readme = read(joinpath(@__DIR__, "..", "README.md"), String)
-    blocks = [m.captures[1] for m in eachmatch(r"```julia\n(.*?)```"s, readme)]
-    runnable = filter(b -> startswith(strip(b), "using MOADyna"), blocks)
+    runnable = _readme_runnable_blocks(readme)
 
     @test length(runnable) == 2   # quick-start + NiO L2,3 XAS
+    lf_readme = replace(readme, "\r\n" => "\n")
+    @test all(_readme_runnable_blocks(text) == runnable for text in
+              (lf_readme, replace(lf_readme, "\n" => "\r\n")))
 
     for (i, code) in enumerate(runnable)
         @testset "block $i runs" begin
