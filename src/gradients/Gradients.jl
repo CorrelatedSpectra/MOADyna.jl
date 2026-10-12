@@ -268,6 +268,12 @@ function groundstate(model::AffineModel, θ::AbstractVector;
     (gap_tol > 0 && isfinite(gap_tol)) || throw(ArgumentError(
         "groundstate: gap_tol must be positive and finite; got $(gap_tol)."))
     H = hamiltonian(model, θ)
+    return _groundstate(H; gap_tol = gap_tol, dense_max = dense_max)
+end
+
+# Keep a prepared Hamiltonian available to the Sternheimer response.
+function _groundstate(H::AbstractMatrix; gap_tol::Real = 1e-6,
+                       dense_max::Integer = 4096)
     d = size(H, 1)
     d ≥ 2 || throw(ArgumentError(
         "groundstate: Hilbert dimension $(d) < 2; cannot measure a gap."))
@@ -316,8 +322,14 @@ function sternheimer_dψ0(model::AffineModel, θ::AbstractVector, E0::Real,
     (rtol > 0 && isfinite(rtol)) || throw(ArgumentError(
         "sternheimer_dψ0: rtol must be positive and finite; got $(rtol)."))
     H = hamiltonian(model, θ)
+    dHψ0 = dhamiltonian(model, θ, θ̇) * ψ0
+    return _sternheimer_dψ0(H, E0, ψ0, dHψ0; rtol = rtol)
+end
+
+function _sternheimer_dψ0(H::AbstractMatrix, E0::Real, ψ0::AbstractVector,
+                          dHψ0::AbstractVector; rtol::Real = 1e-12)
     proj(v) = v .- ψ0 .* (ψ0' * v)                  # P v = v − ψ0 ⟨ψ0|v⟩
-    rhs = -proj(dhamiltonian(model, θ, θ̇) * ψ0)
+    rhs = -proj(dHψ0)
     Aop(v) = H * v .- E0 .* v .+ ψ0 .* (ψ0' * v)    # (H − E0) v + ψ0 ⟨ψ0|v⟩
     x, info = linsolve(Aop, rhs; isposdef = true, rtol = rtol)
     info.converged == 1 || throw(ErrorException(
@@ -895,6 +907,71 @@ _xas_dC(model::XASGradientModel, θ, θ̇) = xas_response_jvp(model.g_model, mod
     model.A, model.B, model.embedding, θ, θ̇, model.ω_grid; Γ = model.Γ,
     gap_tol = model.gap_tol, rtol = model.rtol, embedding_tol = model.embedding_tol)
 
+# `directions === nothing` requests all parameter columns. Stream frequencies so
+# the common resolvent blocks are solved once without retaining a grid-sized cache.
+function _xas_spectrum_derivatives(model::XASGradientModel, θ::AbstractVector,
+                                   directions::Union{Nothing,AbstractMatrix})
+    gm, fm = model.g_model, model.f_model
+    _check_xas_inputs(gm, fm, model.A, model.B, model.embedding, model.ω_grid,
+                      model.Γ, model.rtol, model.embedding_tol)
+    Hg = hamiltonian(gm, θ)
+    E0, ψ0, _ = _groundstate(Hg; gap_tol = model.gap_tol)
+    Hf = hamiltonian(fm, θ)
+    Eψ0 = model.embedding * ψ0
+    X_A = _source_block(model.A, Eψ0)
+    X_B = _source_block(model.B, Eψ0)
+    nd = directions === nothing ? n_params(model) : size(directions, 2)
+    dcg = coeff_jacobian(gm.cmap, θ)
+    dcf = coeff_jacobian(fm.cmap, θ)
+    if directions !== nothing
+        dcg = dcg * directions
+        dcf = dcf * directions
+    end
+    active_g = [j for j in axes(dcg, 1) if any(!iszero, view(dcg, j, :))]
+    active_f = [j for j in axes(dcf, 1) if any(!iszero, view(dcf, j, :))]
+
+    # Combine term actions on ψ0 rather than constructing one large dH per column.
+    dHgψ0 = zeros(ComplexF64, length(ψ0), nd)
+    for j in active_g
+        termψ0 = gm.terms[j] * ψ0
+        for k in 1:nd
+            dHgψ0[:, k] .+= dcg[j, k] .* termψ0
+        end
+    end
+    dE0 = [real(dot(ψ0, view(dHgψ0, :, k))) for k in 1:nd]
+    dX_A = Vector{Matrix{ComplexF64}}(undef, nd)
+    dX_B = Vector{Matrix{ComplexF64}}(undef, nd)
+    for k in 1:nd
+        dψ0 = _sternheimer_dψ0(Hg, E0, ψ0, view(dHgψ0, :, k); rtol = model.rtol)
+        Edψ0 = model.embedding * dψ0
+        dX_A[k] = _source_block(model.A, Edψ0)
+        dX_B[k] = _source_block(model.B, Edψ0)
+    end
+
+    nA, nB, nω = size(X_A, 2), size(X_B, 2), length(model.ω_grid)
+    S = Array{Float64,3}(undef, nA, nB, nω)
+    J = Array{Float64,4}(undef, nA, nB, nω, nd)
+    for (i, ω) in enumerate(model.ω_grid)
+        z = ω + E0 + im * model.Γ / 2
+        R = _resolvent_solve_block(Hf, z, X_B; rtol = model.rtol)
+        S[:, :, i] = (-1 / π) .* imag(X_A' * R)
+        nd == 0 && continue
+        L = _resolvent_solve_block(Hf, conj(z), X_A; rtol = model.rtol)
+        LR = L' * R
+        for k in 1:nd
+            J[:, :, i, k] = (-1 / π) .* imag(dX_A[k]' * R + L' * dX_B[k] - dE0[k] * LR)
+        end
+        # Each final-Hamiltonian term action is shared across tangent columns.
+        for j in active_f
+            term_response = L' * (fm.terms[j] * R)
+            for k in 1:nd
+                J[:, :, i, k] .+= (-1 / π) .* imag(dcf[j, k] .* term_response)
+            end
+        end
+    end
+    return S, J
+end
+
 """
     spectrum(model::XASGradientModel, θ) -> Array{Float64,3}   # nA × nB × nω
 
@@ -911,25 +988,20 @@ spectrum(model::XASGradientModel, θ::AbstractVector) = (-1 / π) .* imag(_xas_C
 Spectrum and its directional derivative `dS = −Im(dC)/π` along `θ̇`.
 """
 function spectrum_and_jvp(model::XASGradientModel, θ::AbstractVector, θ̇::AbstractVector)
-    S  = (-1 / π) .* imag(_xas_C(model, θ))
-    dS = (-1 / π) .* imag(_xas_dC(model, θ, θ̇))
-    return S, dS
+    length(θ̇) == n_params(model) || throw(DimensionMismatch(
+        "dhamiltonian: length(θ̇)=$(length(θ̇)) ≠ nparams=$(n_params(model))."))
+    S, J = _xas_spectrum_derivatives(model, θ, reshape(θ̇, :, 1))
+    return S, J[:, :, :, 1]
 end
 
 """
     jacobian(model, θ) -> Array{Float64,4}   # nA × nB × nω × Nθ
 
-Dense spectrum Jacobian; column `k` is `spectrum_and_jvp(model, θ, e_k)[2]`. Cost =
-`Nθ` JVPs (Fisher / diagnostics; `spectrum_with_pullback` avoids materializing it).
+Dense spectrum Jacobian; column `k` is `spectrum_and_jvp(model, θ, e_k)[2]`.
+The ground state and frequency-dependent resolvent solves are shared across columns.
 """
 function jacobian(model::XASGradientModel, θ::AbstractVector)
-    np = n_params(model)
-    S = spectrum(model, θ)
-    J = Array{Float64,4}(undef, size(S, 1), size(S, 2), size(S, 3), np)
-    for k in 1:np
-        ek = zeros(np); ek[k] = 1.0
-        J[:, :, :, k] = (-1 / π) .* imag(_xas_dC(model, θ, ek))
-    end
+    _, J = _xas_spectrum_derivatives(model, θ, nothing)
     return J
 end
 
@@ -939,26 +1011,20 @@ end
 `S` and a closure `pullback(λ::Array{Float64,3}) -> g::Vector{Float64}` mapping a real
 cotangent on `S` (shape `nA×nB×nω`) to the parameter gradient `g_θ` (length `Nθ`) via
 `g[k] = Σ λ .* dS_k` — equivalently `Σ Re(conj(W).*dC_k)` with `W = −iλ/π`. The `Nθ`
-forward JVP columns are materialized eagerly (each its own immutable array), so the
-ground-state solve happens once per parameter, and `pullback` is then a cheap
-contraction. The pullback API is stable if the internals later become true adjoint
-accumulation.
+forward derivative columns are materialized eagerly with one shared ground-state
+solve and one pair of source-block resolvent solves per frequency. `pullback` is then
+a cheap contraction of this fixed snapshot; it can be called repeatedly.
 """
 function spectrum_with_pullback(model::XASGradientModel, θ::AbstractVector)
     np = n_params(model)
-    S = spectrum(model, θ)
-    cols = Vector{Array{Float64,3}}(undef, np)
-    for k in 1:np
-        ek = zeros(np); ek[k] = 1.0
-        cols[k] = (-1 / π) .* imag(_xas_dC(model, θ, ek))   # fresh array per k
-    end
+    S, J = _xas_spectrum_derivatives(model, θ, nothing)
     function pullback(λ::AbstractArray)
         size(λ) == size(S) || throw(DimensionMismatch(
             "spectrum_with_pullback: cotangent λ has size $(size(λ)), expected $(size(S))."))
         (eltype(λ) <: Real && all(isfinite, λ)) || throw(ArgumentError(
             "spectrum_with_pullback: cotangent λ must be real and finite (S = −Im C/π is " *
             "real; a complex λ would return a complex, ill-defined gradient)."))
-        return [sum(λ .* cols[k]) for k in 1:np]
+        return [sum(λ .* view(J, :, :, :, k)) for k in 1:np]
     end
     return S, pullback
 end

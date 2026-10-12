@@ -16,6 +16,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - RIXS intermediate resolvents preserve the block-tridiagonal Krylov structure.
+- XAS spectrum derivatives share ground-state and resolvent calculations
+  across parameter directions.
 
 ### Added
 

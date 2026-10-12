@@ -39,6 +39,81 @@ function _fixture()
     return model, [0.3, 0.2]
 end
 
+# A nonlinear coefficient map with counters measures real model evaluations;
+# extra directions must not rebuild the common Hamiltonians.
+struct _CountingNonlinearMap <: G.AbstractCoefficientMap
+    c0::Vector{Float64}
+    J::Matrix{Float64}
+    evaluations::Base.RefValue{Int}
+    jacobians::Base.RefValue{Int}
+end
+function G.coeffs(m::_CountingNonlinearMap, θ::AbstractVector)
+    m.evaluations[] += 1
+    return m.c0 + m.J * (θ .+ θ.^2)
+end
+function G.coeff_jacobian(m::_CountingNonlinearMap, θ::AbstractVector)
+    m.jacobians[] += 1
+    return m.J * Diagonal(1 .+ 2 .* θ)
+end
+
+@testset "XAS gradients reuse common work across nonlinear directions" begin
+    counts = Tuple{Int,Int,Int,Int}[]
+    scalar_errors, fd_errors, pullback_errors = Float64[], Float64[], Float64[]
+    for np in (2, 6)
+        original, _ = _fixture()
+        names = [Symbol(:p, k) for k in 1:np]
+        maps = map((original.g_model, original.f_model)) do m
+            J = hcat(m.cmap.J, [0.02 * sin(i + k) for i in 1:3, k in 3:np])
+            _CountingNonlinearMap(m.cmap.c0, J, Ref(0), Ref(0))
+        end
+        gm = G.AffineModel(original.g_model.terms, maps[1], names)
+        fm = G.AffineModel(original.f_model.terms, maps[2], names)
+        model = G.XASGradientModel(gm, fm, original.A, original.B,
+                                   original.embedding, original.ω_grid; Γ = original.Γ)
+        θ = [0.3, 0.2, fill(0.04, np - 2)...]
+        tangent = [cos(k) for k in 1:np]
+        reset() = foreach(m -> (m.evaluations[] = 0; m.jacobians[] = 0), maps)
+        record() = push!(counts, (maps[1].evaluations[], maps[2].evaluations[],
+                                  maps[1].jacobians[], maps[2].jacobians[]))
+
+        reset()
+        S, dS = G.spectrum_and_jvp(model, θ, tangent)
+        record()
+        reset()
+        J = G.jacobian(model, θ)
+        record()
+        reset()
+        Sp, pull = G.spectrum_with_pullback(model, θ)
+        record()
+
+        dC = G.xas_response_jvp(gm, fm, model.A, model.B, model.embedding,
+                                θ, tangent, model.ω_grid; Γ = model.Γ)
+        push!(scalar_errors, maximum(abs, dS + imag(dC) ./ π), maximum(abs, S - Sp))
+        for k in 1:np
+            ek = zeros(np); ek[k] = 1
+            dCk = G.xas_response_jvp(gm, fm, model.A, model.B, model.embedding,
+                                     θ, ek, model.ω_grid; Γ = model.Γ)
+            push!(scalar_errors, maximum(abs, J[:, :, :, k] + imag(dCk) ./ π))
+        end
+        λ = reshape([sin(i) for i in 1:length(S)], size(S))
+        grad = pull(λ)
+        δ = 1e-5
+        Spδ = G.spectrum(model, θ .+ δ .* tangent)
+        Smδ = G.spectrum(model, θ .- δ .* tangent)
+        push!(fd_errors, maximum(abs, dS - (Spδ - Smδ) ./ (2δ)))
+        push!(pullback_errors, abs(dot(grad, tangent) - sum(λ .* (Spδ - Smδ)) / (2δ)))
+        # A pullback is a snapshot and can be called repeatedly, including after
+        # the caller has changed its parameter array and evaluated another model.
+        θ .+= 0.01
+        G.spectrum_with_pullback(model, θ)
+        push!(pullback_errors, maximum(abs, pull(λ) - grad))
+    end
+    @test all(==((1, 1, 1, 1)), counts)
+    @test maximum(scalar_errors) < 1e-10
+    @test maximum(fd_errors) < 1e-6
+    @test maximum(pullback_errors) < 1e-6
+end
+
 @testset "Gradients build-step 6a: spectrum + VJP pullback" begin
     model, θ = _fixture()
     δ = 1e-5
