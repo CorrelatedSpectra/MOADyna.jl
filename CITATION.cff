@@ -22,15 +22,6 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.21808796
     description: Concept DOI — resolves to the latest archived release.
-  - type: doi
-    value: 10.5281/zenodo.22635658
-    description: Archived release v0.3.2.
-  - type: doi
-    value: 10.5281/zenodo.21881201
-    description: Archived release v0.3.1.
-  - type: doi
-    value: 10.5281/zenodo.21808797
-    description: Archived release v0.3.0, under the former name MOAD.
 keywords:
   - julia
   - many-body

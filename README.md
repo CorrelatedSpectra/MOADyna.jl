@@ -194,21 +194,11 @@ Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/).
 
 ## Citing
 
-**Citing the software.** Please cite the version you used. Machine-readable
-metadata is in [`CITATION.cff`](CITATION.cff) (GitHub renders a "Cite this
-repository" button from it).
-
-Each tagged release is archived on Zenodo with its own DOI:
-
-| | DOI |
-|---|---|
-| All versions (resolves to the latest) | [10.5281/zenodo.21808796](https://doi.org/10.5281/zenodo.21808796) |
-| v0.3.2 | [10.5281/zenodo.22635658](https://doi.org/10.5281/zenodo.22635658) |
-| v0.3.1 | [10.5281/zenodo.21881201](https://doi.org/10.5281/zenodo.21881201) |
-| v0.3.0 (as `MOAD`) | [10.5281/zenodo.21808797](https://doi.org/10.5281/zenodo.21808797) |
-
-Cite the **version-specific** DOI for reproducibility — it pins the exact code
-a calculation used.
+**Citing the software.** Please cite MOADyna using
+[10.5281/zenodo.21808796](https://doi.org/10.5281/zenodo.21808796), the DOI
+covering all versions. Machine-readable metadata is in
+[`CITATION.cff`](CITATION.cff) (GitHub renders a "Cite this repository" button
+from it).
 
 **Methods paper.** A separate paper describing the methods is planned. It is
 not the same citation as the software archive, and this section will be updated

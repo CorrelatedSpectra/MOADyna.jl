@@ -20,6 +20,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - XAS spectrum derivatives share ground-state and resolvent calculations
   across parameter directions.
 - The README quick start uses the public `basis(...)` constructor.
+- Software citation guidance uses the single DOI covering all versions.
 
 ### Added
 
