@@ -183,4 +183,6 @@ export atomic_parameters, radial_wavefunction, covered_elements, covered_configu
 # From Units (energy-unit conversions; `Units.kB_eV` stays module-qualified)
 export convert_energy
 
+include("precompile_workload.jl")
+
 end # module

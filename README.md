@@ -70,6 +70,24 @@ Pkg.add("MOADyna")
 Requires Julia 1.10 or newer. See [`CHANGELOG.md`](CHANGELOG.md) for what each
 release changed.
 
+Julia normally precompiles packages automatically after installation or updates,
+saving compiled code for later sessions. To request this explicitly, run in the
+same Julia environment where you installed MOADyna:
+
+```julia
+using Pkg
+Pkg.precompile()
+```
+
+MOADyna precompiles small examples of common diagonalization, XAS, and RIXS
+workflows. The first calculation with different data types or options can still
+trigger additional compilation and take longer. For timing calculations, run a
+representative calculation once before measuring repeated runs in the same Julia
+session. Precompilation reduces compilation delays; it does not change numerical
+accuracy or the calculation's steady-state runtime. See Julia's
+[precompilation guide](https://pkgdocs.julialang.org/v1/environments/#Environment-Precompilation)
+for details.
+
 ## Quick start
 
 A half-filled 4-site Hubbard chain: build the Hamiltonian, restrict to a
