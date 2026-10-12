@@ -39,16 +39,10 @@
     end
 
     @testset "Sx/Sy expansion error threshold" begin
-        # Manually construct a chain with too many Sx ops (would generate 2^17
-        # compiled terms — beyond the error threshold).
-        # We can't easily trigger this from layer-1 OperatorSum without
-        # synthesizing a 17-spin chain. Skip the throw, but exercise the
-        # warn case (factor > 256) with 9 Sx ops would go beyond warn.
-        # 9 spins × 2 expansions each = 512 → warn. Build it.
+        # Nine distinct spins give 512 expansions: warn, but still compile.
         sites = [SpinSite{1//2}(Symbol("s$i")) for i in 1:9]
         h = Hilbert(s.name => s for s in sites)
-        # Cannot multiply 9 spin operators on different sites because that
-        # would only produce one chain. Build a single product.
+        # Build one chain whose nine Sx entries each contribute two choices.
         chain_op = Sx(sites[1], 1//2)
         for i in 2:9
             chain_op = chain_op * Sx(sites[i], 1//2)
@@ -56,5 +50,47 @@
         b = EagerBasis(h)
         # Expect a warn but still complete.
         @test_logs (:warn,) compile(chain_op, b)
+    end
+
+    @testset "Sx/Sy limit precedes Cartesian expansion" begin
+        s = SpinSite{1//2}(:s)
+        b = EagerBasis(Hilbert(:s => s))
+        spin_ops = (Sx(s, 1//2), Sy(s, 1//2))
+        # Repeated actions on one spin keep the Hilbert space tiny. The
+        # expansion itself must reject 2^17 terms before constructing them.
+        errors = map(spin_ops) do op
+            chain = ntuple(_ -> only(op).chain[1], 17)
+            try
+                MOADyna.Bases._expand_spin_xy(chain)
+                nothing
+            catch err
+                err
+            end
+        end
+        @test all(err -> err isa ArgumentError, errors)
+
+        # Exercise counts that cannot fit their expansion factor in Int,
+        # only after early rejection is established; a regression must not
+        # attempt to allocate 2^64 entries in the test process.
+        if all(err -> err isa ArgumentError, errors)
+            long_chain_errors = map(Iterators.product(spin_ops, (64, 128))) do (op, count)
+                # Build the fixture directly rather than specializing
+                # symbolic multiplication at every intermediate length.
+                chain = ntuple(_ -> only(op).chain[1], count)
+                long_op = zero(op)
+                long_op.terms[chain] = OperatorTerm(1.0, chain)
+                try
+                    compile(long_op, b)
+                    nothing
+                catch err
+                    err
+                end
+            end
+            @test all(err -> err isa ArgumentError, long_chain_errors)
+        end
+
+        # The existing limits are inclusive: 256 is quiet, 65536 warns.
+        @test_logs MOADyna.Bases._check_spin_expansion(256)
+        @test_logs (:warn,) MOADyna.Bases._check_spin_expansion(65_536)
     end
 end

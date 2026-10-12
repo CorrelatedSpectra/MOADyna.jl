@@ -51,6 +51,9 @@ A list of ψ values adds a leading axis (matching `xas`'s convention).
 Mixed scalar / vector inputs for T_in vs T_out promote to the full
 6-D form internally; the result collapses to 2-D when both are scalar.
 
+`metadata[:converged]` requires every intermediate and final Lanczos run
+to converge. The individual `chunks` report final-state convergence.
+
 Greek-letter keyword arguments (`Γ_intermediate`, `Γ_final`,
 `ω_in_grid`, `ω_out_grid`) accept ASCII Latin aliases
 (`Gamma_intermediate`, `Gamma_final`, `omega_in_grid`, `omega_out_grid`);
@@ -197,6 +200,7 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
     # Responses-layer evaluation path.
     chunks            = LanczosChunk{ComplexF64}[]
     outer_responses   = Responses.LanczosResponse{ComplexF64}[]
+    intermediate_converged = true
 
     # Empty As === Bs (reused across all outer correlator calls). Never
     # consulted in source_block mode beyond the `As === Bs` identity check.
@@ -223,6 +227,7 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
                                      restrictions = restrictions_intermediate,
                                      basis        = restrictions_intermediate === nothing ? nothing : basis,
                                      retain_basis = false)
+            intermediate_converged &= inner_p1.converged
             T_int_p1 = _build_T_K(inner_p1.α, inner_p1.β)
             es = real.(eigvals(Hermitian(T_int_p1)))
             e_min = min(e_min, minimum(es) - Eg)
@@ -250,6 +255,7 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
                               restrictions = restrictions_intermediate,
                               basis        = restrictions_intermediate === nothing ? nothing : basis,
                               retain_basis = true)
+        intermediate_converged &= inner.converged
         # block_lanczos with retain_basis=true stores K+1 blocks
         # [V_1, V_2, …, V_{K+1}], where V_{K+1} is the next block produced
         # at iteration K but never used inside the K-step Krylov
@@ -341,7 +347,7 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
     #     [for now we always produce 6-D when ANY operator is vectorial; see below]
     #   else                                 → 2-D (n_ω_in, n_ω_out) for each ψ
     full6d = T_in_is_vector || T_out_is_vector
-    converged_flag = all(c -> c.converged, chunks)
+    converged_flag = intermediate_converged && all(c -> c.converged, chunks)
 
     # Per-(ψ, ω_in) GridResponse: extract `.data` from each outer
     # LanczosResponse via `to_grid(L, ω_out_resolved; Γ)`. Shape is

@@ -113,7 +113,6 @@ function compile(H::OperatorSum{T}, basis::EagerBasis) where {T<:Number}
         chain = term.chain
         # Expand Sx/Sy: produce a vector of (factor, expanded_chain) pairs.
         expansions = _expand_spin_xy(chain)
-        _check_spin_expansion(length(expansions))
         for (factor, expanded_chain) in expansions
             ccoef = Tout(coef * factor)
             ccoef == 0 && continue
@@ -134,6 +133,14 @@ end
 # {:Sz, :Splus, :Sminus}. We do the expansion as a Cartesian product over
 # the positions occupied by :Sx / :Sy.
 function _expand_spin_xy(chain::Chain)
+    # Reject exponential growth before allocating its Cartesian product.
+    # Guard the shift separately so long chains cannot overflow Int.
+    n_xy = count(e -> e.kind === :Sx || e.kind === :Sy, chain)
+    n_xy >= 8 * sizeof(Int) - 1 && throw(ArgumentError(
+        "Sx/Sy compile-time expansion factor 2^$n_xy exceeds " *
+        "limit $SXSY_EXPANSION_ERROR. Rewrite the chain in S+/S- form."))
+    _check_spin_expansion(1 << n_xy)
+
     # Find every :Sx/:Sy position and its (factor, replacement_kind) options.
     positions = Tuple{Int, Vector{Tuple{ComplexF64, Symbol}}}[]
     for (i, e) in enumerate(chain)

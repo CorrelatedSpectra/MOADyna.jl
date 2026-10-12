@@ -10,6 +10,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Fermion signs in mixed fermion–boson/spin bases count only fermion
   occupations, including interleaved site orders and multiword encodings.
+- RIXS convergence metadata includes intermediate and final Lanczos runs.
+- Sx/Sy expansion limits are checked before allocating the expanded chains.
 
 ## [0.3.2] — 2026-09-07
 

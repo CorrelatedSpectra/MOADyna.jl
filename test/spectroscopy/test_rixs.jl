@@ -110,6 +110,45 @@
                   for k in 1:length(result.chunks))
     end
 
+    @testset "convergence includes the intermediate recurrence" begin
+        # Intermediate modes 2 and 3 mix, so one inner Lanczos step is
+        # incomplete. Emission returns only mode 1, an eigenstate of H_f:
+        # every outer recurrence nevertheless terminates in one step.
+        sys = build_3level(; ε_i = 5.0, ε_f = 6.0)
+        s = FermionSite{3}(:s)
+        H_i = sys.H + assemble(compile(cdag(s, 2) * c(s, 3) +
+                                      cdag(s, 3) * c(s, 2), sys.basis), sys.basis)
+        T = sys.T_in
+        T_matrix = assemble(compile(T, sys.basis), sys.basis)
+        ω_in = 4.5:0.5:5.5
+        ω_out = 0.0:0.1:0.2
+        kwargs = (; Γ_intermediate = 0.5, Γ_final = 0.05,
+                    Eg = 0.0, reorth = :full, ω_out_grid = ω_out)
+        short = rixs(sys.H, H_i, sys.basis, T, T, sys.ψ;
+                     kwargs..., ω_in_grid = ω_in, krylovdim = 1)
+        short_auto = rixs(sys.H, H_i, sys.basis, T, T, sys.ψ;
+                          kwargs..., krylovdim = 1)
+        short_list = rixs(sys.H, H_i, sys.basis, T, T, [sys.ψ, sys.ψ / 2];
+                          kwargs..., ω_in_grid = ω_in, krylovdim = 1)
+        limited = (short, short_auto, short_list)
+        @test all(result -> all(chunk -> chunk.converged, result.chunks), limited)
+        @test all(result -> !result.metadata[:converged], limited)
+
+        # Dense resolvents independently check recovery when enough inner
+        # Krylov steps are permitted; no fitted or approximate reference.
+        reference = Matrix{ComplexF64}(undef, length(ω_in), length(ω_out))
+        for (i, wi) in enumerate(ω_in), (j, wo) in enumerate(ω_out)
+            Y = ((wi + 0.25im) * I - Matrix(H_i)) \ (T_matrix * sys.ψ)
+            X = adjoint(T_matrix) * Y
+            reference[i, j] = dot(X, ((wo + 0.025im) * I - Matrix(sys.H)) \ X)
+        end
+        complete = rixs(sys.H, H_i, sys.basis, T, T, sys.ψ;
+                        kwargs..., ω_in_grid = ω_in, krylovdim = 3)
+        @test norm(short.tensor - reference) / norm(reference) > 0.1
+        @test complete.metadata[:converged]
+        @test norm(complete.tensor - reference) / norm(reference) < 1e-12
+    end
+
     @testset "multi-ψ ω_in :auto unions inner-pole ranges across ψ" begin
         # Two ψ's with the same H but different starting blocks (different
         # sectors of |g⟩, |i⟩, |f⟩). The :auto ω_in_grid must bracket the
