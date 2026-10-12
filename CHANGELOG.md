@@ -22,6 +22,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The README quick start uses the public `basis(...)` constructor.
 - Software citation guidance uses the single DOI covering all versions.
 - Scalar continued fractions avoid temporary matrix products and inverses.
+- Single-source spectra use a scalar Lanczos recurrence with reusable work vectors.
 
 ### Added
 

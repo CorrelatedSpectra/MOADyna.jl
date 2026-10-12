@@ -60,6 +60,12 @@ calls. Automatic mode keeps small products serial. The same control is available
 on `MOADyna.Responses.block_lanczos`; see [Sparse multiplication threads](@ref)
 for Julia startup and the scope of this setting.
 
+Single-source calculations on supported CPU matrices automatically use a
+scalar Lanczos recurrence with reusable work vectors. Multiple sources use
+block Lanczos. Both return the same response representations, so polarization
+contraction, re-broadening, and retained-basis RIXS calculations keep their
+existing interfaces. Custom operators retain the block multiplication path.
+
 ```@example resp
 using MOADyna
 

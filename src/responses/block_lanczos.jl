@@ -22,9 +22,16 @@ initial column-pivoted QR ortho-normalises the starting block,
 producing the rectangular factor `R` of shape `B_active × B_raw`
 (rank-deflated when `X_raw` is not full column rank). The recurrence
 then produces block-α and block-β stacks. Ragged-block deflation drops
-columns of subsequent `V_{k+1}` blocks whose pivot falls below
-`deflate_tol · ||X_pivot_max||`, shrinking the active block size on the
-fly.
+columns of subsequent `V_{k+1}` blocks, shrinking the active block size
+on the fly.
+
+For a single source column, supported sparse, strided dense, and diagonal
+floating-point matrices use a scalar recurrence with vector `mul!` and
+reusable work vectors. The same sparse `threaded` policy applies. Scalar
+normalization may choose different vector phases from QR; response values
+and the matrix-shaped return contract are preserved. Generic operators,
+products requiring wider intermediate precision, and zero or underflowed
+deflation thresholds keep the block implementation.
 
 # Arguments
 
@@ -66,9 +73,10 @@ This option does not change basis/assembly scheduling or BLAS thread settings.
 A `NamedTuple` with fields:
 
 - `α::Vector{Matrix{T}}` — block-α stack; `α[k]` is `B_k × B_k`.
-- `β::Vector{Matrix{T}}` — block-β stack of `length(β) == length(α) - 1`
-  (or possibly fewer when soft-stop cuts the recurrence early); each
-  `β[k]` is `B_{k+1} × B_k` (rectangular when deflation occurred).
+- `β::Vector{Matrix{T}}` — block-β stack. For `K = length(α)`, its length
+  is `K - 1` on exhaustion/deflation and `K` on a soft-stop or iteration
+  cap. The trailing `β[K]` does not enter the K-step continued fraction.
+  Each `β[k]` is `B_{k+1} × B_k` (rectangular when deflation occurred).
 - `R::Matrix{T}` — initial QR factor, `B_active × B_raw`. Always present.
 - `V_basis::Union{Nothing, Vector{Matrix{T}}}` — when
   `retain_basis = true`, the per-iteration orthonormal blocks; otherwise
@@ -76,21 +84,22 @@ A `NamedTuple` with fields:
   Krylov basis paired with the block-tridiagonal `T_K`** (built from
   `α` and `β`); these are the blocks that `cf_block` /
   `evaluate_on_grid` and the `R†·G₁·R` sandwich operate against. When
-  the recurrence does NOT exhaust the Krylov subspace, an additional
+  the recurrence reaches its iteration cap without stopping, an additional
   trailing block `V_{K+1}` is also stored — it is the next orthonormal
-  block produced by iteration `K`'s QR but **never enters the cf
+  block produced by iteration `K`'s normalization/QR but **never enters the cf
   representation**. Code that builds `V_int = hcat(V_basis...)` for
   the cf sandwich must take the first `length(α)` blocks only;
   including the trailing block dimension-mismatches against `T_K`.
 - `n_iter::Int` — number of α blocks produced (i.e. `K`).
-- `converged::Bool` — whether the soft-stop fired.
+- `converged::Bool` — whether exhaustion, deflation, or the consecutive-beta
+  soft-stop fired; `false` when only the iteration cap was reached.
 
 # Restrictions semantics
 
 When `restrictions !== nothing`:
 
 1. The starting block `X_raw` is projected first: `X_proj = P · X_raw`.
-   The QR is on `X_proj`; the returned `R` relates `V_1` to `X_proj`,
+   Normalization/QR is on `X_proj`; the returned `R` relates `V_1` to `X_proj`,
    not `X_raw`. This is the standard projected-dynamics treatment —
    any portion of `X_raw` outside the projector's range is physically
    meaningless under `P · H · P`.
@@ -137,6 +146,18 @@ function block_lanczos(H, X_raw::AbstractMatrix;
     X = restrictions !== nothing ?
             _project_block(X_raw, restrictions, basis) :
             Matrix{T}(X_raw)             # promote to dense Matrix{T}; may be a copy
+    if B_raw == 1 && _scalar_lanczos_type(T) &&
+       _supports_scalar_lanczos_action(action) &&
+       promote_type(eltype(action), T) === T && 0 < deflate_tol <= 1
+        source_norm = norm(X)
+        # A zero threshold lets the existing QR path continue after exact
+        # exhaustion. Preserve it, including positive products that underflow.
+        if isfinite(source_norm) && source_norm > 0 && deflate_tol * source_norm > 0
+            return _scalar_lanczos(action, X, source_norm;
+                krylovdim, reorth, tol, min_iter, max_iter, deflate_tol,
+                restrictions, basis, retain_basis)
+        end
+    end
     F        = qr(X, ColumnNorm())
     pivots   = abs.(diag(F.R))
     pivots[1] > 0 ||
@@ -196,9 +217,9 @@ function block_lanczos(H, X_raw::AbstractMatrix;
 
         n_iter = k
 
-        # On the last allowed iteration we don't compute a new V_{k+1};
-        # but we DO need β_k for cf evaluation. So always run the QR
-        # except when residual is numerically zero.
+        # A capped run retains beta_k and, when requested, V_(k+1), although
+        # neither enlarges the K-step continued fraction. Only exhaustion or
+        # deflation stops before producing this candidate block.
         residual_norm = norm(W)
         if residual_norm < deflate_tol * pivots[1]
             # Krylov subspace is exhausted.
