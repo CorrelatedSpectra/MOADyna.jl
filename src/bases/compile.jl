@@ -62,6 +62,7 @@ compiled with.
 struct CompiledHamiltonian{T<:Number}
     terms::Vector{CompiledTerm{T}}
     entries::Vector{CompiledEntry}
+    fermion_mask::Vector{UInt64}           # fermion bit positions eligible for JW parity
     masks_flat::Vector{UInt64}              # 2 × nwords per fermion-bearing term
     boson_reqs::Vector{Tuple{Int,Int,Int}}  # (mode_idx into entries, required_min_occ, max_val)
     basis_id::UInt64
@@ -98,6 +99,14 @@ function compile(H::OperatorSum{T}, basis::EagerBasis) where {T<:Number}
     masks_flat = UInt64[]
     boson_reqs = Tuple{Int,Int,Int}[]
     nwords = enc.nwords
+    # Include every fermionic mode, even if absent from H: occupied spectator
+    # fermions contribute to parity, while boson/spin encoding bits do not.
+    fermion_mask = zeros(UInt64, nwords)
+    for entry in values(enc.entries)
+        if entry.kind === :fermion
+            fermion_mask[entry.word_idx] |= UInt64(1) << entry.bit_offset
+        end
+    end
 
     for term in H
         coef = term.coefficient
@@ -114,7 +123,7 @@ function compile(H::OperatorSum{T}, basis::EagerBasis) where {T<:Number}
         end
     end
 
-    return CompiledHamiltonian{Tout}(terms, entries, masks_flat, boson_reqs,
+    return CompiledHamiltonian{Tout}(terms, entries, fermion_mask, masks_flat, boson_reqs,
                                      basis.basis_id, nwords)
 end
 

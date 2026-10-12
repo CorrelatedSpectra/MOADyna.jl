@@ -227,16 +227,16 @@ function _apply_chain_rtl!(state::AbstractVector{UInt64},
         kind = ce.kind
         if kind === FERM_C
             # Annihilate fermion at (word_idx, bit_offset). Must be set;
-            # phase ×= JW sign = (-1)^(parity of bits below this position).
+            # phase ×= JW sign from occupied fermion bits below this position.
             v = get_bit(state, 1, ce.word_idx, ce.bit_offset)
             v == 0 && return zero(T)
-            sgn = _jw_parity(state, ce.word_idx, ce.bit_offset, H.nwords)
+            sgn = _jw_parity(state, ce.word_idx, ce.bit_offset, H.fermion_mask)
             clear_bit!(state, 1, ce.word_idx, ce.bit_offset)
             phase = sgn == 0 ? phase : -phase
         elseif kind === FERM_CDAG
             v = get_bit(state, 1, ce.word_idx, ce.bit_offset)
             v == 1 && return zero(T)
-            sgn = _jw_parity(state, ce.word_idx, ce.bit_offset, H.nwords)
+            sgn = _jw_parity(state, ce.word_idx, ce.bit_offset, H.fermion_mask)
             set_bit!(state, 1, ce.word_idx, ce.bit_offset)
             phase = sgn == 0 ? phase : -phase
         elseif kind === BOS_B
@@ -281,17 +281,18 @@ function _apply_chain_rtl!(state::AbstractVector{UInt64},
     return phase
 end
 
-# Jordan-Wigner parity: count set bits *strictly below* (word_idx, bit_offset)
-# in `state`. Returns 0 for even parity (no sign flip), 1 for odd.
+# Jordan-Wigner parity: count occupied fermion bits *strictly below*
+# (word_idx, bit_offset). Boson/spin spans and padding never contribute.
+# Returns 0 for even parity (no sign flip), 1 for odd.
 @inline function _jw_parity(state::AbstractVector{UInt64}, word_idx::Int,
-                            bit_offset::Int, nwords::Int)
+                            bit_offset::Int, fermion_mask::Vector{UInt64})
     n = 0
     @inbounds for w in 1:word_idx-1
-        n += count_ones(state[w])
+        n += count_ones(state[w] & fermion_mask[w])
     end
     @inbounds if bit_offset > 0
         mask_below = (UInt64(1) << bit_offset) - UInt64(1)
-        n += count_ones(state[word_idx] & mask_below)
+        n += count_ones(state[word_idx] & fermion_mask[word_idx] & mask_below)
     end
     return n & 1
 end

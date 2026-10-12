@@ -4,6 +4,13 @@ All notable changes to MOADyna are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fermion signs in mixed fermion–boson/spin bases count only fermion
+  occupations, including interleaved site orders and multiword encodings.
+
 ## [0.3.2] — 2026-09-07
 
 Fixes the README examples, which never ran, and lets atomic parameters compose

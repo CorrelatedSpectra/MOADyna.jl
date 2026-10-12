@@ -26,6 +26,7 @@ using MOADyna
         include("bases/test_restriction.jl")
         include("bases/test_compile.jl")
         include("bases/test_golden.jl")
+        include("bases/test_mixed_sites.jl")
         include("bases/test_embed.jl")
     end
 
