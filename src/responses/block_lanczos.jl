@@ -53,6 +53,13 @@ Defaults shown here are the kernel-level literals used by
 | `restrictions` | `nothing` | `Restriction` / `Vector{<:Restriction}` / `nothing` |
 | `basis` | `nothing` | required when `restrictions !== nothing` |
 | `retain_basis::Bool` | `false` | keep the concatenated Krylov basis (used by `rixs` and `fluorescence_yield` for the inner-Lanczos pass) |
+| `threaded` | `:auto` | sparse Hamiltonian action: automatic selection, forced parallel kernel (`true`), or serial (`false`) |
+
+The sparse action is prepared once per recurrence. `:auto` considers the
+workload and available Julia threads; `true` uses the available thread pool,
+including a single thread if Julia was started without `--threads=N`.
+Dense and custom operators keep their existing multiplication methods.
+This option does not change basis/assembly scheduling or BLAS thread settings.
 
 # Returns
 
@@ -106,7 +113,9 @@ function block_lanczos(H, X_raw::AbstractMatrix;
                        deflate_tol::Real   = 1e-12,
                        restrictions        = nothing,
                        basis               = nothing,
-                       retain_basis::Bool  = false)
+                       retain_basis::Bool  = false,
+                       threaded            = :auto)
+    _validate_sparse_threading(threaded)
     T = eltype(X_raw)
     N, B_raw = size(X_raw)
 
@@ -122,6 +131,7 @@ function block_lanczos(H, X_raw::AbstractMatrix;
     end
     size(H, 1) == size(H, 2) == N ||
         throw(DimensionMismatch("H ($(size(H, 1))×$(size(H, 2))) does not match starting block N=$N"))
+    action = _prepare_sparse_action(H; nrhs=B_raw, threaded)
 
     # --- Step 0: project and initial QR ----------------------------------
     X = restrictions !== nothing ?
@@ -156,7 +166,7 @@ function block_lanczos(H, X_raw::AbstractMatrix;
     upper = min(krylovdim, max_iter)
     for k in 1:upper
         # W = H · V_curr; project for restrictions.
-        W = H * V_curr                                  # N × B_curr
+        W = action * V_curr                             # N × B_curr
         if restrictions !== nothing
             _apply_to_columns!(W, restrictions, basis)
         end

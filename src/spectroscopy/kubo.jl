@@ -32,7 +32,7 @@
 
 """
     kubo_response(H, basis, A, B; temperature, ω_grid, Γ, N_eigs = nothing,
-                  degen_tol = 1e-8) -> SpectraTensor
+                  degen_tol = 1e-8, threaded = :auto) -> SpectraTensor
 
 Full Kubo retarded susceptibility
 
@@ -66,6 +66,14 @@ ASCII aliases: `ω_grid ↔ omega_grid`, `Γ ↔ Gamma`.
 | `Γ` | `DEFAULTS.Γ_response` | FWHM Lorentzian broadening. |
 | `N_eigs` | `nothing` | project onto the lowest `N_eigs` eigenstates (initial AND final) via a **partial** eigensolve. `nothing` ⇒ full dense spectrum (small sectors only). A truncation `@warn`s; a cutoff that splits a degenerate manifold raises. |
 | `degen_tol` | `1e-8` | `|E_m − E_n| < degen_tol` pairs (incl. `n = m`) are dropped from the regular response. |
+| `threaded` | `:auto` | sparse Hamiltonian action in partial eigensolves: `:auto`, `true`, or `false`. |
+
+`threaded=:auto` selects parallel sparse products according to the workload and
+available Julia threads; `true` forces that kernel on the available pool, and
+`false` keeps sparse products serial. Start Julia with `--threads=N` to make
+multiple threads available. Full dense diagonalization and the dense pair sum
+are unchanged by this setting, as are basis/assembly scheduling and BLAS thread
+settings. The mode is validated on both full and partial routes.
 
 # Return
 `SpectraTensor{ComplexF64}` carrying the **full complex** `χ` — a 1-D tensor
@@ -82,7 +90,9 @@ function kubo_response(H, basis::AbstractBasis,
                        temperature::Real,
                        ω_grid = nothing, omega_grid = nothing,
                        Γ = nothing, Gamma = nothing,
-                       N_eigs = nothing, degen_tol = 1e-8)
+                       N_eigs = nothing, degen_tol = 1e-8,
+                       threaded = :auto)
+    _validate_sparse_threading(threaded)
     (temperature isa Real && temperature ≥ 0) || throw(ArgumentError(
         "kubo_response: temperature must be a real number ≥ 0; got $(repr(temperature))"))
     (degen_tol isa Real && isfinite(degen_tol) && degen_tol > 0) || throw(ArgumentError(
@@ -100,7 +110,7 @@ function kubo_response(H, basis::AbstractBasis,
         "kubo_response: ω_grid is required (pass ω_grid or omega_grid)"))
     Γ_use = _resolve_pair(Γ, Gamma; default = DEFAULTS.Γ_response, name = "Γ")
 
-    evals, V = _kubo_spectrum(H, basis, N_eigs, degen_tol)
+    evals, V = _kubo_spectrum(H, basis, N_eigs, degen_tol; threaded)
     nstate = length(evals)
     E0 = minimum(evals)
     w  = _kubo_weights(evals, Float64(temperature), E0, degen_tol)
@@ -159,7 +169,8 @@ end
 #    usable. A degeneracy gate forbids splitting a manifold at the cutoff (the
 #    within-manifold eigenbasis is arbitrary, so a partial manifold gives a
 #    basis-dependent χ).
-function _kubo_spectrum(H, basis::AbstractBasis, N_eigs, degen_tol)
+function _kubo_spectrum(H, basis::AbstractBasis, N_eigs, degen_tol; threaded = :auto)
+    _validate_sparse_threading(threaded)
     if N_eigs === nothing
         length(basis) > 4096 && throw(ArgumentError(
             "kubo_response: full-spectrum (N_eigs = nothing) dense pair-Lehmann is only " *
@@ -174,7 +185,7 @@ function _kubo_spectrum(H, basis::AbstractBasis, N_eigs, degen_tol)
         "kubo_response: N_eigs must be an Integer ≥ 1; got $(repr(N_eigs))"))
     # Partial eigensolve: lowest N_eigs (+1 buffer state for the manifold gate).
     n_req = min(N_eigs + 1, length(basis))
-    E = eigen(H, basis; n = n_req)
+    E = eigen(H, basis; n = n_req, threaded)
     evals = Float64.(real.(E.values))
     perm = sortperm(evals)
     evals = evals[perm]

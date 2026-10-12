@@ -17,10 +17,11 @@
 # themselves and call the second method directly to skip recompilation.
 
 function LinearAlgebra.eigen(H::OperatorSum, basis::EagerBasis;
-                             kwargs...)
+                             threaded = :auto, kwargs...)
+    _validate_sparse_threading(threaded)
     H_compiled = compile(H, basis)
     H_sparse = assemble(H_compiled, basis)
-    return LinearAlgebra.eigen(H_sparse, basis; kwargs...)
+    return LinearAlgebra.eigen(H_sparse, basis; threaded, kwargs...)
 end
 
 # --- Main method on SparseMatrixCSC -----------------------------------
@@ -49,6 +50,15 @@ The Hamiltonian is assumed Hermitian; eigenvalues are returned as
 | `krylovdim`    | `max(20, 2n + 10)`       | Krylov subspace dimension                          |
 | `dense_below`  | `1024`                   | dense path when `length(basis) ≤ this`             |
 | `x0`           | `nothing`                | initial Krylov vector (seeded random if `nothing`) |
+| `threaded`     | `:auto`                  | sparse Hamiltonian action: `:auto`, `true`, or `false` |
+
+`threaded=:auto` selects a parallel sparse action when the matrix workload and
+available Julia threads justify it. `true` forces that kernel using the available
+Julia thread pool (which may contain only one thread); `false` uses serial sparse
+products. Start Julia with `--threads=N` to make multiple threads available.
+This per-call control affects iterative sparse Hamiltonian products only;
+dense diagonalization, basis/assembly scheduling, and BLAS thread settings are
+independent.
 
 # Returns
 A `LinearAlgebra.Eigen{Float64, T, Matrix{T}}` with:
@@ -68,7 +78,9 @@ function LinearAlgebra.eigen(H_sparse::SparseMatrixCSC, basis::EagerBasis;
                              maxiter::Int = 300,
                              krylovdim::Int = max(20, 2n + 10),
                              dense_below::Int = 1024,
-                             x0::Union{Nothing, AbstractVector} = nothing)
+                             x0::Union{Nothing, AbstractVector} = nothing,
+                             threaded = :auto)
+    _validate_sparse_threading(threaded)
     _validate_eigen_inputs(H_sparse, basis;
                            n, which, krylovdim, x0)
 
@@ -86,7 +98,7 @@ function LinearAlgebra.eigen(H_sparse::SparseMatrixCSC, basis::EagerBasis;
         return _eigen_dense(H_sparse; n, which)
     else
         return _eigen_krylov(H_sparse; n, which, tol, degen_tol,
-                             maxiter, krylovdim, x0)
+                             maxiter, krylovdim, x0, threaded)
     end
 end
 
@@ -113,7 +125,7 @@ end
 function _eigen_krylov(H_sparse::SparseMatrixCSC; n::Int, which::Symbol,
                        tol::Real, degen_tol::Real,
                        maxiter::Int, krylovdim::Int,
-                       x0::Union{Nothing, AbstractVector})
+                       x0::Union{Nothing, AbstractVector}, threaded = :auto)
     T = eltype(H_sparse)
     x0_actual = if x0 === nothing
         _default_x0(size(H_sparse, 1), T)
@@ -125,7 +137,8 @@ function _eigen_krylov(H_sparse::SparseMatrixCSC; n::Int, which::Symbol,
         convert(Vector{T}, x0)
     end
 
-    vals, vecs, info = KrylovKit.eigsolve(H_sparse, x0_actual, n, which;
+    action = _prepare_sparse_action(H_sparse; threaded)
+    vals, vecs, info = KrylovKit.eigsolve(action, x0_actual, n, which;
                                           tol = tol,
                                           maxiter = maxiter,
                                           krylovdim = krylovdim,

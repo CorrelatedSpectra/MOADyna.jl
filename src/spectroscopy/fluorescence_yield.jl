@@ -43,13 +43,21 @@ states, `FY_T = Σ_m ρ_m FY_m`, each referenced to its own `E_m`. An explicit
 `ω_in_grid` is required (per-state `:auto` grids differ); the result is grid-only
 and carries `Eg = E₀` plus `:temperature`, `:ensemble_energies`,
 `:ensemble_weights`, `:N_kept` metadata.
+
+`threaded=:auto` chooses parallel sparse Hamiltonian products when the workload
+and available Julia threads justify it. `true` forces that kernel on the available
+thread pool; `false` uses serial sparse products throughout the solve.
+Start Julia with `--threads=N` to make multiple threads available. This per-call
+setting does not change dense/custom operators, basis/assembly scheduling, or
+BLAS thread settings.
 """
 function fluorescence_yield end
 
 # Eigen overload.
 function fluorescence_yield(H_i, basis::AbstractBasis, T_excite, T_decay,
                             E::LinearAlgebra.Eigen; Eg = nothing, temperature = nothing,
-                            N_states = nothing, degen_tol = 1e-8, kwargs...)
+                            N_states = nothing, degen_tol = 1e-8, threaded = :auto, kwargs...)
+    _validate_sparse_threading(threaded)
     Eg === nothing ||
         throw(ArgumentError("fluorescence_yield: Eg cannot be specified when ψ is an Eigen"))
     if temperature === nothing
@@ -58,10 +66,10 @@ function fluorescence_yield(H_i, basis::AbstractBasis, T_excite, T_decay,
             "require temperature = ...; got temperature = nothing"))
         k = argmin(real.(E.values))
         return fluorescence_yield(H_i, basis, T_excite, T_decay, E.vectors[:, k];
-                                  Eg = real(E.values[k]), kwargs...)
+                                  Eg = real(E.values[k]), threaded, kwargs...)
     end
     return _fy_thermal(H_i, basis, T_excite, T_decay, E; temperature = temperature,
-                       N_states = N_states, degen_tol = degen_tol, kwargs...)
+                       N_states = N_states, degen_tol = degen_tol, threaded, kwargs...)
 end
 
 # Single ψ.
@@ -75,7 +83,9 @@ function fluorescence_yield(H_i, basis::AbstractBasis, T_excite, T_decay,
                             krylovdim::Union{Int,Nothing}    = nothing,
                             reorth::Union{Symbol,Nothing}    = nothing,
                             tol::Union{Real,Nothing}         = nothing,
-                            restrictions_intermediate        = nothing)
+                            restrictions_intermediate        = nothing,
+                            threaded                         = :auto)
+    _validate_sparse_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("fluorescence_yield: Eg required for bare vector ψ"))
     return _fy_run(H_i, basis, _to_T_list(T_excite), _to_T_list(T_decay),
@@ -89,7 +99,8 @@ function fluorescence_yield(H_i, basis::AbstractBasis, T_excite, T_decay,
                    reorth_use    = something(reorth,    DEFAULTS.reorth),
                    tol_use       = something(tol,       DEFAULTS.tol),
                    Eg            = Float64(Eg),
-                   restrictions_intermediate = restrictions_intermediate)
+                   restrictions_intermediate = restrictions_intermediate,
+                   threaded = threaded)
 end
 
 # Multi-ψ.
@@ -101,7 +112,9 @@ function fluorescence_yield(H_i, basis::AbstractBasis, T_excite, T_decay,
                             krylovdim::Union{Int,Nothing} = nothing,
                             reorth::Union{Symbol,Nothing} = nothing,
                             tol::Union{Real,Nothing} = nothing,
-                            restrictions_intermediate = nothing)
+                            restrictions_intermediate = nothing,
+                            threaded = :auto)
+    _validate_sparse_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("fluorescence_yield: Eg required for bare vector list ψ"))
     Eg isa Real ||
@@ -117,7 +130,8 @@ function fluorescence_yield(H_i, basis::AbstractBasis, T_excite, T_decay,
                    reorth_use    = something(reorth,    DEFAULTS.reorth),
                    tol_use       = something(tol,       DEFAULTS.tol),
                    Eg            = Float64(Eg),
-                   restrictions_intermediate = restrictions_intermediate)
+                   restrictions_intermediate = restrictions_intermediate,
+                   threaded = threaded)
 end
 
 # --- Driver ---
@@ -128,7 +142,7 @@ function _fy_run(H_i, basis::AbstractBasis,
                  ψ_list::Vector{<:AbstractVector},
                  ψ_is_list::Bool;
                  Γ_int_use, ω_in_use, krylovdim_use, reorth_use, tol_use,
-                 Eg, restrictions_intermediate)
+                 Eg, restrictions_intermediate, threaded = :auto)
     isempty(T_excite_list) && throw(ArgumentError("fluorescence_yield: T_excite must be non-empty"))
     isempty(T_decay_list)  && throw(ArgumentError("fluorescence_yield: T_decay must be non-empty"))
     isempty(ψ_list)        && throw(ArgumentError("fluorescence_yield: ψ must be non-empty"))
@@ -137,6 +151,7 @@ function _fy_run(H_i, basis::AbstractBasis,
     N_ex     = length(T_excite_list)
     N_dec    = length(T_decay_list)
     N_ψ      = length(ψ_list)
+    action_i = _prepare_sparse_action(H_i; nrhs=N_ex, threaded)
     for ψ in ψ_list
         length(ψ) == N_states ||
             throw(DimensionMismatch("fluorescence_yield: ψ length ≠ basis size"))
@@ -162,7 +177,8 @@ function _fy_run(H_i, basis::AbstractBasis,
             for k in 1:N_ex
                 X_int_p1[:, k] = T_ex_assembled[k] * ψ
             end
-            inner_p1 = Responses.block_lanczos(H_i, X_int_p1;
+            inner_p1 = Responses.block_lanczos(action_i, X_int_p1;
+                                     threaded     = threaded,
                                      krylovdim    = krylovdim_use,
                                      reorth       = reorth_use,
                                      tol          = tol_use,
@@ -185,7 +201,8 @@ function _fy_run(H_i, basis::AbstractBasis,
         for k in 1:N_ex
             X_int[:, k] = T_ex_assembled[k] * ψ
         end
-        inner = Responses.block_lanczos(H_i, X_int;
+        inner = Responses.block_lanczos(action_i, X_int;
+                              threaded     = threaded,
                               krylovdim    = krylovdim_use,
                               reorth       = reorth_use,
                               tol          = tol_use,

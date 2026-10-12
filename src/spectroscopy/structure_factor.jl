@@ -49,6 +49,14 @@ ASCII aliases: `ω_grid ↔ omega_grid`, `Γ ↔ Gamma` (`_resolve_pair`).
 | `T` | `nothing` | accepted alias for `temperature`; specifying both raises. |
 | `N_states`, `degen_tol` | thermal-only knobs forwarded to `correlator`. |
 | `ψ₀`, `Eg` | `nothing` | optional precomputed ground state (T=0 path only; forbidden with `T`). |
+| `threaded` | `:auto` | sparse Hamiltonian action: `:auto`, `true`, or `false`. |
+
+The threading policy is passed through to the correlator and its automatic
+ground-state or thermal-ensemble solve. `:auto` selects according to workload
+and available Julia threads; `true` forces the sparse kernel on the available
+pool; `false` keeps sparse products serial. Start Julia with `--threads=N` for
+multiple threads. Dense/custom operators, basis/assembly scheduling, and BLAS
+thread settings are independent.
 
 # Return
 `SpectraTensor{Float64}`: a 1-D tensor `(n_ω,)` for a single operator, or
@@ -62,7 +70,8 @@ function dynamical_structure_factor(H, basis::AbstractBasis,
                                     Γ = nothing, Gamma = nothing,
                                     T = nothing, temperature = nothing,
                                     N_states = nothing, degen_tol = 1e-8,
-                                    ψ₀ = nothing, Eg = nothing, kwargs...)
+                                    ψ₀ = nothing, Eg = nothing, threaded = :auto, kwargs...)
+    _validate_sparse_threading(threaded)
     # `temperature` is the canonical thermal kwarg (consistent with xas/rixs/fy);
     # `T` is accepted as an alias. Specifying both raises.
     T = _resolve_pair(temperature, T; default = nothing, name = "temperature")
@@ -81,7 +90,7 @@ function dynamical_structure_factor(H, basis::AbstractBasis,
     Γ_use = _resolve_pair(Γ, Gamma; default = DEFAULTS.Γ_response, name = "Γ")
 
     G = _response_grid(H, basis, ops, ω_use, Γ_use, T, N_states, degen_tol, ψ₀, Eg;
-                       kwargs...)
+                       threaded, kwargs...)
 
     # S(q,ω) = −Im C(q,ω)/π over the FULL grid (no ω≤0 drop, no factor).
     n_ops = length(ops)

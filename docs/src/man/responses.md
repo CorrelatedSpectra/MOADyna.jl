@@ -52,6 +52,14 @@ The ground state is computed internally (`state = :ground_state`) or supplied as
 (the default) the constructor returns a [`LanczosResponse`](@ref); pass an ω grid (or
 call [`to_grid`](@ref)) to evaluate.
 
+The `threaded=:auto` keyword controls sparse Hamiltonian multiplication in the
+Lanczos recursion and any ground-state solve performed by `correlator`. Use
+`threaded=true` to force the threaded sparse kernel with the available Julia
+workers, or `threaded=false` to keep these products serial throughout nested
+calls. Automatic mode keeps small products serial. The same control is available
+on `MOADyna.Responses.block_lanczos`; see [Sparse multiplication threads](@ref)
+for Julia startup and the scope of this setting.
+
 ```@example resp
 using MOADyna
 
@@ -60,7 +68,7 @@ s = [FermionSite{2}(:a), FermionSite{2}(:b)]
 h = Hilbert(x.name => x for x in s)
 H = -1.0 * sum(c'(s[1], σ) * c(s[2], σ) + c'(s[2], σ) * c(s[1], σ) for σ in 1:2) +
      4.0 * sum(n(s[i], 1) * n(s[i], 2) for i in 1:2)
-b   = EagerBasis(h, n_fermion(h) == 2)
+b   = basis(h, n_fermion(h) == 2)
 Hsp = assemble(compile(H, b), b)
 
 # Neutral (same-sector) charge response of the staggered density.
@@ -100,7 +108,7 @@ reference ground state must sit at the target filling (here a particle–hole-sy
 ```@example resp
 μ    = 2.0                                            # particle–hole symmetric: half-filling is GS
 Ntot = sum(n(s[i], σ) for i in 1:2, σ in 1:2)
-bc   = EagerBasis(h, n_fermion(h) in 1:3)             # spans N−1, N, N+1
+bc   = basis(h, n_fermion(h) in 1:3)                 # spans N−1, N, N+1
 Hμsp = assemble(compile(H - μ * Ntot, bc), bc)
 cs   = [c(s[1], 1)]                                   # remove / add a ↑ electron on site a
 ωs   = range(-8, 8; length = 400)

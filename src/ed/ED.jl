@@ -21,6 +21,7 @@ using HDF5
 
 using ..Algebra: OperatorSum
 using ..Bases: EagerBasis, compile, assemble
+using ..Bases: _prepare_sparse_action, _validate_sparse_threading
 
 include("errors.jl")
 include("validation.jl")

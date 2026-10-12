@@ -27,6 +27,7 @@ using MOADyna
         include("bases/test_compile.jl")
         include("bases/test_golden.jl")
         include("bases/test_mixed_sites.jl")
+        include("bases/test_sparse_action.jl")
         include("bases/test_embed.jl")
     end
 
@@ -77,6 +78,7 @@ using MOADyna
         include("spectroscopy/test_structure_factor.jl")
         include("spectroscopy/test_finite_T_spectra.jl")
         include("spectroscopy/test_kubo.jl")
+        include("spectroscopy/test_threaded_kubo.jl")
     end
 
     @testset "Gradients" begin
@@ -92,5 +94,6 @@ using MOADyna
     end
 
     include("test_aqua.jl")
+    include("test_threaded_controls.jl")
     include("test_readme.jl")
 end

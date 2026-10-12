@@ -26,6 +26,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Native NiO RIXS validation against tracked Quanty and PyQuanty references.
+- Threaded sparse Hamiltonian products with per-call `threaded=:auto/true/false`
+  controls in diagonalization, responses, and core-level spectroscopy.
 
 ## [0.3.2] — 2026-09-07
 

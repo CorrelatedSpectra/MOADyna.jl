@@ -51,7 +51,8 @@ end
 # --- finite-T XAS ----------------------------------------------------------
 function _xas_thermal(H, basis::AbstractBasis, T_op, E::LinearAlgebra.Eigen;
                       temperature, N_states = nothing, degen_tol = 1e-8,
-                      ω_grid = nothing, omega_grid = nothing, kwargs...)
+                      ω_grid = nothing, omega_grid = nothing,
+                      threaded = :auto, kwargs...)
     _check_temperature(temperature, "xas")
     ω_use = _resolve_pair(ω_grid, omega_grid; default = nothing, name = "ω_grid")
     ω_use === nothing && throw(ArgumentError(
@@ -60,7 +61,9 @@ function _xas_thermal(H, basis::AbstractBasis, T_op, E::LinearAlgebra.Eigen;
         "combined; pass ω_grid = ..."))
     states, energies, weights, E0 = Responses._boltzmann_ensemble(
         E.values, E.vectors, Float64(temperature), N_states, degen_tol)
-    χs = [xas(H, basis, T_op, states[m]; Eg = energies[m], ω_grid = ω_use, kwargs...)
+    action = _prepare_sparse_action(H; nrhs=length(_to_T_list(T_op)), threaded)
+    χs = [xas(action, basis, T_op, states[m]; Eg = energies[m], ω_grid = ω_use,
+              threaded, kwargs...)
           for m in eachindex(states)]
     return _relabel_thermal(weighted_sum(χs, weights), E0;
                             temperature = temperature, energies = energies,
@@ -72,7 +75,8 @@ function _rixs_thermal(H_f, H_i, basis::AbstractBasis, T_in, T_out,
                        E::LinearAlgebra.Eigen;
                        temperature, N_states = nothing, degen_tol = 1e-8,
                        ω_in_grid = nothing, omega_in_grid = nothing,
-                       ω_out_grid = nothing, omega_out_grid = nothing, kwargs...)
+                       ω_out_grid = nothing, omega_out_grid = nothing,
+                       threaded = :auto, kwargs...)
     _check_temperature(temperature, "rixs")
     ω_in_use = _resolve_pair(ω_in_grid, omega_in_grid; default = nothing, name = "ω_in_grid")
     ω_out_use = _resolve_pair(ω_out_grid, omega_out_grid; default = nothing, name = "ω_out_grid")
@@ -81,8 +85,12 @@ function _rixs_thermal(H_f, H_i, basis::AbstractBasis, T_in, T_out,
         "ω_out_grid — per-state :auto grids differ and cannot be combined"))
     states, energies, weights, E0 = Responses._boltzmann_ensemble(
         E.values, E.vectors, Float64(temperature), N_states, degen_tol)
-    χs = [rixs(H_f, H_i, basis, T_in, T_out, states[m];
-               Eg = energies[m], ω_in_grid = ω_in_use, ω_out_grid = ω_out_use, kwargs...)
+    n_in, n_out = length(_to_T_list(T_in)), length(_to_T_list(T_out))
+    action_i = _prepare_sparse_action(H_i; nrhs=n_in, threaded)
+    action_f = _prepare_sparse_action(H_f; nrhs=n_in*n_out, threaded)
+    χs = [rixs(action_f, action_i, basis, T_in, T_out, states[m];
+               Eg = energies[m], ω_in_grid = ω_in_use, ω_out_grid = ω_out_use,
+               threaded, kwargs...)
           for m in eachindex(states)]
     return _relabel_thermal(weighted_sum(χs, weights), E0;
                             temperature = temperature, energies = energies,
@@ -93,7 +101,8 @@ end
 function _fy_thermal(H_i, basis::AbstractBasis, T_excite, T_decay,
                      E::LinearAlgebra.Eigen;
                      temperature, N_states = nothing, degen_tol = 1e-8,
-                     ω_in_grid = nothing, omega_in_grid = nothing, kwargs...)
+                     ω_in_grid = nothing, omega_in_grid = nothing,
+                     threaded = :auto, kwargs...)
     _check_temperature(temperature, "fluorescence_yield")
     ω_in_use = _resolve_pair(ω_in_grid, omega_in_grid; default = nothing, name = "ω_in_grid")
     ω_in_use === nothing && throw(ArgumentError(
@@ -101,8 +110,10 @@ function _fy_thermal(H_i, basis::AbstractBasis, T_excite, T_decay,
         "ω_in_grid — per-state :auto grids differ and cannot be combined"))
     states, energies, weights, E0 = Responses._boltzmann_ensemble(
         E.values, E.vectors, Float64(temperature), N_states, degen_tol)
-    χs = [fluorescence_yield(H_i, basis, T_excite, T_decay, states[m];
-                             Eg = energies[m], ω_in_grid = ω_in_use, kwargs...)
+    action = _prepare_sparse_action(H_i; nrhs=length(_to_T_list(T_excite)), threaded)
+    χs = [fluorescence_yield(action, basis, T_excite, T_decay, states[m];
+                             Eg = energies[m], ω_in_grid = ω_in_use,
+                             threaded, kwargs...)
           for m in eachindex(states)]
     return _relabel_thermal(weighted_sum(χs, weights), E0;
                             temperature = temperature, energies = energies,

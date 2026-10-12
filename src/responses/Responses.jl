@@ -25,6 +25,7 @@ using HDF5
 
 using ..Algebra
 using ..Bases
+using ..Bases: _prepare_sparse_action, _validate_sparse_threading
 
 include("types.jl")
 include("block_lanczos.jl")

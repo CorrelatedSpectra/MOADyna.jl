@@ -65,13 +65,21 @@ states, `χ_T = Σ_m ρ_m χ_m`, each referenced to its own `E_m`. Explicit
 `ω_in_grid` **and** `ω_out_grid` are required (per-state `:auto` grids differ);
 the result is grid-only and carries `Eg = E₀` plus `:temperature`,
 `:ensemble_energies`, `:ensemble_weights`, `:N_kept` metadata.
+
+`threaded=:auto` chooses parallel sparse Hamiltonian products when the workload
+and available Julia threads justify it. `true` forces that kernel on the available
+thread pool; `false` uses serial sparse products in every inner and outer solve.
+Start Julia with `--threads=N` to make multiple threads available. This per-call
+setting does not change dense/custom operators, basis/assembly scheduling, or
+BLAS thread settings.
 """
 function rixs end
 
 # Eigen overload — extract GS from full eigendecomposition.
 function rixs(H_f, H_i, basis::AbstractBasis, T_in, T_out,
               E::LinearAlgebra.Eigen; Eg = nothing, temperature = nothing,
-              N_states = nothing, degen_tol = 1e-8, kwargs...)
+              N_states = nothing, degen_tol = 1e-8, threaded = :auto, kwargs...)
+    _validate_sparse_threading(threaded)
     Eg === nothing ||
         throw(ArgumentError("rixs: Eg cannot be specified when ψ is an Eigen"))
     if temperature === nothing
@@ -80,10 +88,10 @@ function rixs(H_f, H_i, basis::AbstractBasis, T_in, T_out,
             "temperature = ...; got temperature = nothing"))
         k = argmin(real.(E.values))
         return rixs(H_f, H_i, basis, T_in, T_out, E.vectors[:, k];
-                    Eg = real(E.values[k]), kwargs...)
+                    Eg = real(E.values[k]), threaded, kwargs...)
     end
     return _rixs_thermal(H_f, H_i, basis, T_in, T_out, E; temperature = temperature,
-                         N_states = N_states, degen_tol = degen_tol, kwargs...)
+                         N_states = N_states, degen_tol = degen_tol, threaded, kwargs...)
 end
 
 # Single ψ vector.
@@ -102,7 +110,9 @@ function rixs(H_f, H_i, basis::AbstractBasis, T_in, T_out,
               reorth::Union{Symbol,Nothing}    = nothing,
               tol::Union{Real,Nothing}         = nothing,
               restrictions_intermediate = nothing,
-              restrictions_final        = nothing)
+              restrictions_final        = nothing,
+              threaded                  = :auto)
+    _validate_sparse_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("rixs: Eg required when ψ is a bare vector"))
     return _rixs_run(H_f, H_i, basis, _to_T_list(T_in), _to_T_list(T_out),
@@ -122,7 +132,8 @@ function rixs(H_f, H_i, basis::AbstractBasis, T_in, T_out,
                      tol_use       = something(tol,       DEFAULTS.tol),
                      Eg            = Float64(Eg),
                      restrictions_intermediate = restrictions_intermediate,
-                     restrictions_final        = restrictions_final)
+                     restrictions_final        = restrictions_final,
+                     threaded                  = threaded)
 end
 
 # Multi-ψ.
@@ -137,7 +148,9 @@ function rixs(H_f, H_i, basis::AbstractBasis, T_in, T_out,
               reorth::Union{Symbol,Nothing} = nothing,
               tol::Union{Real,Nothing} = nothing,
               restrictions_intermediate = nothing,
-              restrictions_final        = nothing)
+              restrictions_final        = nothing,
+              threaded                  = :auto)
+    _validate_sparse_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("rixs: Eg required when ψ is a bare vector list"))
     Eg isa Real ||
@@ -158,7 +171,8 @@ function rixs(H_f, H_i, basis::AbstractBasis, T_in, T_out,
                      tol_use       = something(tol,       DEFAULTS.tol),
                      Eg            = Float64(Eg),
                      restrictions_intermediate = restrictions_intermediate,
-                     restrictions_final        = restrictions_final)
+                     restrictions_final        = restrictions_final,
+                     threaded                  = threaded)
 end
 
 # --- Driver ----------------------------------------------------------------
@@ -171,7 +185,7 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
                    ψ_is_list::Bool;
                    Γ_int_use, Γ_fin_use, ω_in_use, ω_out_use,
                    krylovdim_use, reorth_use, tol_use, Eg,
-                   restrictions_intermediate, restrictions_final)
+                   restrictions_intermediate, restrictions_final, threaded = :auto)
     isempty(T_in_list)  && throw(ArgumentError("rixs: T_in must be non-empty"))
     isempty(T_out_list) && throw(ArgumentError("rixs: T_out must be non-empty"))
     isempty(ψ_list)     && throw(ArgumentError("rixs: ψ must be non-empty"))
@@ -181,6 +195,8 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
     N_out    = length(T_out_list)
     N_ψ      = length(ψ_list)
     B_raw_outer = N_in * N_out
+    action_i = _prepare_sparse_action(H_i; nrhs=N_in, threaded)
+    action_f = _prepare_sparse_action(H_f; nrhs=B_raw_outer, threaded)
 
     for ψ in ψ_list
         length(ψ) == N_states ||
@@ -220,7 +236,8 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
             for k in 1:N_in
                 X_int_p1[:, k] = T_in_assembled[k] * ψ
             end
-            inner_p1 = Responses.block_lanczos(H_i, X_int_p1;
+            inner_p1 = Responses.block_lanczos(action_i, X_int_p1;
+                                     threaded     = threaded,
                                      krylovdim    = krylovdim_use,
                                      reorth       = reorth_use,
                                      tol          = tol_use,
@@ -248,7 +265,8 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
         for k in 1:N_in
             X_int[:, k] = T_in_assembled[k] * ψ
         end
-        inner = Responses.block_lanczos(H_i, X_int;
+        inner = Responses.block_lanczos(action_i, X_int;
+                              threaded     = threaded,
                               krylovdim    = krylovdim_use,
                               reorth       = reorth_use,
                               tol          = tol_use,
@@ -291,7 +309,8 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
             # chunks; `to_grid(L, ω_out; Γ)` materialises the grid
             # response after the grid is settled.
             outer_response = Responses.correlator(
-                H_f, basis, empty_outer_ops, empty_outer_ops;
+                action_f, basis, empty_outer_ops, empty_outer_ops;
+                threaded     = threaded,
                 Γ            = Γ_fin_use,
                 Eg           = Eg,
                 state        = nothing,

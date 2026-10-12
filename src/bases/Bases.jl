@@ -33,6 +33,7 @@ include("restriction.jl")
 include("basis.jl")
 include("compile.jl")
 include("assemble.jl")
+include("sparse_action.jl")
 include("embed.jl")
 
 # Basis

@@ -39,6 +39,7 @@ using HDF5
 using ..Algebra: OperatorSum, Restriction
 using ..Bases: AbstractBasis, EagerBasis, basis_id, apply_restriction!,
                 compile, assemble
+using ..Bases: _prepare_sparse_action, _validate_sparse_threading
 import ..Responses
 
 include("types.jl")

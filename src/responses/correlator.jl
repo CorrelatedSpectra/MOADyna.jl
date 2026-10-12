@@ -81,6 +81,7 @@ then wrap the result as one of `LanczosResponse`, `PoleResponse`, or
 | `addition_indices` | `nothing`    | for `:addition`: defaults to `eachindex(Bs)` if `nothing`; for `:both`: explicit partition (may be empty/`nothing` on one side — at least one non-empty side required) |
 | `removal_indices`  | `nothing`    | for `:removal`: defaults to `eachindex(Bs)` if `nothing`; for `:both`: explicit partition (may be empty/`nothing` on one side — at least one non-empty side required) |
 | `form`         | `:lanczos`       | output type: `:lanczos`, `:pole`, or `:grid` |
+| `threaded`     | `:auto`          | sparse Hamiltonian action: `:auto`, `true`, or `false` |
 | `T`            | `nothing`        | finite-T temperature in H's energy units (k_B=1); `nothing` = T=0 path. `form ∈ (:pole,:grid)`. With no `ensemble_states`, the ensemble is auto-computed from H on `basis` and is `:neutral`-only; supply `ensemble_states` for charged channels. |
 | `N_states`     | `nothing`        | thermal-only: cap on number of lowest states summed (requires T) |
 | `degen_tol`    | `1e-8`           | thermal-only: degeneracy tolerance for manifold-completeness (requires T) |
@@ -89,6 +90,13 @@ then wrap the result as one of `LanczosResponse`, `PoleResponse`, or
 
 Any additional kwargs (e.g. `krylovdim`, `reorth`, `tol`, `restrictions`) are
 forwarded to the internal `block_lanczos` kernel (`MOADyna.Responses.block_lanczos`).
+
+`threaded=:auto` selects parallel sparse Hamiltonian products according to the
+workload and available Julia threads. `true` forces that kernel on the available
+thread pool (possibly one thread); `false` keeps sparse products serial, including
+automatic ground-state and thermal-ensemble solves. Start Julia with `--threads=N`
+to make multiple threads available. Dense/custom multiplication, basis/assembly
+scheduling, and BLAS thread settings are independent.
 
 # Return
 
@@ -139,7 +147,9 @@ function correlator(H::AbstractMatrix,
                     degen_tol          = 1e-8,
                     ensemble_states    = nothing,
                     ensemble_energies  = nothing,
+                    threaded           = :auto,
                     kwargs...)
+    _validate_sparse_threading(threaded)
     # --- 1. Autocorrelator validation ----------------------------------
     if !(As === Bs)
         throw(ArgumentError(
@@ -224,6 +234,7 @@ function correlator(H::AbstractMatrix,
                                      removal_indices = removal_indices,
                                      ensemble_states = ensemble_states,
                                      ensemble_energies = ensemble_energies,
+                                     threaded = threaded,
                                      kwargs...)
         else
             # Auto-computed ensemble: same-sector :neutral only.
@@ -242,7 +253,7 @@ function correlator(H::AbstractMatrix,
             # Dispatch to the auto-ensemble thermal path (2d Task 3).
             return _thermal_response(H, basis, As, Bs;
                                      T = T, N_states = N_states, degen_tol = degen_tol,
-                                     Γ = Γ, form = form, ω = ω, kwargs...)
+                                     Γ = Γ, form = form, ω = ω, threaded, kwargs...)
         end
     end
 
@@ -346,6 +357,7 @@ function correlator(H::AbstractMatrix,
                        addition_indices = nothing,
                        removal_indices  = nothing,
                        form             = form,
+                       threaded         = threaded,
                        kwargs...)
         else
             nothing
@@ -363,6 +375,7 @@ function correlator(H::AbstractMatrix,
                        addition_indices = nothing,
                        removal_indices  = nothing,
                        form             = form,
+                       threaded         = threaded,
                        kwargs...)
         else
             nothing
@@ -518,7 +531,7 @@ function correlator(H::AbstractMatrix,
     else
         # modes (a) and (b): build from ops_active · ψ₀
         ψ₀, Eg_use = if state === :ground_state
-            E = eigen(H, basis; n = 1)
+            E = eigen(H, basis; n = 1, threaded)
             k = argmin(real.(E.values))
             ψ_gs = E.vectors[:, k]
             Eg_computed = real(E.values[k])
@@ -566,9 +579,9 @@ function correlator(H::AbstractMatrix,
     # For :addition, wrap in try/catch to provide a channel-specific
     # rank-zero hint (basis may not span the (N+1) sector).
     _run_lanczos(X_in) = if haskey(kwargs, :restrictions) && !haskey(kwargs, :basis)
-        block_lanczos(H, X_in; basis = basis, kwargs...)
+        block_lanczos(H, X_in; basis = basis, threaded, kwargs...)
     else
-        block_lanczos(H, X_in; kwargs...)
+        block_lanczos(H, X_in; threaded, kwargs...)
     end
 
     result = if channel === :addition
@@ -667,7 +680,7 @@ Returns:
 Zero-weight states (e.g. the T=0 excited states) are dropped before
 returning, so the caller never runs the kernel on them.
 """
-function _thermal_states(H, basis, T::Real, N_states, degen_tol)
+function _thermal_states(H, basis, T::Real, N_states, degen_tol; threaded = :auto)
     # Full-spectrum guard: the full trace is only tractable on a small
     # basis (the eigen dense-path threshold dense_below = 1024).
     if N_states === nothing && length(basis) > 1024
@@ -679,7 +692,7 @@ function _thermal_states(H, basis, T::Real, N_states, degen_tol)
 
     # Request one buffer state beyond N_states to test manifold completeness.
     n_req = N_states === nothing ? length(basis) : min(N_states + 1, length(basis))
-    E = eigen(H, basis; n = n_req)
+    E = eigen(H, basis; n = n_req, threaded)
     return _boltzmann_ensemble(E.values, E.vectors, T, N_states, degen_tol)
 end
 
@@ -802,9 +815,10 @@ function _thermal_response(H, basis, As, Bs;
                            removal_indices = nothing,
                            ensemble_states = nothing,
                            ensemble_energies = nothing,
+                           threaded = :auto,
                            kwargs...)
     states, energies, weights, E0 = if ensemble_states === nothing
-        _thermal_states(H, basis, T, N_states, degen_tol)
+        _thermal_states(H, basis, T, N_states, degen_tol; threaded)
     else
         # Supplied ensemble: run the same truncation/degeneracy/weight logic on
         # the user-provided (energies, states). hcat the state vectors into the
@@ -813,13 +827,14 @@ function _thermal_response(H, basis, As, Bs;
         _boltzmann_ensemble(ensemble_energies, V, T, N_states, degen_tol)
     end
 
+    action = _prepare_sparse_action(H; nrhs=max(1,length(Bs)), threaded)
     weighted = map(eachindex(states)) do m
-        per_state = correlator(H, basis, As, Bs;
+        per_state = correlator(action, basis, As, Bs;
                                Γ = Γ, Eg = energies[m], state = states[m],
                                source_block = nothing, channel = channel,
                                addition_indices = addition_indices,
                                removal_indices = removal_indices,
-                               form = :pole, kwargs...)   # NO T — single-state path
+                               form = :pole, threaded, kwargs...)   # NO T — single-state path
         weights[m] * _reframe_eg(per_state, E0)
     end
 

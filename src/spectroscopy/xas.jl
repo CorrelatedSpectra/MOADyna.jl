@@ -55,9 +55,16 @@ ASCII Latin aliases are accepted for every Greek-named kwarg
 | `reorth` | `DEFAULTS.reorth` | `:none` or `:full` |
 | `restrictions` | `nothing` | layer-2 `Restriction` for projected dynamics |
 | `tol` | `DEFAULTS.tol` | block-Lanczos soft-stop on ‖β_k‖ |
+| `threaded` | `:auto` | sparse Hamiltonian action: `:auto`, `true`, or `false` |
 | `temperature` | `nothing` | finite-T (`k_B = 1`). Only with an `Eigen` ψ: Boltzmann-averages the spectrum over the thermally populated initial states, `χ_T(ω) = Σ_m ρ_m χ_m(ω)`. `nothing` ⇒ T=0 (pick the ground state). |
 | `N_states` | `nothing` | finite-T only: cap on the number of lowest `Eigen` states summed (degeneracy-complete; manifold-splitting raises). |
 | `degen_tol` | `1e-8` | finite-T only: degeneracy tolerance for the ground-manifold / truncation logic. |
+
+`threaded=:auto` chooses parallel sparse Hamiltonian products when the workload
+and available Julia threads justify it. `true` forces that kernel on the available
+thread pool; `false` uses serial sparse products throughout this call. Start Julia
+with `--threads=N` to make multiple threads available. Dense/custom operators,
+basis/assembly scheduling, and BLAS thread settings are independent.
 
 **Finite temperature.** Pass `ψ::Eigen` together with `temperature = …` to get
 the Boltzmann ensemble average over initial states (each referenced to its own
@@ -90,7 +97,8 @@ function xas end
 
 function xas(H, basis::AbstractBasis, T, E::LinearAlgebra.Eigen;
              Eg = nothing, temperature = nothing,
-             N_states = nothing, degen_tol = 1e-8, kwargs...)
+             N_states = nothing, degen_tol = 1e-8, threaded = :auto, kwargs...)
+    _validate_sparse_threading(threaded)
     Eg === nothing ||
         throw(ArgumentError("xas: Eg cannot be specified when ψ is an Eigen"))
     if temperature === nothing
@@ -100,10 +108,10 @@ function xas(H, basis::AbstractBasis, T, E::LinearAlgebra.Eigen;
             "temperature = ...; got temperature = nothing"))
         k = argmin(real.(E.values))
         return xas(H, basis, T, E.vectors[:, k];
-                   Eg = real(E.values[k]), kwargs...)
+                   Eg = real(E.values[k]), threaded, kwargs...)
     end
     return _xas_thermal(H, basis, T, E; temperature = temperature,
-                        N_states = N_states, degen_tol = degen_tol, kwargs...)
+                        N_states = N_states, degen_tol = degen_tol, threaded, kwargs...)
 end
 
 # --- Single ψ::AbstractVector{<:Number} -----------------------------------
@@ -117,7 +125,9 @@ function xas(H, basis::AbstractBasis, T, ψ::AbstractVector{<:Number};
              krylovdim::Union{Int,Nothing}    = nothing,
              reorth::Union{Symbol,Nothing}    = nothing,
              tol::Union{Real,Nothing}         = nothing,
-             restrictions     = nothing)
+             restrictions     = nothing,
+             threaded         = :auto)
+    _validate_sparse_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("xas: Eg is required when ψ is a bare vector " *
                             "(pass `Eg = ...` or call with an Eigen)"))
@@ -128,7 +138,8 @@ function xas(H, basis::AbstractBasis, T, ψ::AbstractVector{<:Number};
                     reorth_use    = something(reorth,    DEFAULTS.reorth),
                     tol_use       = something(tol,       DEFAULTS.tol),
                     Eg            = Float64(Eg),
-                    restrictions  = restrictions)
+                    restrictions  = restrictions,
+                    threaded      = threaded)
 end
 
 # --- Pre-applied source vector (skip internal T·ψ) ------------------------
@@ -149,7 +160,9 @@ function xas(H, basis::AbstractBasis, source::AbstractVector{<:Number};
              krylovdim::Union{Int,Nothing}    = nothing,
              reorth::Union{Symbol,Nothing}    = nothing,
              tol::Union{Real,Nothing}         = nothing,
-             restrictions     = nothing)
+             restrictions     = nothing,
+             threaded         = :auto)
+    _validate_sparse_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("xas: Eg is required when calling with a pre-applied " *
                             "source vector (no ψ from which to extract it)"))
@@ -165,7 +178,8 @@ function xas(H, basis::AbstractBasis, source::AbstractVector{<:Number};
                     reorth_use    = something(reorth,    DEFAULTS.reorth),
                     tol_use       = something(tol,       DEFAULTS.tol),
                     Eg            = Float64(Eg),
-                    restrictions  = restrictions)
+                    restrictions  = restrictions,
+                    threaded      = threaded)
 end
 
 # --- List of ψ's -----------------------------------------------------------
@@ -180,7 +194,9 @@ function xas(H, basis::AbstractBasis, T,
              krylovdim::Union{Int,Nothing}    = nothing,
              reorth::Union{Symbol,Nothing}    = nothing,
              tol::Union{Real,Nothing}         = nothing,
-             restrictions     = nothing)
+             restrictions     = nothing,
+             threaded         = :auto)
+    _validate_sparse_threading(threaded)
     # Multi-ψ contract: a single shared `Eg::Real`. The list of ψ's is
     # interpreted as several ground-state vectors that share a common
     # zero-frequency reference (typical use case: a list of degenerate
@@ -198,7 +214,8 @@ function xas(H, basis::AbstractBasis, T,
                     reorth_use    = something(reorth,    DEFAULTS.reorth),
                     tol_use       = something(tol,       DEFAULTS.tol),
                     Eg            = Float64(Eg),
-                    restrictions  = restrictions)
+                    restrictions  = restrictions,
+                    threaded      = threaded)
 end
 
 # --- Internal helpers ------------------------------------------------------
@@ -216,7 +233,7 @@ function _xas_run(H, basis::AbstractBasis,
                   ψ_list::Vector{<:AbstractVector},
                   T_is_vector::Bool, ψ_is_list::Bool;
                   Γ_use, ω_grid_use, krylovdim_use, reorth_use,
-                  tol_use, Eg, restrictions)
+                  tol_use, Eg, restrictions, threaded = :auto)
     isempty(T_list) && throw(ArgumentError("xas: T must be non-empty"))
     isempty(ψ_list) && throw(ArgumentError("xas: ψ must be non-empty"))
     N_T = length(T_list)
@@ -255,7 +272,8 @@ function _xas_run(H, basis::AbstractBasis,
                                  reorth_use    = reorth_use,
                                  tol_use       = tol_use,
                                  Eg            = Eg,
-                                 restrictions  = restrictions)
+                                 restrictions  = restrictions,
+                                 threaded      = threaded)
 end
 
 # Pipeline starting from already-built source blocks. `source_blocks` is a
@@ -281,7 +299,7 @@ function _xas_run_from_sources(H, basis::AbstractBasis,
                                source_blocks::Vector{<:AbstractMatrix},
                                T_is_vector::Bool, ψ_is_list::Bool;
                                Γ_use, ω_grid_use, krylovdim_use, reorth_use,
-                               tol_use, Eg, restrictions)
+                               tol_use, Eg, restrictions, threaded = :auto)
     isempty(source_blocks) && throw(ArgumentError("xas: source must be non-empty"))
     N_ψ = length(source_blocks)
     N_T = size(source_blocks[1], 2)
@@ -302,7 +320,9 @@ function _xas_run_from_sources(H, basis::AbstractBasis,
 
     # Forward block-Lanczos tuning kwargs. `restrictions` requires `basis`
     # alongside it — correlator auto-fills basis when restrictions is set.
-    common_kwargs = (krylovdim = krylovdim_use,
+    action = _prepare_sparse_action(H; nrhs=N_T, threaded)
+    common_kwargs = (threaded = threaded,
+                     krylovdim = krylovdim_use,
                      reorth    = reorth_use,
                      tol       = tol_use,
                      retain_basis = false)
@@ -315,7 +335,7 @@ function _xas_run_from_sources(H, basis::AbstractBasis,
     n_iter_results = Int[]
     converged_results = Bool[]
     for (ψ_idx, X) in enumerate(source_blocks)
-        L = Responses.correlator(H, basis, empty_ops, empty_ops;
+        L = Responses.correlator(action, basis, empty_ops, empty_ops;
                                  source_block = X,
                                  state        = nothing,
                                  Eg           = Eg,

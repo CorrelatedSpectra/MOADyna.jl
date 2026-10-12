@@ -109,7 +109,7 @@ t, U = 1.0, 4.0
 H = -t * sum(c'(s[1], σ) * c(s[2], σ) + c'(s[2], σ) * c(s[1], σ) for σ in 1:2) +
      U * sum(n(s[i], 1) * n(s[i], 2) for i in 1:2)
 
-b   = EagerBasis(h, n_fermion(h) == 2)
+b   = basis(h, n_fermion(h) == 2)
 Hsp = assemble(compile(H, b), b)
 gs  = eigen(Hsp, b; n = 1)
 
@@ -144,6 +144,33 @@ diamagnetic weight is not included). Both wrappers take the finite-`T` path via 
 (thermal average over the low-lying states); see [Responses](@ref) for the underlying
 [`correlator`](@ref).
 
+## Threading in spectroscopy
+
+[`xas`](@ref), [`rixs`](@ref), and [`fluorescence_yield`](@ref) accept
+`threaded=:auto` (the default), `threaded=true`, or `threaded=false`. Automatic
+mode uses the available Julia threads when a sparse product is large enough to
+amortize scheduling overhead. `true` forces that kernel; `false` keeps sparse
+Hamiltonian products serial throughout the calculation, including nested
+recursions and thermal averages.
+
+[`optical_conductivity`](@ref) and [`dynamical_structure_factor`](@ref) forward
+the same control to their underlying response calculation. [`kubo_response`](@ref)
+applies it to sparse products in a partial eigensolve; its full dense eigensolve
+and eigenstate-pair sum retain their existing execution paths.
+
+```julia
+spec = xas(H_xas, basis_xas, T, psi0; Eg, threaded = false)
+result = rixs(H_final, H_intermediate, basis, T_in, T_out, psi0;
+              Eg, threaded = true)
+```
+
+Start Julia with, for example, `--threads=4` to provide four workers. This
+setting is separate from basis/assembly scheduling and BLAS thread counts; it
+does not create additional Julia threads. A calculation prepares the sparse
+action once and reuses it across incident energies or initial states. Keep its
+Hamiltonians fixed until the calculation returns. See
+[Sparse multiplication threads](@ref) in the ED manual for the solver setting.
+
 ## Restriction-resolved partial excitations
 
 To decompose a spectrum into final-state channels (e.g. the ``d^9`` vs ``d^{10}\underline{L}`` contributions of a
@@ -157,11 +184,19 @@ final-state `nshells(m, :Ni_3d) == 9` channel of the L-edge).
 
 ## Finite temperature
 
-Finite temperature in v0.2 applies to the **neutral same-sector response wrappers** —
-[`optical_conductivity`](@ref) and [`dynamical_structure_factor`](@ref) — via a `T` keyword
+The **neutral same-sector response wrappers** —
+[`optical_conductivity`](@ref) and [`dynamical_structure_factor`](@ref) — accept a `T` keyword
 (with `k_B = 1`; not to be confused with the transition-operator argument `T` of the
 core-level functions). It replaces the single ground-state expectation by a
 Boltzmann-weighted sum over the low-lying eigenstates (degeneracy-complete truncation). The
 thermal machinery lives in [`correlator`](@ref) and is described in the [Responses](@ref)
-chapter. Finite-temperature XAS/RIXS/fluorescence yield are **not** exposed in v0.2
-(deferred to a follow-on sub-phase).
+chapter.
+
+For XAS, RIXS, and fluorescence yield, pass an eigensystem as the initial-state
+argument and set `temperature=…` (also with `k_B = 1`). Supply explicit frequency
+grids so the spectra from each initial state are evaluated on common axes before
+Boltzmann averaging. `N_states` and `degen_tol` control the retained ensemble;
+`threaded` has the same meaning as for a single initial state.
+The eigensystem's vectors must live in the propagation basis; use [`embed`](@ref)
+when the initial basis differs. Thermal averaging returns a grid tensor without
+retained Lanczos chunks, so re-broadening requires another calculation.
