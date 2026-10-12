@@ -32,6 +32,8 @@ be `Real` or `Complex` and is promoted to `Complex` internally.
 This is a pure post-processing primitive — no matvecs, no Lanczos.
 The arithmetic touches only small block matrices (`B × B` and
 `B × B_prev`). Cost per call: `O(K · B³)` flops.
+When every active block has size one, scalar arithmetic avoids temporary
+matrices inside the recurrence while preserving the matrix return shape.
 """
 function cf_block(α::Vector{<:AbstractMatrix},
                   β::Vector{<:AbstractMatrix},
@@ -44,6 +46,21 @@ function cf_block(α::Vector{<:AbstractMatrix},
     Tc = T <: Complex ? T : Complex{T}
 
     zc = Tc(z)
+
+    # Scalar spectra share the response representation with block spectra,
+    # but do not need matrix products or inverses at every Krylov step.
+    # Check the complete active chain: ragged blocks can grow beyond size
+    # one even when its first and last blocks are scalar. A trailing β_K
+    # lies outside the represented tridiagonal and remains unused.
+    if all(a -> size(a) == (1, 1), α) &&
+       all(k -> size(β[k]) == (1, 1), 1:(K-1))
+        g = inv(zc - Tc(α[K][1, 1]))
+        for k in (K-1):-1:1
+            b = Tc(β[k][1, 1])
+            g = inv(zc - Tc(α[k][1, 1]) - conj(b) * g * b)
+        end
+        return fill(g, 1, 1)
+    end
 
     # Start from the bottom: G_K = (z·I - α_K)^{-1}
     G = Tc.(α[K])

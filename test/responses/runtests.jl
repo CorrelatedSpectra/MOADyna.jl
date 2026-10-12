@@ -3,6 +3,7 @@ using MOADyna
 
 @testset "Responses" begin
     include("test_block_lanczos.jl")
+    include("test_scalar_cf.jl")
     include("test_types.jl")
     include("test_arithmetic.jl")
     include("test_conversions.jl")
