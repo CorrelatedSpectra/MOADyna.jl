@@ -71,6 +71,7 @@ using MOADyna
         include("spectroscopy/test_re_broaden_table.jl")
         include("spectroscopy/test_io.jl")
         include("spectroscopy/test_rixs.jl")
+        include("spectroscopy/test_rixs_solver.jl")
         include("spectroscopy/test_fluorescence_yield.jl")
         include("spectroscopy/test_conductivity.jl")
         include("spectroscopy/test_structure_factor.jl")

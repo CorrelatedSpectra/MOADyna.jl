@@ -13,6 +13,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - RIXS convergence metadata includes intermediate and final Lanczos runs.
 - Sx/Sy expansion limits are checked before allocating the expanded chains.
 
+### Changed
+
+- RIXS intermediate resolvents preserve the block-tridiagonal Krylov structure.
+
 ### Added
 
 - Native NiO RIXS validation against tracked Quanty and PyQuanty references.
