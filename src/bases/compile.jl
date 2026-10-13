@@ -2,7 +2,7 @@
 # compile — lower an OperatorSum + basis to CompiledHamiltonian
 # =====================================================================
 #
-# Per §5 of docs/architecture/02_hilbert.md. Each layer-1 chain is lowered
+# Each symbolic chain is lowered
 # into a sequence of `CompiledEntry` records that the apply hot path can
 # consume without touching layer-1 symbolic types. Sx/Sy entries are
 # expanded into combinations of S+/S- at compile time.
@@ -12,8 +12,7 @@
 """
     CompiledEntry
 
-A primitive ladder/spin action in lowered form. See §5.1 of the layer-2
-chapter.
+A primitive ladder/spin action in lowered form.
 """
 struct CompiledEntry
     kind::EntryKind
@@ -52,7 +51,7 @@ end
 Opaque output of `compile(H, basis)` and the required input to `assemble`;
 it is the basis-resolved intermediate that maps a symbolic `OperatorSum`
 onto the concrete bit-encoding of a specific `EagerBasis`. Consumers should
-treat it as a black box: pass it to `assemble` to obtain the dense matrix,
+treat it as a black box: pass it to `assemble` to obtain the sparse matrix,
 or inspect `.basis_id` to verify it matches the target basis.
 
 Collection of compiled terms with their entries, prechecks, and a
@@ -296,20 +295,8 @@ end
 
 # --- Fermionic precheck masks ----------------------------------------------
 #
-# Walking the chain right-to-left (the apply order):
-#   - annihilation needs the bit set,
-#   - creation needs the bit cleared.
-# A mode that's annihilated and then created (in the right-to-left walk) is
-# self-consistent and isn't forbidden. So:
-#   ann_mask        = OR of all bits annihilated at any point in the walk
-#   cre_forbid_mask = OR of (bits created) ∖ (bits subsequently annihilated
-#                          in the walk, i.e. annihilated at an earlier
-#                          right-to-left position than the creation)
-# A simpler safe upper bound that is correct for v0.1 acceptance tests:
-# treat every annihilation as requiring its bit set, and every creation as
-# requiring its bit cleared UNLESS the same mode is annihilated as well.
-# That covers `c'c` (n), `c'(i)c(j)` hops, `c'(i)c'(j)c(k)c(l)` two-body
-# correctly.
+# For a normally ordered fermion chain, annihilated modes must be occupied.
+# Created modes must be empty unless they are also annihilated in the chain.
 
 function _build_fermion_masks!(masks_flat::Vector{UInt64},
                                chain::Chain, chain_offset::Int,

@@ -2,8 +2,7 @@
 # CompiledRestriction — primitive form of a layer-1 Restriction
 # =====================================================================
 #
-# Per §4 of docs/architecture/02_hilbert.md, a restriction is lowered to one
-# of three operational shapes:
+# A restriction is lowered to one of three operational shapes:
 #
 #   POPCOUNT      bitwise mask + popcount: fermion particle counts on a set
 #                 of modes; min ≤ Σ bᵢ ≤ max.
@@ -19,7 +18,7 @@
 """
     CompiledRestriction
 
-Per §4.1 of the layer-2 chapter. Carries a `mask` over `nwords` UInt64 words
+Carries a `mask` over `nwords` UInt64 words
 (bits set on the modes counted), integer `min`/`max` bounds, a per-mode
 `weights` vector (in scaled-integer form), and a global `scale` such that
 the user-visible bound is `min/scale ≤ value ≤ max/scale`.

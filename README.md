@@ -70,9 +70,10 @@ Pkg.add("MOADyna")
 Requires Julia 1.10 or newer. See [`CHANGELOG.md`](CHANGELOG.md) for what each
 release changed.
 
-Julia normally precompiles packages automatically after installation or updates,
-saving compiled code for later sessions. To request this explicitly, run in the
-same Julia environment where you installed MOADyna:
+Julia automatically precompiles packages during normal installation with
+`Pkg.add` or `Pkg.instantiate`, saving compiled code for later sessions. No
+extra step is needed. For a development checkout added with `Pkg.develop`, or
+to request precompilation explicitly, run in that Julia environment:
 
 ```julia
 using Pkg

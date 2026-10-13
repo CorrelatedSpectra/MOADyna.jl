@@ -2,10 +2,8 @@
 #
 # Hand-typed Cartesian generator sets per group; the full element list is
 # recovered via BFS closure in `group.jl`. The spgrep / libmsym
-# embedded-blob path (chapter §2.3) adds fully-ordered element lists with
-# explicit setting variants and serves as the cross-source agreement
-# oracle (§2.4 Oracle 2). Those blobs are produced by dev_scripts and are
-# populated when bumping the source version.
+# embedded data provide ordered element lists with explicit setting variants
+# for cross-source agreement checks.
 
 const _I3 = SMatrix{3,3,Float64}(1.0, 0.0, 0.0,
                                  0.0, 1.0, 0.0,
@@ -33,7 +31,7 @@ const _INVERSION = SMatrix{3,3,Float64}(-1.0, 0.0, 0.0,
                                         0.0, -1.0, 0.0,
                                         0.0, 0.0, -1.0)
 
-# Crystal-system metric for the spgrep → Cartesian transform (§2.2 (2.1)).
+# Crystal-system metric for the spgrep → Cartesian transform.
 const CRYSTAL_SYSTEM_METRIC = Dict{Symbol, SMatrix{3,3,Float64,9}}(
     :triclinic    => _I3,
     :monoclinic   => _I3,

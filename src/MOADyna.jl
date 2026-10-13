@@ -148,8 +148,7 @@ export LanczosResponse, PoleResponse, GridResponse, GreensFunction
 export correlator, to_pole, to_grid
 export save_response, load_response
 
-# From Spectroscopy (rixs / fluorescence_yield + helpers added in
-# later phases). Algorithm internals (LanczosChunk, BlockTriDiagonal,
+# From Spectroscopy. Algorithm internals (LanczosChunk, BlockTriDiagonal,
 # Defaults, block_lanczos, cf_block, evaluate_on_grid, pretty_step,
 # auto_grid) intentionally not re-exported here; reach via
 # MOADyna.Spectroscopy.<name>.

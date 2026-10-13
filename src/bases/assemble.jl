@@ -2,8 +2,7 @@
 # assemble — parallel sparse matrix construction
 # =====================================================================
 #
-# Per §6 of docs/architecture/02_hilbert.md. Two-pass build, but we
-# skip the COO scratch and write CSC directly:
+# Two-pass construction writes CSC directly without a COO scratch buffer:
 #   Pass 1: each chunk produces a *mini-CSC* (colptr, rowval, nzval)
 #           for its column slab. Per-column Dict dedup; sort by row.
 #   Pass 2: stitch the mini-CSCs into the final SparseMatrixCSC by
@@ -11,8 +10,8 @@
 #           colptr. No global COO triplets, no sparse(I,J,V) scratch.
 #
 # Index type Idx is auto-selected: Int32 when length(basis) <= typemax(Int32)-1
-# AND nnz fits Int32 (almost always for ED), else Int. Halves the memory
-# for colptr / rowval / nzval (the 8-byte "Int" → 4-byte "Int32" slim).
+# AND nnz fits Int32, else Int. Int32 halves index storage in colptr and rowval;
+# the numerical nzval element type is unchanged.
 
 """
     assemble(H::CompiledHamiltonian{T}, basis::EagerBasis) -> SparseMatrixCSC{T,<:Integer}
@@ -61,8 +60,6 @@ function _assemble_with_idx(H::CompiledHamiltonian{T}, basis::EagerBasis,
 
     # If Idx is Int32 but nnz overflows it, retry with Int. We can't
     # know nnz before pass-1, so this is the natural place to check.
-    # In practice ED problems never come close — the 2.6M-state benchmark has nnz≈3.6e7,
-    # well below the 2.15e9 Int32 ceiling.
     total_nnz_int = 0
     @inbounds for k in eachindex(locals)
         total_nnz_int += length(locals[k][2])
@@ -211,7 +208,7 @@ end
 # Returns the accumulated phase as a value of the same eltype as
 # H.terms[i].coef. Phase 0 means "term vanishes on this state".
 #
-# Per §6.2 of the layer-2 chapter: rightmost entry hits |ψ⟩ first.
+# The rightmost entry acts on |ψ⟩ first.
 # Mutates `state` in place to the resulting |φ⟩.
 
 function _apply_chain_rtl!(state::AbstractVector{UInt64},

@@ -211,8 +211,7 @@ function _bitstring_to_words!(buf::AbstractVector{UInt64},
         # Resolve the bit position in MOADyna's encoding.
         entry = mode_entry(encoding, site_name, _splat(label))
         # FermionSite modes are 1-bit. Set that bit.
-        # (Boson/spin sites would need set_span!; not needed for v0.1
-        # since Quanty wavefunctions are over fermionic modes only.)
+        # This reader handles Quanty wavefunctions over fermionic modes only.
         buf[entry.word_idx] |= UInt64(1) << entry.bit_offset
     end
     return buf

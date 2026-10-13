@@ -369,8 +369,7 @@ function _xas_run_from_sources(H, basis::AbstractBasis,
     n_ω = length(ω_grid_resolved)
 
     # Materialise on the resolved grid via Responses.to_grid; .data is
-    # shape (B_raw, B_raw, n_ω), exactly what the v0.1 evaluate_on_grid
-    # returned, so `_xas_pack` consumes it unchanged.
+    # shape (B_raw, B_raw, n_ω), as required by `_xas_pack`.
     χs = Array{ComplexF64,3}[]
     for L in responses
         G = Responses.to_grid(L, ω_grid_resolved; Γ = Γ_use)

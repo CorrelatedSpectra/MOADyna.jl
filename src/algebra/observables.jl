@@ -177,7 +177,7 @@ Sum of Sz over `SpinSite`s. `FermionSite`s are NOT auto-summed: a bare
 `FermionSite{N}` carries no spin convention (no built-in up/down
 labelling), so `Sz_total` over fermions is ill-defined at layer 1. Use
 `WeightedParticleCount(sites, weights)` with explicit `+1//2`/`-1//2`
-weights instead — see §4.3 of `docs/architecture/02_hilbert.md`.
+weights instead.
 
 `BosonSite`s are also excluded (no spin meaning).
 """

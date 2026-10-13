@@ -1,42 +1,16 @@
-# src/gradients/Gradients.jl
+# T=0 XAS derivatives from preassembled term matrices.
 #
-# MOADyna.Gradients — the v0.3 differentiable forward model (T=0 only).
-#
-# Makes MOADyna's `(physical parameters θ → XAS spectrum)` map differentiable in θ,
-# forward-mode + analytic-resolvent — NOT reverse-AD through the eigensolver. The
-# whole layer is built on an AFFINE Hamiltonian model
-#
-#     H(θ) = Σ_i c_i(θ) · M_i ,        dH(θ̇) = Σ_i (∂c_i/∂θ · θ̇)_i · M_i ,
-#
-# with term matrices M_i assembled ONCE and combined numerically as θ varies; the
-# symbolic builders (coulomb, Akm, …) are never re-run inside the differentiated path
-# (their `iszero`/`chop` branches are non-smooth and change sparsity).
-#
-# Contents (built and finite-difference-validated in seven steps):
-#   • Coefficient maps + `AffineModel` (`hamiltonian`/`dhamiltonian`); `zsa_onsite`.
-#   • Ground-state derivatives: `groundstate` (non-degenerate gate), `grad_E0`
-#     (Hellmann–Feynman), `sternheimer_dψ0` (projected Sternheimer).
-#   • Resolvent JVP: `response_C`/`response_jvp` (fixed source) and the full coupled
-#     `xas_response_C`/`xas_response_jvp` (θ in both H_g and H_f).
-#   • Degeneracy/sector awareness: `groundstate_manifold`, `manifold_gate`,
-#     `lowlying_spectrum`, and the opt-in `classify_groundstate` (the ONLY symbol that
-#     reaches into the physics modules; never on a differentiated path).
-#   • Spectrum VJP/pullback: `XASGradientModel`, `spectrum`, `spectrum_and_jvp`,
-#     `jacobian`, `spectrum_with_pullback` (S = −Im C/π, cotangent W = −iλ/π); plus a
-#     degeneracy-clustered spectral measure (`freeze_windows`, `spectral_clusters`).
-#   • `fit_spectrum`: a deterministic direct-fit baseline (the `Optim` weakdep
-#     extension `MOADynaOptimExt`).
-#
-# Scope: T=0 only (finite-T dropped by design). Parameter INFERENCE (observation
-# model, NPE/HMC/SBC/OOD) lives in a separate sibling package that depends on MOADyna;
-# MOADyna never hard-depends on the ML stack.
+# H(θ) = Σ_i c_i(θ) M_i and dH(θ̇) = Σ_i (∂c_i/∂θ · θ̇)_i M_i.
+# Keeping the term matrices fixed avoids differentiating symbolic branches.
+# Analytic resolvent and ground-state derivatives provide spectrum Jacobians
+# and pullbacks, with gapped-manifold and clustered-spectrum support.
 
 module Gradients
 
 using LinearAlgebra
 using SparseArrays
 using KrylovKit: linsolve
-using ..PointGroups: classify_state   # spatial irrep labeling (build-step 5 bridge)
+using ..PointGroups: classify_state   # spatial irrep labeling
 
 export AbstractCoefficientMap, AffineMap, coeffs, coeff_jacobian
 export AffineModel, hamiltonian, dhamiltonian, n_params, n_terms
@@ -52,9 +26,8 @@ export fit_spectrum
 
 # --- Coefficient maps  θ ↦ (c_1, …, c_nterms) ------------------------------
 #
-# Interface: `coeffs(map, θ)` and `coeff_jacobian(map, θ)`. For the v0.3 anchor
-# the map is affine (constant Jacobian), but the interface is kept general so a
-# later nonlinear coefficient map is simply a different concrete subtype.
+# Interface: `coeffs(map, θ)` and `coeff_jacobian(map, θ)`.
+# `AffineMap` implements a constant Jacobian.
 
 abstract type AbstractCoefficientMap end
 
@@ -245,7 +218,7 @@ function zsa_onsite(target_shells::AbstractVector{Symbol},
     return ε, dε_dEanchor, A
 end
 
-# --- Ground-state derivatives (build-step 2) -------------------------------
+# --- Ground-state derivatives -------------------------------------------
 #
 # Non-degenerate ground state. dE0 via Hellmann–Feynman; dψ0 via a projected
 # (shifted full-rank) Sternheimer solve. Operates directly on the assembled
@@ -256,11 +229,11 @@ end
     groundstate(model::AffineModel, θ; gap_tol=1e-6, dense_max=4096) -> (E0, ψ0, gap)
 
 Lowest eigenpair of `H(θ)` with a non-degeneracy gate. Dense path
-`eigen(Hermitian(Matrix(H)))` — the fixtures are small and ≥2 eigenvalues are
-needed to measure the gap. Errors if `gap = E1 − E0 ≤ gap_tol`: a
+`eigen(Hermitian(Matrix(H)))` computes the spectrum; at least two eigenvalues
+are needed to measure the gap. Errors if `gap = E1 − E0 ≤ gap_tol`: a
 (near-)degenerate ground state makes `dψ0` ill-conditioned / undefined. For a
-genuinely degenerate ground manifold use [`groundstate_manifold`](@ref) (build-step
-5), which returns the orthonormal manifold basis and gates on the external gap.
+degenerate ground manifold use [`groundstate_manifold`](@ref), which returns
+the orthonormal manifold basis and gates on the external gap.
 `ψ0` is normalized.
 """
 function groundstate(model::AffineModel, θ::AbstractVector;
@@ -338,11 +311,11 @@ function _sternheimer_dψ0(H::AbstractMatrix, E0::Real, ψ0::AbstractVector,
     return proj(x)                                  # clean any roundoff ψ0-component
 end
 
-# --- Resolvent JVP (build-step 3) ------------------------------------------
+# --- Resolvent JVP -------------------------------------------------------
 #
 # Scalar response C(ω) = X† G(ω) X and its directional derivative, at FIXED
-# source X and FIXED reference E0 (the moving E0(θ) and X(θ) couplings are
-# build-step 4). G(ω) = [(ω + E0 + iΓ/2)·I − H(θ)]⁻¹, so with z fixed,
+# source X and FIXED reference E0. `xas_response_jvp` includes their derivatives.
+# G(ω) = [(ω + E0 + iΓ/2)·I − H(θ)]⁻¹, so with z fixed,
 # dG = G·dH·G and dC = X† G dH G X — evaluated by two shifted solves:
 # R = G X, dR = G (dH R), dC = X† dR.
 
@@ -379,8 +352,8 @@ end
     response_C(model::AffineModel, θ, X, ω_grid; E0, Γ, rtol=1e-12) -> Vector{ComplexF64}
 
 Scalar response `C(ω) = X† G(ω) X` at fixed source `X` and fixed reference `E0`,
-with `G(ω) = [(ω + E0 + iΓ/2)·I − H(θ)]⁻¹`. (Build-step 3: `X` and `E0` fixed;
-the moving-state couplings are build-step 4.)
+with `G(ω) = [(ω + E0 + iΓ/2)·I − H(θ)]⁻¹`.
+Use `xas_response_C` when the source and ground energy depend on `θ`.
 """
 function response_C(model::AffineModel, θ::AbstractVector, X::AbstractVector,
                     ω_grid::AbstractVector; E0::Real, Γ::Real, rtol::Real = 1e-12)
@@ -419,7 +392,7 @@ function response_jvp(model::AffineModel, θ::AbstractVector, θ̇::AbstractVect
     return dC
 end
 
-# --- Full XAS JVP: couple H_g and H_f (build-step 4) -----------------------
+# --- Full XAS JVP: couple H_g and H_f -------------------------------------
 #
 # C_AB(ω) = X_A† G X_B, X_A = A·E·ψ0, X_B = B·E·ψ0, G = [(ω+E0+iΓ/2)I − H_f]⁻¹,
 # with (E0, ψ0) the ground state of H_g(θ). θ enters BOTH H_g and H_f, so the JVP
@@ -540,14 +513,14 @@ function xas_response_jvp(g_model::AffineModel, f_model::AffineModel, A, B,
     return dC
 end
 
-# --- Build-step 5: degeneracy gate + sector-aware ground state -------------
+# --- Degeneracy gate and sector-aware ground state -----------------------
 #
 # Make the T=0 ground-state step degeneracy-aware (a g-fold manifold rather than a
 # single state) and, via an opt-in physics bridge, sector-aware (spatial irrep +
 # ⟨S²⟩). Everything a differentiated path touches (`groundstate_manifold`,
 # `manifold_gate`) is pure linear algebra — no physics-module deps; only the opt-in
 # `classify_groundstate` reaches into `classify_state`, and it is NEVER on a
-# differentiated path. The manifold-summed *derivative* is build-step 6.
+# differentiated path.
 
 """
     GroundState
@@ -845,12 +818,11 @@ function classify_groundstate(model::AffineModel, θ::AbstractVector;
     return GroundStateReport(reports[1], reports[2:end], gs)
 end
 
-# --- Build-step 6: spectrum VJP/pullback + clustered spectral measure ------
+# --- Spectrum VJP/pullback and clustered spectral measure -----------------
 #
-# Steps 3–4 give the complex correlator C_AB(ω) and its JVP dC. Step 6 turns those
-# into the real intensity S = −Im C/π, its dense Jacobian and pullback (the VJP the
-# sibling inference layer calls), and an optional degeneracy-clustered spectral
-# measure (gauge-invariant moments of S over FROZEN windows). The grid response is
+# Convert the complex correlator C_AB(ω) and its JVP dC into the real intensity
+# S = −Im C/π, its dense Jacobian and pullback, and an optional clustered spectral
+# measure (gauge-invariant moments of S over fixed windows). The grid response is
 # the primary differentiable object; the clustered measure is a structured view on
 # top — no per-pole residue derivatives (poles are used ONCE, in freeze_windows, to
 # DEFINE windows, never differentiated).
@@ -1192,12 +1164,11 @@ function spectral_clusters_jvp(model::XASGradientModel, θ::AbstractVector,
             end for win in windows]
 end
 
-# --- Build-step 7: deterministic direct-fit baseline (Optim weakdep) -------
+# --- Direct spectrum fitting (Optim extension) ---------------------------
 #
 # `fit_spectrum` is a gradient-driven least-squares baseline: minimize
-# ½‖w∘(spectrum(model,θ) − target)‖² with the analytic VJP (step-6 pullback). It is a
-# DIAGNOSTIC / sanity baseline — calibrated inference (NPE/HMC/SBC) lives in the sibling
-# package, not here. The method is provided by the `MOADynaOptimExt` package extension; the
+# ½‖w∘(spectrum(model,θ) − target)‖² with the analytic VJP.
+# The method is provided by the `MOADynaOptimExt` package extension; the
 # variadic fallback below errors helpfully when `Optim` is not loaded (it is strictly
 # less specific than the extension's 3-positional-argument method, so no collision).
 

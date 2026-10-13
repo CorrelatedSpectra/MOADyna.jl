@@ -1,13 +1,10 @@
 # src/shells/multipole.jl
 #
 # Raw rank-k Wigner-Eckart building blocks for the standard transition /
-# moment operators (sub-phase 2h): the general electric multipole
-# transition operator, the E2 quadrupole transition, the nIXS scattering
-# operator, the charge-quadrupole moment Q, and (with spin coupling added
-# in a later stage) the spin-dipole T.
+# moment operators: electric multipole and E2 transitions, nIXS scattering,
+# charge-quadrupole moments Q, and spin-dipole moments T.
 #
-# This file provides the two convention-locked primitives that every 2h
-# operator is built from:
+# Two shared primitives fix the angular convention:
 #
 #   `_ckq_coeff(ℓ_b, ℓ_a, k, q, m_a)`  — the Racah C^k_q matrix element
 #       ⟨ℓ_b, m_a+q | C^k_q | ℓ_a, m_a⟩, the rank-k cross-shell
@@ -28,7 +25,7 @@
 # Quanty's `(l1, m1)` is the created (bra) index = MOADyna's `(ℓ_b, m_b)`;
 # `(l2, m2)` the annihilated (ket) = `(ℓ_a, m_a)`; `q = m1 − m2 = m_b − m_a`.
 # At k=1 this is identical to `dipole.jl`, so `dipole` is recoverable as the
-# k=1 special case (refactored in Stage A).
+# k=1 special case.
 #
 # IMPORTANT — why NOT reuse `Akm` (group_projected.jl): `Akm` Hermitizes its
 # result (`(out + out') / 2`), which is correct for a crystal-field

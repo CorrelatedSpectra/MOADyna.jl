@@ -11,7 +11,7 @@ standard representation matrix used to transform spherical-harmonic states
 Conventions: active rotation, zyz Euler decomposition
 `D^ℓ_{m'm}(α,β,γ) = e^{-im'α} d^ℓ_{m'm}(β) e^{-imγ}`; row index
 `m' ∈ -ℓ..+ℓ`, column `m ∈ -ℓ..+ℓ`. Improper rotations (det = −1)
-pick up the parity factor `(det g)^ℓ` per §7 (5).
+pick up the parity factor `(det g)^ℓ`.
 
 To obtain `D^ℓ(g)` for every element of a group in one call, use
 `wignerd_for(G, ℓ)`.
@@ -30,7 +30,7 @@ wignerd_for(G::PointGroup, ℓ::Int) = [_wignerd_matrix(e.matrix, ℓ) for e in 
 
 Decompose the angular-momentum representation `D^ℓ` restricted to `G`
 into Mulliken irreps with multiplicities. Multiplicities are computed
-via complex constituents (per §9.2 step 1) — the factor-of-2 trap for
+via complex constituents — the factor-of-2 trap for
 folded `E_j` cyclic-family irreps is avoided by summing constituent
 multiplicities and asserting equality across conjugate pairs.
 
@@ -76,7 +76,7 @@ end
 
 The Mulliken-IR projector `P_Γ` acting on `V_ℓ` (the `(2ℓ+1)`-dim
 spherical-harmonic space). Built as a sum over complex constituents
-per §6.5 / §9.2 (avoids the factor-of-2 cyclic-family trap). The
+to avoid the factor-of-2 cyclic-family trap. The
 returned matrix is Hermitian and idempotent (`atol = 1e-9`).
 """
 function project(G::PointGroup, label::Symbol, ℓ::Int)

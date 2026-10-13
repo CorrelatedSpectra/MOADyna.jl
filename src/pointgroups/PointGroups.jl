@@ -2,7 +2,7 @@
     MOADyna.PointGroups
 
 Point-group representation theory for crystal-field and term-symbol
-analysis. Public surface (chapter §17):
+analysis. Public surface:
 
 - Construction: [`pointgroup`](@ref), [`rotate`](@ref).
 - Types: [`GroupElement`](@ref), [`IRrep`](@ref), [`PointGroup`](@ref).

@@ -363,9 +363,7 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
 
     # Per-(ψ, ω_in) GridResponse: extract `.data` from each outer
     # LanczosResponse via `to_grid(L, ω_out_resolved; Γ)`. Shape is
-    # (B_raw_outer, B_raw_outer, n_ω_out) — identical to what
-    # `evaluate_on_grid(chunk, …)` produced in v0.1, since the cf-recurrence
-    # math is shared (Responses.cf_block under the hood).
+    # (B_raw_outer, B_raw_outer, n_ω_out).
     if full6d || ψ_is_list
         # 6-D shape (N_in, N_out, N_out, N_in, n_ω_in, n_ω_out): axes are
         # (i, j, k, l, ω_in, ω_out) — i, l index T_in (size N_in), j, k

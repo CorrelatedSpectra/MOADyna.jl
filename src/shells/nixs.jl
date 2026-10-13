@@ -1,7 +1,7 @@
 # src/shells/nixs.jl
 #
 # Non-resonant inelastic X-ray scattering (nIXS) transition operator and
-# the radial-integral / angular primitives it needs (sub-phase 2h, Stage B).
+# the radial-integral / angular primitives it needs.
 #
 # The nIXS scattering operator is the second-quantized e^{i q·r}, expanded
 # in multipoles via the plane-wave (Rayleigh) expansion. In Racah's
@@ -23,7 +23,7 @@
 # generally non-Hermitian, so it is built by the raw `_ckm_contract`.
 #
 # The nIXS *spectrum* is then obtained by handing this operator to the
-# shipped `dynamical_structure_factor` (sub-phase 2e).
+# `dynamical_structure_factor` function.
 
 """
     _assoc_legendre(l::Integer, m::Integer, x::Real) -> Float64

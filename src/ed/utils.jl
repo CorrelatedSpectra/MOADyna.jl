@@ -43,7 +43,7 @@ end
 
 # --- Cluster-scoped Gram-Schmidt via QR -------------------------------
 #
-# Per §4 (Krylov path) of the chapter. KrylovKit's eigenvectors are
+# KrylovKit's eigenvectors are
 # individually normalized; across distinct eigenvalues the Lanczos
 # construction makes them orthogonal to within numerical tolerance, so
 # we don't touch them. Within a degenerate cluster (eigvals equal to

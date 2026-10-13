@@ -42,7 +42,7 @@ as `kron(U_orbital, I_2)`.
 
 Phase convention: Condon-Shortley standard tesseral combinations.
 
-Throws `ArgumentError` for ℓ = 3 (f-shell, deferred) and ℓ ≥ 4.
+Throws `ArgumentError` for the unsupported ℓ ≥ 3 shells.
 """
 function to_real(m::ShellModel, shell::Symbol)
     ell = ell_of(m, shell)

@@ -29,7 +29,7 @@ abstract type AbstractSite end
     name(site::AbstractSite) -> Symbol
 
 Human-readable identifier for the site. Two sites are equal iff they have
-the same type and the same name (see §1.4 / §8 of 01_algebra.md).
+the same type and the same name.
 """
 function name end
 

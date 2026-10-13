@@ -301,8 +301,7 @@ function _block_lanczos(action, X::Matrix{T};
             consec += 1
             if consec ≥ min_iter
                 converged = true
-                # We've already pushed α_k and β_k; advance one more α at
-                # next loop? No — the chapter says soft-stop right here.
+                # Keep the current α_k and trailing β_k at the soft stop.
                 break
             end
         else

@@ -66,7 +66,7 @@ end
     (G::GridResponse{T, N})(ω::Number) -> Array
 
 Evaluate the gridded response at an exact grid point. If `ω` is not in
-`G.ω`, raises `ArgumentError` (interpolation is deferred to v0.5+).
+`G.ω`, raises `ArgumentError`; interpolation is not supported.
 
 Returns a slice of `G.data` at the matching ω index along the last axis:
 a `Matrix` when `N = 3` (the standard `(rows, cols, nω)` layout), or an
@@ -445,8 +445,7 @@ _channel_add(x, y)                 = x + y
 
 # Explicit error for the Grid + Pole / Pole + Grid mixed-rep cases that
 # would otherwise leak a raw MethodError out of dispatch. Grid → Pole
-# is deliberately deferred to v0.5+ (rational-approximation fitting),
-# so there is no faithful in-Responses promotion.
+# would require rational-approximation fitting, so no exact promotion is available.
 function _channel_add(::GridResponse, ::PoleResponse)
     throw(ArgumentError(
         "GreensFunction +: cannot add GridResponse + PoleResponse channel — " *

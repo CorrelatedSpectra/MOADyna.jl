@@ -52,9 +52,7 @@ const PAGES = [
         "Point groups"                   => "man/pointgroups.md",
         "Atomic parameters"              => "man/atomic.md",
     ],
-    # NOTE: a top-level "Tutorials" bucket is a deliberate adaptation —
-    # TensorKit folds its tutorial into the Manual; MOADyna promotes worked
-    # examples to their own section for the spectroscopy / Quanty audience.
+    # Worked spectroscopy examples have their own section.
     "Tutorials" => [
         "Getting started"      => "tut/getting_started.md",
         "NiO: XAS, RIXS, and nIXS" => "tut/nio.md",
@@ -93,9 +91,7 @@ makedocs(;
         prettyurls = get(ENV, "CI", nothing) == "true",
         canonical  = "https://correlatedspectra.github.io/MOADyna.jl/stable",
         edit_link  = "main",
-        # `assets/logo.svg` is auto-detected; an SVG favicon link is wired
-        # in the Stage-3 polish step (Documenter's `assets` list only takes
-        # .css/.js/.ico classes).
+        # Documenter auto-detects `assets/logo.svg`.
     ),
     pages    = PAGES,
     doctest  = true,

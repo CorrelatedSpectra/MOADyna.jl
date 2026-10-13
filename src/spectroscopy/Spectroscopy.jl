@@ -79,9 +79,8 @@ export average, weighted_sum, restrict_to_window, plot_range
 export save_spectra, load_spectra
 
 # ---------------------------------------------------------------------------
-# Backward-compat shims (v0.2 → v0.7): kernel functions moved to
-# MOADyna.Responses. These const aliases preserve MOADyna.Spectroscopy.<name>
-# call sites without requiring migration. Deprecation removed at v0.7 freeze.
+# Compatibility aliases for kernel functions in MOADyna.Responses.
+# Existing MOADyna.Spectroscopy.<name> call sites remain supported.
 # ---------------------------------------------------------------------------
 const block_lanczos = Responses.block_lanczos
 const cf_block      = Responses.cf_block

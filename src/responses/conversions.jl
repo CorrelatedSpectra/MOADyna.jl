@@ -139,13 +139,11 @@ end
 
 Return `G` itself if `ω == G.ω` AND `Γ == G.Γ`. Otherwise raises
 `ArgumentError` — re-evaluating from a sampled grid would require lossy
-fitting (deferred to v0.5+).
+fitting, which is not supported.
 
-This is an identity pass-through, not a re-grid or re-broaden. To evaluate
-on a different ω grid or with a different Γ, first convert back to a pole
-representation via `to_pole`, then call `to_grid` on the resulting
-`PoleResponse`. Note that `to_pole` requires a `LanczosResponse`; if you
-only have a `GridResponse`, the Lanczos source must be retained separately.
+To evaluate on a different ω grid or with a different Γ, use the original
+`PoleResponse` or `LanczosResponse`; a sampled `GridResponse` does not retain
+the information needed for either operation.
 """
 function to_grid(G::GridResponse{T, N}, ω::AbstractVector{<:Real};
                  Γ::Real = G.Γ) where {T, N}

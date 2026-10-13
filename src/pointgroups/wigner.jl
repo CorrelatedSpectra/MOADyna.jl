@@ -1,9 +1,9 @@
 # Wigner D^ℓ from a 3×3 Cartesian rotation matrix.
 #
-# Active rotation (rotates physical states, §8.5):
+# Active rotation (rotates physical states):
 #   D^ℓ_{m'm}(α, β, γ) = e^{-i m' α} d^ℓ_{m'm}(β) e^{-i m γ}
 # Improper rotations (det R = -1) get an extra parity factor s^ℓ
-# applied externally (see §7 step 5).
+# applied by `_wignerd_matrix`.
 #
 # m-ordering convention: row index m' = -ℓ..+ℓ; column m = -ℓ..+ℓ.
 
@@ -61,7 +61,7 @@ end
 
 # Full D^ℓ from a Cartesian rotation matrix. Handles both proper (det=+1)
 # and improper (det=-1) by factoring through the proper part and applying
-# the parity factor s^ℓ (s = det R) per §7.
+# the parity factor s^ℓ (s = det R).
 function _wignerd_matrix(R::SMatrix{3,3,Float64,9}, ℓ::Int)
     s = det(R)
     s_int = s > 0 ? 1 : -1

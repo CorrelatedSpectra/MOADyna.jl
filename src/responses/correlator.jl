@@ -10,14 +10,11 @@
 # Convention pins:
 #
 #   - **Autocorrelator-only contract:** `As === Bs` (object identity)
-#     is validated. Cross-correlator (As ≠ Bs) belongs to a later
-#     sub-phase; the signature accepts the broader shape for
-#     forward-compat with joint-source-block + slice extensions.
+#     is validated; distinct left and right operator lists are unsupported.
 #   - **Channel kwarg.** All four channels are implemented:
 #     `:neutral` (default), `:addition`, `:removal`, `:both`. The
 #     `:both` branch requires explicit `addition_indices` and/or
-#     `removal_indices` (no silent default) — see chapter §3 for the
-#     locked partition contract.
+#     `removal_indices` (no silent default).
 #   - **Source-input modes (mutually exclusive):**
 #       (a) `state = :ground_state`, `source_block = nothing`: kernel
 #           runs `eigen(H, basis; n=1)` to get ψ₀ + Eg.
@@ -61,7 +58,7 @@ then wrap the result as one of `LanczosResponse`, `PoleResponse`, or
   `state` (or `source_block`) all live. **Sector-spanning is the
   caller's responsibility** (see Notes).
 - `As::Vector{<:OperatorSum}` — left operators. **Must be `===` equal to
-  `Bs`** (autocorrelator-only contract; cross-correlator deferred to v0.5+).
+  `Bs`** (autocorrelator-only contract).
 - `Bs::Vector{<:OperatorSum}` — right operators applied to `state` to
   build the initial Krylov block. **In source_block mode, `As` and `Bs`
   are not consulted** beyond the `As === Bs` identity check — pass them
@@ -77,7 +74,7 @@ then wrap the result as one of `LanczosResponse`, `PoleResponse`, or
 | `Eg`           | `nothing`        | required for state-vector / source-block modes; computed (and forbidden to supply) when `state = :ground_state` |
 | `state`        | `:ground_state`  | `:ground_state` (compute ψ₀+Eg; Eg must be `nothing`) / `AbstractVector` (user ψ₀) / `nothing` (with `source_block`) |
 | `source_block` | `nothing`        | pre-built initial block; mutually exclusive with non-`nothing` `state`; rejected for `channel = :both` |
-| `channel`      | `:neutral`       | `:neutral` / `:addition` / `:removal` / `:both` — see chapter §3 for the partition contract on `:both` |
+| `channel`      | `:neutral`       | `:neutral` / `:addition` / `:removal` / `:both` — `:both` requires the explicit index partition below |
 | `addition_indices` | `nothing`    | for `:addition`: defaults to `eachindex(Bs)` if `nothing`; for `:both`: explicit partition (may be empty/`nothing` on one side — at least one non-empty side required) |
 | `removal_indices`  | `nothing`    | for `:removal`: defaults to `eachindex(Bs)` if `nothing`; for `:both`: explicit partition (may be empty/`nothing` on one side — at least one non-empty side required) |
 | `form`         | `:lanczos`       | output type: `:lanczos`, `:pole`, or `:grid` |

@@ -246,8 +246,6 @@ function _symmetry_adapted_basis(G::PointGroup, ℓ::Int; experimental::Bool=fal
         # multiplicity convention exercised by the Quanty Akm regression suite
         # for the cells the suite covers; it has not been independently anchored
         # to a sourced explicit-irrep-matrix library (Koster / Bilbao / libmsym).
-        # Sourced explicit-irrep-matrix anchoring (Koster / Bilbao /
-        # libmsym) is a planned future extension.
         #
         # Convention:
         #   b_k = Re(⟨basis_k | B_{2,0} | basis_k⟩) / d_Γ  (per-copy A_{2,0} coupling)
@@ -830,9 +828,8 @@ end
 Build a `LiftedRep` whose `mode_action[(g_idx, s_idx)]` is the
 `(2ℓ_s+1)×(2ℓ_s+1)` matrix realising element `g_idx`'s action on shell
 `s_idx`'s creation operators (spin-up and spin-down get the same
-matrix). The full Fock-space apply (`(rep::LiftedRep)(g_idx, ψ)`) that
-the chapter §10.3 specifies needs Layer-1 single-particle rotation
-wiring; not yet exposed here.
+matrix). This object stores single-particle actions; many-body state
+classification is available through `MOADyna.classify_state`.
 """
 function lift(G::PointGroup, shell_ls::AbstractVector{<:Integer})
     Dl_cache = Dict{Tuple{Int, Int}, Matrix{ComplexF64}}()
@@ -860,8 +857,8 @@ subspace character `χ_S(g) = Tr_S U(g)` (one entry per element of `G`,
 in `G.elements` order). Returns a vector of `:label => integer-mult`
 pairs. Asserts `χ_S` is class-constant up to `tol`.
 
-Multiplicity of complex-type folded `E_j` is computed via constituent
-(per §10.4 (10.3)–(10.4)) and the conjugate-pair equality is asserted.
+Multiplicity of complex-type folded `E_j` is computed via complex constituents,
+and equality across the conjugate pair is asserted.
 """
 function classify_subspace(χ_S::AbstractVector{<:Number}, G::PointGroup; tol=1e-6)
     n_elems = length(G.elements)
@@ -912,8 +909,7 @@ end
 
 Given precomputed `⟨ψ|U(g)|ψ⟩` values (one per element in `G.elements`
 order), return projector weights `w_Γ = ⟨ψ|P_Γ|ψ⟩` per Mulliken IR
-(per §10.4 (10.1), summed over **all** elements, complex constituents
-folded). Returns a `(weights::Vector{Pair{Symbol, Float64}},
+(summed over **all** elements, with complex constituents folded). Returns a `(weights::Vector{Pair{Symbol, Float64}},
 dominant_IR::Symbol, dominant_weight::Float64)` named tuple.
 """
 function classify_state(matrix_elements::AbstractVector{<:Number}, G::PointGroup;

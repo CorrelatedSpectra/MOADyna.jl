@@ -15,7 +15,7 @@
 # elements, so the implementation diagonalises the sector rather than running a
 # one-sided Lanczos resolvent.
 #
-# Design (v0.2 closeout Item C):
+# Response conventions:
 #  - `temperature` is required (`k_B = 1`); `temperature = 0` uses the same
 #    degenerate-ground-manifold averaging as the rest of the finite-T layer.
 #  - The truncation knob is `N_eigs` (NOT `N_states`): it is a PROJECTED Lehmann

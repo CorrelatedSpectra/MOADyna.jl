@@ -4,7 +4,7 @@
 #
 # For a Hilbert with sites s_1, …, s_K, the encoding lays out per-mode bit
 # spans contiguously in a flat bit-string and packs them into a UInt64 word
-# vector. Per §3 of docs/architecture/02_hilbert.md:
+# vector:
 #
 #   - FermionSite{N}:  N bits, 1 per mode (occupation 0/1)
 #   - BosonSite{Nmax}: ⌈log₂(Nmax+1)⌉ bits per site (occupation 0..Nmax)
@@ -77,8 +77,7 @@ function EncodingMap(hilbert::Hilbert)
         site_total = encoding_bits(site)
 
         # Reserve the site's span; pad to the next word boundary if it would
-        # straddle. v0.1 acceptance tests fit in nwords == 1 so straddling
-        # is rare; padding keeps every mode addressable inside a single word.
+        # straddle. Padding keeps every mode addressable inside a single word.
         word_idx_0based  = bit_cursor ÷ 64
         bit_in_word      = bit_cursor % 64
         if bit_in_word + site_total > 64
@@ -215,7 +214,7 @@ end
     return nothing
 end
 
-# --- Lexicographic comparator over flat storage (§2.1) ----------------------
+# --- Lexicographic comparator over flat storage -----------------------------
 #
 # Used both at sort time (before any EagerBasis exists) and post-construction
 # via the basis-aware wrapper.

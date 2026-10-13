@@ -2,7 +2,7 @@
 # EagerBasis — sorted-vector enumeration of restricted Hilbert sectors
 # =====================================================================
 #
-# Per §2 of docs/architecture/02_hilbert.md. Construction uses partitioned
+# Construction uses partitioned
 # enumeration (one partition per restriction-influenced subset of modes,
 # plus one "unrestricted" partition for any remaining modes), mixed-radix
 # unranking over the Cartesian product, threaded enumeration into a flat
@@ -21,12 +21,12 @@ _next_basis_id() = Threads.atomic_add!(_BASIS_ID_COUNTER, UInt64(1)) + UInt64(1)
     EagerBasis(hilbert, restrictions...)
 
 A sorted-vector enumeration of the conserved sectors of `hilbert` defined by
-`restrictions`. See the layer-2 chapter, §2.
+`restrictions`.
 
 Typical workflow: build via `basis(hilbert, restrictions...)` or call the
 constructor directly; `length(b)` returns the sector dimension; then pass
 `b` to `compile` (producing a `CompiledHamiltonian`) and `assemble` (the
-dense matrix). For human-readable state inspection see `expectation_table`
+sparse matrix). For human-readable state inspection see `expectation_table`
 and `configuration_weights` in `MOADyna.Diagnostics`.
 """
 struct EagerBasis <: AbstractBasis
@@ -161,13 +161,8 @@ function EagerBasis(hilbert::Hilbert, restrictions::Restriction...)
         _enumerate_all!(states, part_lists, part_radices, part_layouts, enc.nwords, M)
     end
 
-    # Cross-coupled filter: any restriction not fully owned by a single
-    # partition needs predicate-style application here. _plan_partitions
-    # already ensures every restriction is covered by exactly one partition
-    # in v0.1, so no extra filter pass is required for the supported cases.
-    # (We still perform a defensive filter when there is unrestricted slack
-    # and a restriction touches modes spread across partitions — see
-    # `cross_coupled` in _plan_partitions.)
+    # Shared restrictions are merged into one partition, so every constraint
+    # has already been enforced before the Cartesian product is formed.
 
     # Sort the flat buffer lexicographically (index-permutation sort).
     if M > 1
@@ -179,9 +174,8 @@ end
 
 # --- Partition planning -----------------------------------------------------
 
-# A partition is a set of mode entries plus the compiled restrictions that
-# act exclusively on those modes. Restrictions spanning multiple partitions
-# are not supported in v0.1 (none of T1/T2/T3 require them).
+# Each partition owns its modes and every restriction that touches them.
+# Restrictions sharing a mode are merged before enumeration.
 
 struct _Partition
     mode_entries::Vector{ModeEntry}
@@ -317,7 +311,7 @@ function _enumerate_partition(p::_Partition, enc::EncodingMap)
     elseif _is_pure_weighted(p)
         # No POPCOUNT in this partition; restrictions are weighted-style
         # (BYTESUM / WEIGHTED_SUM). Use the recursive walk with precomputed
-        # suffix min/max-possible-sum pruning (per §4.2 of the chapter).
+        # suffix min/max-possible-sum pruning.
         _walk_weighted_pruned!(out, rec, p, enc)
     else
         # General fallback: walk every value, check every restriction at
@@ -649,7 +643,7 @@ end
 # running + remaining_max is below the lower bound) for any restriction,
 # prune the entire subtree. At the leaf we verify each restriction's bound.
 #
-# Per chapter §4.2 — recursive-pruned walk for weighted sums.
+# Recursive walk with suffix bounds for weighted sums.
 
 function _walk_weighted_pruned!(out::Vector{UInt64}, rec::Vector{UInt64},
                                 p::_Partition, enc::EncodingMap)

@@ -12,8 +12,7 @@
 #    Supports `re_broaden` after load.
 #
 # `format = :auto` picks by filename extension. RIXS results round-trip
-# through HDF5 only; the ASCII writer rejects RIXS with a clear message
-# (a directory-of-files 2-D-map variant is on the to-do list).
+# through HDF5 only; the ASCII writer rejects RIXS with a clear message.
 
 const _IO_FORMAT_VERSION  = 1
 
