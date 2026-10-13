@@ -108,7 +108,7 @@ end
 
 # Total ordering key for canonical position
 @inline function _order_key(e::LadderEntry)
-    return (_statistics_priority(e), _kind_priority(e), String(name(e.site)), e.label)
+    return (_statistics_priority(e), _kind_priority(e), name(e.site), e.label)
 end
 
 @inline _same_mode(a::LadderEntry, b::LadderEntry) = a.site == b.site && a.label == b.label
