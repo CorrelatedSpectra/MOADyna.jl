@@ -438,29 +438,6 @@ function _xas_pack(χs::Vector{Array{ComplexF64,3}},
     end
 end
 
-# Build dense block tridiagonal T_K from α/β stacks (ragged-block aware).
-function _build_T_K(α::Vector{<:AbstractMatrix}, β::Vector{<:AbstractMatrix})
-    K = length(α)
-    K ≥ 1 || throw(ArgumentError("_build_T_K: empty α stack"))
-    Tc = eltype(α[1])
-    sizes = Int[size(α[k], 1) for k in 1:K]
-    offs  = cumsum(vcat(0, sizes))
-    M = sum(sizes)
-    T_K = zeros(Tc, M, M)
-    @inbounds for k in 1:K
-        rng = (offs[k]+1):offs[k+1]
-        T_K[rng, rng] .= α[k]
-    end
-    @inbounds for k in 1:min(K-1, length(β))
-        rng_k    = (offs[k]+1):offs[k+1]
-        rng_kp1  = (offs[k+1]+1):offs[k+2]
-        # β[k] has shape (sizes[k+1] × sizes[k]); sits below diagonal.
-        T_K[rng_kp1, rng_k] .= β[k]
-        T_K[rng_k, rng_kp1] .= adjoint(β[k])
-    end
-    return T_K
-end
-
 # Pole structure (eigenvalues of T_K). Internal — used by the auto-grid
 # helper and by `poles`.
 function _chunk_poles(chunk::LanczosChunk)

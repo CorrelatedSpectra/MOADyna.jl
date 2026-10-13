@@ -22,7 +22,7 @@ using PrecompileTools: @compile_workload
                      omega_grid=range(-0.5,1.0;length=3),Gamma=0.3,krylovdim=6,
                      reorth=:full)
         tensor = xas(matrix,b,probes,psi;Eg=eg,
-                     omega_grid=range(-0.5,1.0;length=3),Gamma=0.3,krylovdim=6,
+                     omega_grid=range(-0.5,1.0;length=192),Gamma=0.3,krylovdim=6,
                      reorth=:full,threaded=true)
         rixs(matrix,matrix,b,probes[1],probes[2],psi;Eg=eg,
                           omega_in_grid=range(0.1,0.1;length=1),

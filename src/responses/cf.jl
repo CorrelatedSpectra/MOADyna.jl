@@ -135,6 +135,20 @@ function _cf_grid(α::Vector{<:AbstractMatrix}, β::Vector{<:AbstractMatrix},
         return out
     end
 
+    right = Matrix{W}(R)
+    left_work = Matrix{W}(left)
+    shifts = nothing
+    M = sum(widths)
+    # Amortize dense setup only for sufficiently long, small Hermitian chains.
+    if W === ComplexF64 && ω isa AbstractVector && M <= 256 && length(ω) >= max(_HERMITIAN_GRID_MIN_POINTS, M) &&
+       Float64(M)*Float64(raw_block_size)^2 <= 2sum(Float64(b)^3 for b in widths) &&
+       all(a -> a isa Matrix, α) && all(k -> β[k] isa Matrix, 1:K-1) &&
+       all(a -> all(isfinite, a) && ishermitian(a), α) &&
+       all(k -> all(isfinite, β[k]), 1:K-1) && all(isfinite, R) && all(isfinite, left)
+        shifts = W[z_at(w) for w in ω]
+        _hermitian_cf_grid!(out, α, β, right, left_work, shifts, widths) && return out
+    end
+
     # D_k = zI - α_k - β_k† (D_(k+1) \ β_k). Consume each factor
     # before reusing its matrix storage. No Hermitian projection is applied.
     nmax = maximum(widths)
@@ -142,13 +156,12 @@ function _cf_grid(α::Vector{<:AbstractMatrix}, β::Vector{<:AbstractMatrix},
     coupling = Matrix{W}(undef, nmax, nmax)
     solved_R = Matrix{W}(undef, widths[1], raw_block_size)
     χ = Matrix{W}(undef, raw_block_size, raw_block_size)
-    right = Matrix{W}(R)
-    left_work = Matrix{W}(left)
     # Convert mixed-precision couplings once per grid; ignore a trailing β_K.
     betas = [eltype(β[k]) === W ? β[k] : Matrix{W}(β[k]) for k in 1:K-1]
 
-    for (i, w) in enumerate(ω)
-        z = W(z_at(w))
+    # Reuse materialized shifts after a failed attempt; do not consume a grid twice.
+    for (i, w) in enumerate(isnothing(shifts) ? ω : shifts)
+        z = isnothing(shifts) ? W(z_at(w)) : w
         last = @view factors[1:widths[K], 1:widths[K]]
         _cf_shifted!(last, α[K], z)
         factor = lu!(last)
@@ -174,4 +187,54 @@ function _cf_shifted!(target, α, z)
         target[i, j] = i == j ? z - α[i, j] : -α[i, j]
     end
     return target
+end
+
+const _HERMITIAN_GRID_MIN_POINTS = 192
+
+# Avoid extreme intermediate products; this is not a conditioning certificate.
+function _moderate_pole_range(A, M)
+    low = 4sqrt(floatmin(Float64))
+    high = sqrt(floatmax(Float64))/(4max(1, M))
+    all(A) do value
+        magnitude = abs(value)
+        iszero(value) || (isfinite(magnitude) && low <= magnitude <= high)
+    end
+end
+
+# Evaluate a small Hermitian chain, returning false to use continued fractions.
+# The caller owns all buffers and overwrites out completely after a fallback.
+function _hermitian_cf_grid!(out, α, β, right_work, left_work, shifts, widths)
+    all(isfinite, shifts) && all(z -> !iszero(imag(z)), shifts) || return false
+    M = sum(widths)
+    T = _build_T_K(α, β, ComplexF64)
+    all(isfinite, T) && ishermitian(T) || return false
+    _moderate_pole_range(right_work, M) && _moderate_pole_range(left_work, M) || return false
+    scale = max(1.0, opnorm(T, Inf), maximum(abs(real(z)) for z in shifts))
+    minimum(abs(imag(z)) for z in shifts) > M*sqrt(eps(Float64))*scale || return false
+    F = eigen(Hermitian(T))
+    all(isfinite, F.values) && all(isfinite, F.vectors) || return false
+    top = view(F.vectors, 1:first(widths), :)
+    right = adjoint(top)*right_work
+    left = left_work*top
+    _moderate_pole_range(right, M) && _moderate_pole_range(left, M) || return false
+    b = size(out, 1)
+    weights = Matrix{ComplexF64}(undef, b*b, M)
+    for n in 1:M, j in 1:b, i in 1:b
+        weights[i+(j-1)*b, n] = left[i,n]*right[n,j]
+    end
+    _moderate_pole_range(weights, M) || return false
+    denominators = Vector{ComplexF64}(undef, M)
+    values = Vector{ComplexF64}(undef, b*b)
+    for (index, z) in enumerate(shifts)
+        for n in 1:M
+            denominators[n] = inv(z-F.values[n])
+        end
+        _moderate_pole_range(denominators, M) || return false
+        mul!(values, weights, denominators)
+        for j in 1:b, i in 1:b
+            out[i,j,index] = values[i+(j-1)*b]
+            isfinite(out[i,j,index]) || return false
+        end
+    end
+    return true
 end

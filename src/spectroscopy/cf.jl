@@ -27,8 +27,9 @@ polarisations (e.g. circular).
 the denominator is `iΓ/2`. `Eg` is the ground-state energy used as
 the zero-frequency reference (`ω = 0` corresponds to the GS pole).
 
-Block chains reuse call-local factorization and solve workspaces across the
-grid; scalar and generic-precision chains retain the single-point CF route.
+Small Hermitian block chains may use an eigendecomposition when the grid
+and numerical range permit it. Other block grids reuse call-local solve
+workspaces; scalar and generic-precision chains retain single-point CF.
 `ω_grid` is any iterable supporting `length`.
 """
 function evaluate_on_grid(chunk::LanczosChunk, ω_grid;

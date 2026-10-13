@@ -72,6 +72,11 @@ wider arithmetic keeps the serial path. The scalar-specialized recurrence
 retains its existing reorthogonalization. Dense/custom Hamiltonian products,
 basis/assembly scheduling, and BLAS thread settings are unchanged.
 
+For finite Hermitian matrices in supported concrete storage, same-precision
+multi-source recurrences keep diagonal blocks exactly Hermitian. The same
+block is stored and subtracted; scalar, restricted and unsupported actions
+retain their existing arithmetic.
+
 For sufficiently large full-reorthogonalization runs with multiple sources,
 finite sparse matrices may be reduced to the exact source-reachable coordinates.
 Every nonzero source and matrix entry participates; no amplitude cutoff is used.
@@ -155,7 +160,8 @@ function block_lanczos(H, X_raw::AbstractMatrix;
             _project_block(X_raw, restrictions, basis) :
             Matrix{T}(X_raw)             # promote to dense Matrix{T}; may be a copy
 
-    options = (; krylovdim, reorth, tol, min_iter, max_iter, deflate_tol,
+    hermitian_projection = B_raw > 1 && restrictions === nothing && _trusted_hermitian_action(H, T)
+    options = (; hermitian_projection, krylovdim, reorth, tol, min_iter, max_iter, deflate_tol,
                  restrictions, basis, retain_basis, threaded)
     rows = _reachable_block_rows(H, X; reorth, krylovdim, max_iter,
                                   deflate_tol, restrictions)
@@ -182,7 +188,8 @@ end
 function _block_lanczos(action, X::Matrix{T};
                         krylovdim::Int, reorth::Symbol, tol::Real,
                         min_iter::Int, max_iter::Int, deflate_tol::Real,
-                        restrictions, basis, retain_basis::Bool, threaded = :auto) where {T}
+                        restrictions, basis, retain_basis::Bool, threaded = :auto,
+                        hermitian_projection::Bool = false) where {T}
     N, B_raw = size(X)
     if B_raw == 1 && _scalar_lanczos_type(T) &&
        _supports_scalar_lanczos_action(action) &&
@@ -240,6 +247,9 @@ function _block_lanczos(action, X::Matrix{T};
 
         # α_k = V_curr† · W; subtract.
         α_k = adjoint(V_curr) * W                       # B_curr × B_curr
+        if hermitian_projection && W isa Matrix{T} && α_k isa Matrix{T} && all(isfinite, α_k)
+            _hermitianize_block!(α_k)
+        end
         push!(α_blocks, α_k)
         _subtract_block_product!(W, V_curr, α_k)
 
@@ -317,6 +327,43 @@ function _block_lanczos(action, X::Matrix{T};
 end
 
 # --- Internal helpers ------------------------------------------------------
+
+# Trust concrete storage and its current entries, not a custom trait method.
+function _trusted_hermitian_action(H, ::Type{T}) where {T}
+    _scalar_lanczos_type(T) || return false
+    if H isa Bases._SparseRowAction
+        typeof(H).parameters[3] === true && H.row_storage === H.parent || return false
+        H = H.parent
+    end
+    sealed = H isa Matrix || H isa SparseMatrixCSC || (H isa Diagonal && H.diag isa Vector)
+    sealed && _scalar_lanczos_type(eltype(H)) && promote_type(eltype(H), T) === T || return false
+    values = H isa SparseMatrixCSC ? nonzeros(H) : H isa Diagonal ? H.diag : H
+    return all(isfinite, values) && ishermitian(H)
+end
+
+function _hermitian_mean(a::T, b::T) where {T<:AbstractFloat}
+    a == b && return a
+    if signbit(a) == signbit(b) && max(abs(a), abs(b)) > floatmax(T)/2
+        return a/2 + b/2
+    end
+    return (a+b)/2
+end
+_hermitian_mean(a::Complex, b::Complex) =
+    complex(_hermitian_mean(real(a), real(b)), _hermitian_mean(imag(a), imag(b)))
+
+function _hermitianize_block!(A)
+    for j in axes(A, 2)
+        isreal(A[j,j]) || (A[j,j] = real(A[j,j]))
+        for i in 1:j-1
+            a, b = A[i,j], conj(A[j,i])
+            a == b && continue
+            value = _hermitian_mean(a, b)
+            A[i,j] = value
+            A[j,i] = conj(value)
+        end
+    end
+    return A
+end
 
 _block_sparse_parent(::Any) = nothing
 _block_sparse_parent(H::SparseMatrixCSC) = H

@@ -35,31 +35,8 @@ Lanczos layer; consumers needing it should query the source
 `LanczosResponse` directly before calling `to_pole`.
 """
 function to_pole(L::LanczosResponse{T}) where {T}
-    K = length(L.α)
-    # Block sizes: B_k = size(α[k], 1)
-    block_sizes = [size(L.α[k], 1) for k in 1:K]
-    M = sum(block_sizes)
-    offsets = [sum(block_sizes[1:k-1]) for k in 1:K]  # start index - 1 for each block
-
-    # Assemble block-tridiagonal T_K preserving the full element type T.
-    # For real T this gives a real-symmetric matrix; for complex T (e.g.,
-    # Hamiltonians with SOC or B-field) this gives a Hermitian matrix with
-    # non-trivial imaginary blocks. Using real.(·) would discard those entries
-    # and produce wrong eigenvalues.
-    Tk = zeros(T, M, M)
-
-    for k in 1:K
-        r = offsets[k]+1 : offsets[k]+block_sizes[k]
-        Tk[r, r] = L.α[k]
-    end
-    for k in 1:K-1
-        # β[k] has shape (B_{k+1} × B_k)
-        # off-diagonal (k, k+1) block in T_K
-        r_k1 = offsets[k+1]+1 : offsets[k+1]+block_sizes[k+1]  # rows for block k+1
-        c_k  = offsets[k]+1   : offsets[k]+block_sizes[k]        # cols for block k
-        Tk[r_k1, c_k] = L.β[k]       # (k+1, k) block
-        Tk[c_k, r_k1] = L.β[k]'      # (k, k+1) block = adjoint
-    end
+    Tk = _build_T_K(L.α, L.β, T)
+    M = size(Tk, 1)
 
     # Diagonalise using Hermitian wrapper — works for both real-symmetric and
     # complex-Hermitian T_K. eigen(Hermitian(·)) always returns real eigenvalues.
@@ -94,9 +71,10 @@ Materialise a `LanczosResponse` onto the frequency grid `ω`. The `Γ`
 keyword allows overriding the broadening; the returned `GridResponse`
 carries `Γ_override` and inherits `Eg = R.Eg`.
 
-Evaluate the same finite continued fraction at each ω. Block chains reuse
-call-local factorization and solve workspaces across the grid; scalar and
-generic-precision chains retain `cf_block` evaluation.
+Evaluate the same finite-chain response at each ω. Small Hermitian block
+chains may use an eigendecomposition when the grid and numerical range
+permit it; other block grids reuse call-local solve workspaces. Scalar
+and generic-precision chains retain `cf_block` evaluation.
 """
 function to_grid(L::LanczosResponse{T}, ω::AbstractVector{<:Real};
                  Γ::Real = L.Γ) where {T}

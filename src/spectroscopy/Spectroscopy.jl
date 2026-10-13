@@ -41,6 +41,7 @@ using ..Bases: AbstractBasis, EagerBasis, basis_id, apply_restriction!,
                 compile, assemble
 using ..Bases: _prepare_sparse_action, _validate_sparse_threading
 import ..Responses
+import ..Responses: _build_T_K
 
 include("types.jl")
 include("defaults.jl")
