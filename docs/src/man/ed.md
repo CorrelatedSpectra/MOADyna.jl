@@ -56,10 +56,6 @@ Keeping a batch calculation on the
 worker pool can reduce task handoff overhead; interactive sessions can still
 use a separate interactive pool. `threaded=:auto` uses workers for sufficiently large sparse
 Hamiltonian products; small products remain serial to avoid scheduling overhead.
-Automatic selection is conservative: it allows for a block shrinking to one
-source during Lanczos deflation and uses a larger threshold for callers on the
-interactive pool. The threshold is a heuristic, so a forced setting can be
-useful when measuring a particular workload.
 Use `threaded=true` to force the threaded kernel or `threaded=false` to force the
 serial kernel for a calculation:
 

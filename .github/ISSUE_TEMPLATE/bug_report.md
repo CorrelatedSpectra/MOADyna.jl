@@ -16,7 +16,7 @@ Describe the problem in 1-3 sentences.
 
 ## What were you trying to do?
 
-Example: compute XAS, build a basis, compare with Quanty, run a benchmark, etc.
+Example: compute XAS, build a basis, diagonalize a Hamiltonian.
 
 ## Code or command
 

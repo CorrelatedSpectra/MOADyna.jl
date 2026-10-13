@@ -19,14 +19,10 @@ and single-particle Green's functions — all within a single package.
     See the [Changelog](@ref) for what's new.
 
 !!! tip "Precompilation and first-use time"
-    Julia normally precompiles packages after installation or updates. You can
-    also run `using Pkg; Pkg.precompile()` in the environment where you installed
-    MOADyna. Compiled code is cached for later sessions, including small examples
-    of common diagonalization, XAS, and RIXS workflows. New data types or options
-    may still trigger compilation on first use. When timing calculations, run a
-    representative calculation once before measuring repeats in the same Julia
-    session. Precompilation reduces compilation delays; numerical accuracy and
-    steady-state runtime are unchanged.
+    Julia precompiles packages after installation or updates and caches compiled
+    code for later sessions. You can also run `using Pkg; Pkg.precompile()` in the
+    environment where you installed MOADyna. The first calculation can take
+    longer while Julia compiles additional methods.
 
 The organizing principle is that *the code should read like the operators*. The
 expression `c'(s, 1) * c(s, 2)` is literally the operator

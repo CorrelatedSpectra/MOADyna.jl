@@ -81,12 +81,8 @@ using Pkg
 Pkg.precompile()
 ```
 
-MOADyna precompiles small examples of common diagonalization, XAS, and RIXS
-workflows. The first calculation with different data types or options can still
-trigger additional compilation and take longer. For timing calculations, run a
-representative calculation once before measuring repeated runs in the same Julia
-session. Precompilation reduces compilation delays; it does not change numerical
-accuracy or the calculation's steady-state runtime. See Julia's
+The first calculation can take longer while Julia compiles additional methods.
+See Julia's
 [precompilation guide](https://pkgdocs.julialang.org/v1/environments/#Environment-Precompilation)
 for details.
 

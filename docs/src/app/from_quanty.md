@@ -28,9 +28,9 @@ MOADyna uses the same Racah ``C^{k}_{q}`` convention as Quanty's `SlaterCoeffici
 equivalent operators carry equivalent matrix elements. The `dipole` operator is regressed
 against Quanty operator dumps, and the remaining standard-operator coefficients are locked
 against Quanty source formulas and independent in-tree oracles (see
-[Validation & benchmarks](@ref) below).
+[Validation against references](@ref) below).
 
-## Validation & benchmarks
+## Validation against references
 
 MOADyna is checked against independent references on every push — analytic results, other
 exact-diagonalization codes, and Quanty/PyQuanty — so the physics is verified, not just the
