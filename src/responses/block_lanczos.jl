@@ -178,6 +178,13 @@ function block_lanczos(H, X_raw::AbstractMatrix;
     V_blocks  = retain_basis || reorth === :full ? Matrix{T}[copy(V_curr)] : Matrix{T}[]
     V_prev    = nothing
     β_prev    = nothing                 # β_{k-1} of shape B_curr × B_prev (or nothing for k=1)
+    # Active ranks cannot grow beyond the initial rank. Reuse a small ragged
+    # coefficient workspace when every product stays in the source precision.
+    # Wider/custom arithmetic keeps the original allocating product path.
+    coeff_work = reorth === :full && _scalar_lanczos_type(T) &&
+                 _supports_scalar_lanczos_action(action) &&
+                 promote_type(eltype(action), T) === T ?
+                 Matrix{T}(undef, B_active, B_active) : nothing
     β1_fro    = NaN
     consec    = 0
     converged = false
@@ -195,23 +202,24 @@ function block_lanczos(H, X_raw::AbstractMatrix;
         # α_k = V_curr† · W; subtract.
         α_k = adjoint(V_curr) * W                       # B_curr × B_curr
         push!(α_blocks, α_k)
-        W .-= V_curr * α_k
+        _subtract_block_product!(W, V_curr, α_k)
 
         # W -= V_prev · β_prev†   (k ≥ 2 only)
         if V_prev !== nothing && β_prev !== nothing
-            W .-= V_prev * adjoint(β_prev)              # N × B_curr
+            _subtract_block_product!(W, V_prev, adjoint(β_prev))
         end
 
         # FRO: orthogonalise W against ALL stored V blocks (CGS-2 outside
         # the immediate predecessors). Memory grows O(B·K) but kills ghosts.
         if reorth === :full
-            for V_old in V_blocks
-                coeff = adjoint(V_old) * W
-                W .-= V_old * coeff
-            end
-            for V_old in V_blocks    # second pass for stability
-                coeff = adjoint(V_old) * W
-                W .-= V_old * coeff
+            for _ in 1:2, V_old in V_blocks
+                if coeff_work === nothing || !(W isa StridedMatrix{T})
+                    coeff = adjoint(V_old) * W
+                else
+                    coeff = view(coeff_work, 1:size(V_old, 2), 1:size(W, 2))
+                    mul!(coeff, adjoint(V_old), W)
+                end
+                _subtract_block_product!(W, V_old, coeff)
             end
         end
 
@@ -279,6 +287,23 @@ function block_lanczos(H, X_raw::AbstractMatrix;
 end
 
 # --- Internal helpers ------------------------------------------------------
+
+function _subtract_block_product!(W::StridedMatrix{T}, V::StridedMatrix{T},
+                                  C::AbstractMatrix{T}) where
+        {T<:Union{Float32,Float64,ComplexF32,ComplexF64}}
+    # Known actions return disjoint dense storage. Preserve the allocating
+    # behavior if a custom action instead returns an alias of its input.
+    if Base.mightalias(W, V) || Base.mightalias(W, C)
+        W .-= V * C
+        return W
+    end
+    return mul!(W, V, C, -one(T), one(T))
+end
+
+function _subtract_block_product!(W, V, C)
+    W .-= V * C
+    return W
+end
 
 function _project_block(X::AbstractMatrix, restrictions, basis)
     T = eltype(X)
