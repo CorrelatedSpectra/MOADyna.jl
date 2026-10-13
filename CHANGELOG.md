@@ -4,7 +4,7 @@ All notable changes to MOADyna are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.3] — 2026-10-13
 
 ### Fixed
 
@@ -13,6 +13,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - RIXS convergence metadata includes intermediate and final Lanczos runs.
 - Sx/Sy expansion limits are checked before allocating the expanded chains.
 - README examples are extracted correctly with Windows line endings.
+- Spectrum exports record the installed package version.
 
 ### Changed
 
@@ -23,6 +24,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Software citation guidance uses the single DOI covering all versions.
 - Scalar continued fractions avoid temporary matrix products and inverses.
 - Single-source spectra use a scalar Lanczos recurrence with reusable work vectors.
+- Block Lanczos reuses projection buffers, threads full reorthogonalization,
+  and calculates in exact reachable subspaces when the work policy permits.
+- Hermitian response grids reuse a projected eigendecomposition when numerical
+  guards permit it, with continued fractions as the fallback.
+- Dense ground-state calculations request only the required extremal eigenpairs.
+- Basis construction groups fermion occupancy constraints, avoids symbol sorting
+  allocations, and sorts single-word packed states directly.
+- Development and CI use the latest stable Julia; Julia 1.10 and later remain
+  within the declared compatibility range.
 
 ### Added
 
