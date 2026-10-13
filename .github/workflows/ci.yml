@@ -28,13 +28,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # '1.10' is the current LTS; '1' tracks the latest stable release.
-        # Julia 1.11 is unmaintained, so it is deliberately not covered.
+        # Track the latest stable Julia consistently across platforms.
         include:
-          - {julia-version: '1.10', os: ubuntu-latest}
-          - {julia-version: '1',    os: ubuntu-latest}
-          - {julia-version: '1',    os: macOS-latest}
-          - {julia-version: '1',    os: windows-latest}
+          - {julia-version: '1', os: ubuntu-latest}
+          - {julia-version: '1', os: macOS-latest}
+          - {julia-version: '1', os: windows-latest}
 
     steps:
       - uses: actions/checkout@v7

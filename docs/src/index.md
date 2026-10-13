@@ -14,7 +14,9 @@ and single-particle Green's functions — all within a single package.
     using Pkg
     Pkg.add("MOADyna")
     ```
-    Requires Julia 1.10 or newer. See the [Changelog](@ref) for what's new.
+    Development and CI use the latest stable Julia, currently 1.13. Julia
+    1.10–1.12 are expected to work, but are not covered by CI.
+    See the [Changelog](@ref) for what's new.
 
 !!! tip "Precompilation and first-use time"
     Julia normally precompiles packages after installation or updates. You can

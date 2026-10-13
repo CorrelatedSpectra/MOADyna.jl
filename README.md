@@ -67,8 +67,9 @@ using Pkg
 Pkg.add("MOADyna")
 ```
 
-Requires Julia 1.10 or newer. See [`CHANGELOG.md`](CHANGELOG.md) for what each
-release changed.
+Development and CI use the latest stable Julia, currently 1.13. Julia
+1.10–1.12 are expected to work, but are not covered by CI. See
+[`CHANGELOG.md`](CHANGELOG.md) for what each release changed.
 
 Julia automatically precompiles packages during normal installation with
 `Pkg.add` or `Pkg.instantiate`, saving compiled code for later sessions. No
