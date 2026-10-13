@@ -98,3 +98,80 @@ end
 # evaluate_on_grid depends on LanczosChunk (a Spectroscopy-domain type) and
 # therefore lives in src/spectroscopy/cf.jl to avoid a circular dependency.
 # (Responses cannot import from Spectroscopy.)
+
+# Evaluate a complete grid with call-local block-solve workspaces. The caller
+# supplies the shift expression and its type to retain its arithmetic convention.
+# cf_block remains the scalar/generic fallback and the public single-point API.
+function _cf_grid(α::Vector{<:AbstractMatrix}, β::Vector{<:AbstractMatrix},
+                  R::AbstractMatrix, ω, z_at::F, ::Type{Z};
+                  sign::Integer=1, prefactor=nothing,
+                  raw_block_size::Int=size(R, 2)) where {F,Z}
+    T = eltype(R)
+    Tc = T <: Complex ? T : Complex{T}
+    out = Array{Tc,3}(undef, raw_block_size, raw_block_size, length(ω))
+    length(ω) == 0 && return out
+
+    K = length(α)
+    K >= 1 || throw(ArgumentError("cf_block: α stack is empty"))
+    length(β) == K || length(β) == K - 1 ||
+        throw(ArgumentError("cf_block: β stack length $(length(β)) inconsistent with α length $K"))
+    widths = size.(α, 1)
+    all(size(a, 1) == size(a, 2) for a in α) ||
+        throw(DimensionMismatch("CF diagonal blocks must be square"))
+    all(size(β[k]) == (widths[k+1], widths[k]) for k in 1:K-1) ||
+        throw(DimensionMismatch("CF coupling block dimensions"))
+    size(R, 1) == widths[1] && size(R, 2) == raw_block_size ||
+        throw(DimensionMismatch("CF source factor dimensions"))
+
+    # Apply the response prefactor before promotion, as in single-point calls.
+    # Spectroscopy uses the unscaled adjoint directly.
+    left = isnothing(prefactor) ? adjoint(R) : sign * prefactor * adjoint(R)
+    W = promote_type(eltype(eltype(α)), eltype(eltype(β)), Z)
+    scalar = all(==(1), widths) && all(size(β[k]) == (1, 1) for k in 1:K-1)
+    if scalar || !(W <: Union{ComplexF32,ComplexF64}) || any(==(0), widths)
+        for (i, w) in enumerate(ω)
+            out[:, :, i] = left * cf_block(α, β, z_at(w)) * R
+        end
+        return out
+    end
+
+    # D_k = zI - α_k - β_k† (D_(k+1) \ β_k). Consume each factor
+    # before reusing its matrix storage. No Hermitian projection is applied.
+    nmax = maximum(widths)
+    factors = Matrix{W}(undef, nmax, nmax)
+    coupling = Matrix{W}(undef, nmax, nmax)
+    solved_R = Matrix{W}(undef, widths[1], raw_block_size)
+    χ = Matrix{W}(undef, raw_block_size, raw_block_size)
+    right = Matrix{W}(R)
+    left_work = Matrix{W}(left)
+    # Convert mixed-precision couplings once per grid; ignore a trailing β_K.
+    betas = [eltype(β[k]) === W ? β[k] : Matrix{W}(β[k]) for k in 1:K-1]
+
+    for (i, w) in enumerate(ω)
+        z = W(z_at(w))
+        last = @view factors[1:widths[K], 1:widths[K]]
+        _cf_shifted!(last, α[K], z)
+        factor = lu!(last)
+        for k in K-1:-1:1
+            rhs = @view coupling[1:widths[k+1], 1:widths[k]]
+            copyto!(rhs, betas[k])
+            ldiv!(factor, rhs)
+            current = @view factors[1:widths[k], 1:widths[k]]
+            _cf_shifted!(current, α[k], z)
+            mul!(current, adjoint(betas[k]), rhs, -one(W), one(W))
+            factor = lu!(current)
+        end
+        copyto!(solved_R, right)
+        ldiv!(factor, solved_R)
+        mul!(χ, left_work, solved_R)
+        @views out[:, :, i] .= χ
+    end
+    return out
+end
+
+function _cf_shifted!(target, α, z)
+    @inbounds for j in axes(target, 2), i in axes(target, 1)
+        target[i, j] = i == j ? z - α[i, j] : -α[i, j]
+    end
+    return target
+end

@@ -1,10 +1,10 @@
 # =====================================================================
-# evaluate_on_grid — Spectroscopy-side wrapper over MOADyna.Responses.cf_block
+# evaluate_on_grid — Spectroscopy-side continued-fraction grid evaluation
 # =====================================================================
 #
-# cf_block itself lives in src/responses/cf.jl (MOADyna.Responses.cf_block).
-# evaluate_on_grid wraps a LanczosChunk (a Spectroscopy-domain type), so it
-# lives here to avoid a circular dependency.
+# The continued-fraction primitive and shared grid workspaces live in Responses.
+# This wrapper accepts the Spectroscopy-domain LanczosChunk, avoiding a circular
+# dependency between the two modules.
 
 """
     evaluate_on_grid(chunk::LanczosChunk, ω_grid; Γ::Real, Eg::Real)
@@ -27,28 +27,20 @@ polarisations (e.g. circular).
 the denominator is `iΓ/2`. `Eg` is the ground-state energy used as
 the zero-frequency reference (`ω = 0` corresponds to the GS pole).
 
+Block chains reuse call-local factorization and solve workspaces across the
+grid; scalar and generic-precision chains retain the single-point CF route.
 `ω_grid` is any iterable supporting `length`.
 """
 function evaluate_on_grid(chunk::LanczosChunk, ω_grid;
                           Γ::Real, Eg::Real)
     R       = chunk.R
     B_raw   = chunk.raw_block_size
-    n_ω     = length(ω_grid)
     α       = chunk.α
     β       = chunk.β
     Tc      = eltype(R)
     Tc <: Complex ||
         throw(ArgumentError("evaluate_on_grid: chunk eltype must be Complex; got $Tc"))
 
-    out = Array{Tc, 3}(undef, B_raw, B_raw, n_ω)
-    Rdag = adjoint(R)
-
-    @inbounds for (i, ω) in enumerate(ω_grid)
-        z   = Tc(ω + Eg + im * (Γ / 2))
-        G1  = Responses.cf_block(α, β, z)  # B_active × B_active
-        χ   = Rdag * G1 * R              # B_raw × B_raw
-        out[:, :, i] = χ
-    end
-
-    return out
+    z_at = ω -> Tc(ω + Eg + im * (Γ / 2))
+    return Responses._cf_grid(α, β, R, ω_grid, z_at, Tc; raw_block_size=B_raw)
 end

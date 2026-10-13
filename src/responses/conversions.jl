@@ -94,20 +94,17 @@ Materialise a `LanczosResponse` onto the frequency grid `ω`. The `Γ`
 keyword allows overriding the broadening; the returned `GridResponse`
 carries `Γ_override` and inherits `Eg = R.Eg`.
 
-Each ω point is evaluated via `cf_block` (exact continued-fraction).
+Evaluate the same finite continued fraction at each ω. Block chains reuse
+call-local factorization and solve workspaces across the grid; scalar and
+generic-precision chains retain `cf_block` evaluation.
 """
 function to_grid(L::LanczosResponse{T}, ω::AbstractVector{<:Real};
                  Γ::Real = L.Γ) where {T}
     ω_vec  = Vector{Float64}(ω)
-    B_raw  = size(L.R, 2)
-    nω     = length(ω_vec)
 
     # Preserve the source element precision: Float32 → ComplexF32,
     # Float64 → ComplexF64, ComplexF32 → ComplexF32, etc.
     Tc = T <: Complex ? T : Complex{T}
-
-    # data has shape (B_raw, B_raw, nω)
-    data   = Array{Tc, 3}(undef, B_raw, B_raw, nω)
 
     # Temporarily build a LanczosResponse with the (possibly overridden) Γ.
     # `converged` is preserved (Γ override is a broadening change, not a
@@ -120,9 +117,9 @@ function to_grid(L::LanczosResponse{T}, ω::AbstractVector{<:Real};
                             L.prefactor, L.converged)
     end
 
-    for (iω, ω_pt) in enumerate(ω_vec)
-        data[:, :, iω] = L_eval(ω_pt)
-    end
+    z_at = ω_pt -> L_eval.sign * (ω_pt + im * L_eval.Γ / 2) + L_eval.Eg
+    data = _cf_grid(L_eval.α, L_eval.β, L_eval.R, ω_vec, z_at, ComplexF64;
+                    sign=L_eval.sign, prefactor=L_eval.prefactor)
 
     return GridResponse{Tc, 3}(data, ω_vec, L.Eg, Float64(Γ))
 end
@@ -214,4 +211,3 @@ function _gf_γ(GF::GreensFunction)
     ch = isnothing(GF.addition) ? GF.removal : GF.addition
     return ch.Γ
 end
-
