@@ -15,7 +15,6 @@
 # through HDF5 only; the ASCII writer rejects RIXS with a clear message
 # (a directory-of-files 2-D-map variant is on the to-do list).
 
-const _MOADYNA_VERSION       = v"0.1.0-dev"
 const _IO_FORMAT_VERSION  = 1
 
 # ---------------------------------------------------------------------
@@ -115,7 +114,7 @@ function _save_spectra_txt(result::SpectraTensor, filename::AbstractString)
         # ---- Header --------------------------------------------------
         println(io, "# MOADyna.Spectroscopy output")
         println(io, "# Created: ", Dates.format(now(UTC), dateformat"yyyy-mm-ddTHH:MM:SSZ"))
-        println(io, "# MOADyna version: ", _MOADYNA_VERSION)
+        println(io, "# MOADyna version: ", Base.pkgversion(@__MODULE__))
         println(io, "# Format version: ", _IO_FORMAT_VERSION, " (txt)")
         println(io, "# Function: ", result.metadata[:function])
         println(io, "# Tensor shape: ", size(tensor),
@@ -349,7 +348,7 @@ end
 function _save_spectra_h5(result::SpectraTensor, filename::AbstractString)
     HDF5.h5open(filename, "w") do f
         HDF5.attributes(f)["format_version"] = _IO_FORMAT_VERSION
-        HDF5.attributes(f)["moad_version"]   = string(_MOADYNA_VERSION)
+        HDF5.attributes(f)["moad_version"]   = string(Base.pkgversion(@__MODULE__))
 
         # Tensor (raw numerical array).
         f["tensor"] = result.tensor
