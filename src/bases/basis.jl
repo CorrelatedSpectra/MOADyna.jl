@@ -795,6 +795,7 @@ end
 # --- Sort: index-permutation sort, then threaded gather --------------------
 
 function _sort_flat_states!(states::Vector{UInt64}, nwords::Int, N::Int)
+    nwords == 1 && return sort!(states)
     perm = collect(1:N)
     sort!(perm; alg = QuickSort,
           lt = (i, j) -> _state_less_flat(states, nwords, i, j))
