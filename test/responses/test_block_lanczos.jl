@@ -181,6 +181,28 @@
                       for i in 1:length(Vs), j in 1:length(Vs) if i < j) < 1e-9
     end
 
+    @testset "Disconnected sparse source block preserves original coordinates" begin
+        rng = MersenneTwister(20261013)
+        N = 256
+        rows = [31, 170]
+        H = sparse(ComplexF64.(Diagonal(range(-1, 1; length=N))))
+        H[31, 170] = 0.1 + 0.2im
+        H[170, 31] = 0.1 - 0.2im
+        # The reachable sector is narrower than the raw source block.
+        X = zeros(ComplexF64, N, 5)
+        X[rows, :] = randn(rng, ComplexF64, 2, 5)
+        result = block_lanczos(H, X; krylovdim=64, reorth=:full,
+                               retain_basis=true, threaded=true)
+        @test result.converged
+        @test size(result.R) == (2, 5)
+        @test all(size(V, 1) == N for V in result.V_basis)
+        @test result.V_basis[1] * result.R ≈ X atol=1e-12
+        z = complex(0.2, 0.4)
+        exact = X[rows, :]' * ((z * I - Matrix(H[rows, rows])) \ X[rows, :])
+        actual = result.R' * cf_block(result.α, result.β, z) * result.R
+        @test actual ≈ exact rtol=1e-10 atol=1e-10
+    end
+
     # ---------------------------------------------------------------
     # Input validation
     # ---------------------------------------------------------------

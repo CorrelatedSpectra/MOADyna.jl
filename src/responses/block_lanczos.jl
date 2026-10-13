@@ -68,6 +68,12 @@ including a single thread if Julia was started without `--threads=N`.
 Dense and custom operators keep their existing multiplication methods.
 This option does not change basis/assembly scheduling or BLAS thread settings.
 
+For sufficiently large full-reorthogonalization runs with multiple sources,
+finite sparse matrices may be reduced to the exact source-reachable coordinates.
+Every nonzero source and matrix entry participates; no amplitude cutoff is used.
+Restrictions and unsupported actions retain the general path. Returned retained
+basis blocks always use the original row coordinates.
+
 # Returns
 
 A `NamedTuple` with fields:
@@ -140,12 +146,40 @@ function block_lanczos(H, X_raw::AbstractMatrix;
     end
     size(H, 1) == size(H, 2) == N ||
         throw(DimensionMismatch("H ($(size(H, 1))×$(size(H, 2))) does not match starting block N=$N"))
-    action = _prepare_sparse_action(H; nrhs=B_raw, threaded)
-
     # --- Step 0: project and initial QR ----------------------------------
     X = restrictions !== nothing ?
             _project_block(X_raw, restrictions, basis) :
             Matrix{T}(X_raw)             # promote to dense Matrix{T}; may be a copy
+
+    options = (; krylovdim, reorth, tol, min_iter, max_iter, deflate_tol,
+                 restrictions, basis, retain_basis)
+    rows = _reachable_block_rows(H, X; reorth, krylovdim, max_iter,
+                                  deflate_tol, restrictions)
+    if rows !== nothing
+        parent = _block_sparse_parent(H)
+        reduced = _prepare_sparse_action(parent[rows, rows]; nrhs=B_raw, threaded)
+        result = _block_lanczos(reduced, X[rows, :]; options...)
+        if retain_basis
+            lifted = map(result.V_basis) do V
+                out = zeros(eltype(V), N, size(V, 2))
+                @inbounds for col in axes(V, 2), i in eachindex(rows)
+                    out[rows[i], col] = V[i, col]
+                end
+                out
+            end
+            return merge(result, (;V_basis=lifted))
+        end
+        return result
+    end
+    action = _prepare_sparse_action(H; nrhs=B_raw, threaded)
+    return _block_lanczos(action, X; options...)
+end
+
+function _block_lanczos(action, X::Matrix{T};
+                        krylovdim::Int, reorth::Symbol, tol::Real,
+                        min_iter::Int, max_iter::Int, deflate_tol::Real,
+                        restrictions, basis, retain_basis::Bool) where {T}
+    N, B_raw = size(X)
     if B_raw == 1 && _scalar_lanczos_type(T) &&
        _supports_scalar_lanczos_action(action) &&
        promote_type(eltype(action), T) === T && 0 < deflate_tol <= 1
@@ -165,7 +199,7 @@ function block_lanczos(H, X_raw::AbstractMatrix;
                             (restrictions === nothing ? "" :
                              " (restriction may have annihilated all columns)")))
     init_threshold = deflate_tol * pivots[1]
-    B_active = something(findfirst(p -> p < init_threshold, pivots), B_raw + 1) - 1
+    B_active = something(findfirst(p -> p < init_threshold, pivots), length(pivots) + 1) - 1
     B_active ≥ 1 ||
         throw(ArgumentError("block_lanczos: deflated to rank zero at initial QR"))
 
@@ -287,6 +321,61 @@ function block_lanczos(H, X_raw::AbstractMatrix;
 end
 
 # --- Internal helpers ------------------------------------------------------
+
+_block_sparse_parent(::Any) = nothing
+_block_sparse_parent(H::SparseMatrixCSC) = H
+_block_sparse_parent(H::Bases._SparseRowAction) = H.parent
+
+function _reachable_block_rows(H, X::Matrix{T}; reorth, krylovdim, max_iter,
+                                deflate_tol, restrictions) where {T}
+    N, B = size(X)
+    # Conservative work policy; these gates never discard source amplitudes.
+    reorth === :full && restrictions === nothing && B > 1 && N >= 256 &&
+        min(krylovdim, max_iter) >= 32 && _scalar_lanczos_type(T) || return nothing
+    parent = _block_sparse_parent(H)
+    parent === nothing && return nothing
+    _scalar_lanczos_type(eltype(parent)) &&
+        promote_type(eltype(parent), T) === T || return nothing
+    RT = typeof(real(zero(T)))
+    # Extremely small thresholds can allow arbitrary QR completion directions;
+    # keep the original path in that regime, including underflowed thresholds.
+    eps(RT) <= deflate_tol <= 1 || return nothing
+
+    limit = fld(3N, 4)
+    selected = falses(N)
+    queue = Int[]
+    source_max = zero(RT)
+    @inbounds for col in axes(X, 2), row in axes(X, 1)
+        value = X[row, col]
+        isfinite(value) || return nothing
+        source_max = max(source_max, abs(value))
+        if !iszero(value) && !selected[row]
+            selected[row] = true
+            push!(queue, row)
+            length(queue) > limit && return nothing
+        end
+    end
+    isempty(queue) && return nothing
+    isfinite(source_max) && RT(deflate_tol * source_max) > 0 &&
+        isfinite(norm(X)) || return nothing
+    values, indices = nonzeros(parent), rowvals(parent)
+    # Excluded nonfinite entries can still contaminate an IEEE product via 0*Inf.
+    all(isfinite, values) || return nothing
+    cursor = 1
+    while cursor <= length(queue)
+        @inbounds for p in nzrange(parent, queue[cursor])
+            row = indices[p]
+            if !iszero(values[p]) && !selected[row]
+                selected[row] = true
+                push!(queue, row)
+                length(queue) > limit && return nothing
+            end
+        end
+        cursor += 1
+    end
+    # Sorted original coordinates preserve source-column order and embeddings.
+    return findall(selected)
+end
 
 function _subtract_block_product!(W::StridedMatrix{T}, V::StridedMatrix{T},
                                   C::AbstractMatrix{T}) where
