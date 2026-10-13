@@ -170,12 +170,15 @@ function block_lanczos(H, X_raw::AbstractMatrix;
         reduced = _prepare_sparse_action(parent[rows, rows]; nrhs=B_raw, threaded)
         result = _block_lanczos(reduced, X[rows, :]; options...)
         if retain_basis
-            lifted = map(result.V_basis) do V
+            # Release each private reduced block as its full-basis copy is ready.
+            lifted = result.V_basis
+            for j in eachindex(lifted)
+                V = lifted[j]
                 out = zeros(eltype(V), N, size(V, 2))
                 @inbounds for col in axes(V, 2), i in eachindex(rows)
                     out[rows[i], col] = V[i, col]
                 end
-                out
+                lifted[j] = out
             end
             return merge(result, (;V_basis=lifted))
         end
