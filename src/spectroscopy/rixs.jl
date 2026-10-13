@@ -66,12 +66,12 @@ states, `χ_T = Σ_m ρ_m χ_m`, each referenced to its own `E_m`. Explicit
 the result is grid-only and carries `Eg = E₀` plus `:temperature`,
 `:ensemble_energies`, `:ensemble_weights`, `:N_kept` metadata.
 
-`threaded=:auto` chooses parallel sparse Hamiltonian products when the workload
-and available Julia threads justify it. `true` forces that kernel on the available
-thread pool; `false` uses serial sparse products in every inner and outer solve.
-Start Julia with `--threads=N` to make multiple threads available. This per-call
-setting does not change dense/custom operators, basis/assembly scheduling, or
-BLAS thread settings.
+`threaded=:auto` selects parallel sparse Hamiltonian products and supported
+block full reorthogonalization according to their workload and available Julia
+threads. `true` requests the row kernels on the available default pool (possibly
+one thread); `false` keeps both serial throughout nested solves. Start Julia with
+`--threads=N` to make multiple threads available. Dense/custom Hamiltonian
+products, basis/assembly scheduling, and BLAS thread settings are independent.
 """
 function rixs end
 

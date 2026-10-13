@@ -52,13 +52,21 @@ The ground state is computed internally (`state = :ground_state`) or supplied as
 (the default) the constructor returns a [`LanczosResponse`](@ref); pass an ω grid (or
 call [`to_grid`](@ref)) to evaluate.
 
-The `threaded=:auto` keyword controls sparse Hamiltonian multiplication in the
-Lanczos recursion and any ground-state solve performed by `correlator`. Use
-`threaded=true` to force the threaded sparse kernel with the available Julia
-workers, or `threaded=false` to keep these products serial throughout nested
-calls. Automatic mode keeps small products serial. The same control is available
-on `MOADyna.Responses.block_lanczos`; see [Sparse multiplication threads](@ref)
-for Julia startup and the scope of this setting.
+The `threaded=:auto` keyword controls sparse Hamiltonian multiplication and
+supported block full reorthogonalization, including nested response calculations.
+Sparse products in any ground-state solve use the same control. `threaded=true`
+requests the row kernels on the available default Julia pool (possibly one worker);
+`threaded=false` keeps both serial. Automatic mode keeps small products serial
+and uses a conservative per-block work floor for reorthogonalization.
+
+Block reorthogonalization visits every stored block in order for two complete
+passes. Parallel row products use a small solve-local coefficient workspace;
+they preserve this order but can change floating-point summation. Wider or
+unsupported arithmetic stays serial. The scalar-specialized recurrence retains
+its existing reorthogonalization. The same control is available on
+`MOADyna.Responses.block_lanczos`; see [Sparse multiplication threads](@ref)
+for Julia startup. Dense/custom Hamiltonian multiplication, basis assembly and
+BLAS thread settings remain independent.
 
 Single-source calculations on supported CPU matrices automatically use a
 scalar Lanczos recurrence with reusable work vectors. Multiple sources use

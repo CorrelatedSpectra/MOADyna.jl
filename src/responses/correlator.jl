@@ -81,7 +81,7 @@ then wrap the result as one of `LanczosResponse`, `PoleResponse`, or
 | `addition_indices` | `nothing`    | for `:addition`: defaults to `eachindex(Bs)` if `nothing`; for `:both`: explicit partition (may be empty/`nothing` on one side — at least one non-empty side required) |
 | `removal_indices`  | `nothing`    | for `:removal`: defaults to `eachindex(Bs)` if `nothing`; for `:both`: explicit partition (may be empty/`nothing` on one side — at least one non-empty side required) |
 | `form`         | `:lanczos`       | output type: `:lanczos`, `:pole`, or `:grid` |
-| `threaded`     | `:auto`          | sparse Hamiltonian action: `:auto`, `true`, or `false` |
+| `threaded`     | `:auto`          | sparse Hamiltonian action and supported block FRO: `:auto`, `true`, or `false` |
 | `T`            | `nothing`        | finite-T temperature in H's energy units (k_B=1); `nothing` = T=0 path. `form ∈ (:pole,:grid)`. With no `ensemble_states`, the ensemble is auto-computed from H on `basis` and is `:neutral`-only; supply `ensemble_states` for charged channels. |
 | `N_states`     | `nothing`        | thermal-only: cap on number of lowest states summed (requires T) |
 | `degen_tol`    | `1e-8`           | thermal-only: degeneracy tolerance for manifold-completeness (requires T) |
@@ -91,12 +91,13 @@ then wrap the result as one of `LanczosResponse`, `PoleResponse`, or
 Any additional kwargs (e.g. `krylovdim`, `reorth`, `tol`, `restrictions`) are
 forwarded to the internal `block_lanczos` kernel (`MOADyna.Responses.block_lanczos`).
 
-`threaded=:auto` selects parallel sparse Hamiltonian products according to the
-workload and available Julia threads. `true` forces that kernel on the available
-thread pool (possibly one thread); `false` keeps sparse products serial, including
-automatic ground-state and thermal-ensemble solves. Start Julia with `--threads=N`
-to make multiple threads available. Dense/custom multiplication, basis/assembly
-scheduling, and BLAS thread settings are independent.
+`threaded=:auto` selects parallel sparse Hamiltonian products and supported
+block full reorthogonalization according to their workload and available Julia
+threads. `true` requests the row kernels on the available default pool (possibly
+one thread); `false` keeps both serial, including sparse products in automatic
+ground-state and thermal-ensemble solves. Start Julia with `--threads=N` to make
+multiple threads available. Dense/custom Hamiltonian multiplication,
+basis/assembly scheduling, and BLAS thread settings are independent.
 
 # Return
 

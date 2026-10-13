@@ -55,16 +55,17 @@ ASCII Latin aliases are accepted for every Greek-named kwarg
 | `reorth` | `DEFAULTS.reorth` | `:none` or `:full` |
 | `restrictions` | `nothing` | layer-2 `Restriction` for projected dynamics |
 | `tol` | `DEFAULTS.tol` | block-Lanczos soft-stop on ‖β_k‖ |
-| `threaded` | `:auto` | sparse Hamiltonian action: `:auto`, `true`, or `false` |
+| `threaded` | `:auto` | sparse Hamiltonian action and supported block FRO: `:auto`, `true`, or `false` |
 | `temperature` | `nothing` | finite-T (`k_B = 1`). Only with an `Eigen` ψ: Boltzmann-averages the spectrum over the thermally populated initial states, `χ_T(ω) = Σ_m ρ_m χ_m(ω)`. `nothing` ⇒ T=0 (pick the ground state). |
 | `N_states` | `nothing` | finite-T only: cap on the number of lowest `Eigen` states summed (degeneracy-complete; manifold-splitting raises). |
 | `degen_tol` | `1e-8` | finite-T only: degeneracy tolerance for the ground-manifold / truncation logic. |
 
-`threaded=:auto` chooses parallel sparse Hamiltonian products when the workload
-and available Julia threads justify it. `true` forces that kernel on the available
-thread pool; `false` uses serial sparse products throughout this call. Start Julia
-with `--threads=N` to make multiple threads available. Dense/custom operators,
-basis/assembly scheduling, and BLAS thread settings are independent.
+`threaded=:auto` selects parallel sparse Hamiltonian products and supported
+block full reorthogonalization according to their workload and available Julia
+threads. `true` requests the row kernels on the available default pool (possibly
+one thread); `false` keeps both serial throughout nested solves. Start Julia with
+`--threads=N` to make multiple threads available. Dense/custom Hamiltonian
+products, basis/assembly scheduling, and BLAS thread settings are independent.
 
 **Finite temperature.** Pass `ψ::Eigen` together with `temperature = …` to get
 the Boltzmann ensemble average over initial states (each referenced to its own

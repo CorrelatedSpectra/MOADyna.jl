@@ -60,13 +60,17 @@ Defaults shown here are the kernel-level literals used by
 | `restrictions` | `nothing` | `Restriction` / `Vector{<:Restriction}` / `nothing` |
 | `basis` | `nothing` | required when `restrictions !== nothing` |
 | `retain_basis::Bool` | `false` | keep the concatenated Krylov basis (used by `rixs` and `fluorescence_yield` for the inner-Lanczos pass) |
-| `threaded` | `:auto` | sparse Hamiltonian action: automatic selection, forced parallel kernel (`true`), or serial (`false`) |
+| `threaded` | `:auto` | sparse Hamiltonian action and supported block FRO: automatic selection, forced row kernels (`true`), or serial (`false`) |
 
-The sparse action is prepared once per recurrence. `:auto` considers the
-workload and available Julia threads; `true` uses the available thread pool,
-including a single thread if Julia was started without `--threads=N`.
-Dense and custom operators keep their existing multiplication methods.
-This option does not change basis/assembly scheduling or BLAS thread settings.
+Sparse-action and supported block-FRO workspaces are prepared once per
+recurrence. `:auto` considers the workload and available Julia threads;
+block FRO uses a conservative per-block work floor. `true` uses the available
+default thread pool, including one thread; `false` keeps both kernels serial.
+Full block reorthogonalization retains its two passes and historical-block
+order; row partitioning can change floating-point summation. Unsupported or
+wider arithmetic keeps the serial path. The scalar-specialized recurrence
+retains its existing reorthogonalization. Dense/custom Hamiltonian products,
+basis/assembly scheduling, and BLAS thread settings are unchanged.
 
 For sufficiently large full-reorthogonalization runs with multiple sources,
 finite sparse matrices may be reduced to the exact source-reachable coordinates.
@@ -152,7 +156,7 @@ function block_lanczos(H, X_raw::AbstractMatrix;
             Matrix{T}(X_raw)             # promote to dense Matrix{T}; may be a copy
 
     options = (; krylovdim, reorth, tol, min_iter, max_iter, deflate_tol,
-                 restrictions, basis, retain_basis)
+                 restrictions, basis, retain_basis, threaded)
     rows = _reachable_block_rows(H, X; reorth, krylovdim, max_iter,
                                   deflate_tol, restrictions)
     if rows !== nothing
@@ -178,7 +182,7 @@ end
 function _block_lanczos(action, X::Matrix{T};
                         krylovdim::Int, reorth::Symbol, tol::Real,
                         min_iter::Int, max_iter::Int, deflate_tol::Real,
-                        restrictions, basis, retain_basis::Bool) where {T}
+                        restrictions, basis, retain_basis::Bool, threaded = :auto) where {T}
     N, B_raw = size(X)
     if B_raw == 1 && _scalar_lanczos_type(T) &&
        _supports_scalar_lanczos_action(action) &&
@@ -219,6 +223,7 @@ function _block_lanczos(action, X::Matrix{T};
                  _supports_scalar_lanczos_action(action) &&
                  promote_type(eltype(action), T) === T ?
                  Matrix{T}(undef, B_active, B_active) : nothing
+    row_work = _prepare_block_reorth(N, coeff_work, threaded)
     β1_fro    = NaN
     consec    = 0
     converged = false
@@ -243,18 +248,9 @@ function _block_lanczos(action, X::Matrix{T};
             _subtract_block_product!(W, V_prev, adjoint(β_prev))
         end
 
-        # FRO: orthogonalise W against ALL stored V blocks (CGS-2 outside
-        # the immediate predecessors). Memory grows O(B·K) but kills ghosts.
+        # Two ordered projection passes over stored blocks suppress ghosts.
         if reorth === :full
-            for _ in 1:2, V_old in V_blocks
-                if coeff_work === nothing || !(W isa StridedMatrix{T})
-                    coeff = adjoint(V_old) * W
-                else
-                    coeff = view(coeff_work, 1:size(V_old, 2), 1:size(W, 2))
-                    mul!(coeff, adjoint(V_old), W)
-                end
-                _subtract_block_product!(W, V_old, coeff)
-            end
+            _reorthogonalize_block!(W, V_blocks, coeff_work, row_work)
         end
 
         n_iter = k

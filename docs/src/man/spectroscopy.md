@@ -147,11 +147,15 @@ diamagnetic weight is not included). Both wrappers take the finite-`T` path via 
 ## Threading in spectroscopy
 
 [`xas`](@ref), [`rixs`](@ref), and [`fluorescence_yield`](@ref) accept
-`threaded=:auto` (the default), `threaded=true`, or `threaded=false`. Automatic
-mode uses the available Julia threads when a sparse product is large enough to
-amortize scheduling overhead. `true` forces that kernel; `false` keeps sparse
-Hamiltonian products serial throughout the calculation, including nested
-recursions and thermal averages.
+`threaded=:auto` (the default), `threaded=true`, or `threaded=false`. This controls
+sparse Hamiltonian products and supported block full reorthogonalization,
+including nested recursions and thermal averages. Automatic mode uses workers
+for sufficiently large products and applies a conservative per-block work floor
+to reorthogonalization. `true` requests these row kernels on the available default
+pool (possibly one worker); `false` keeps both serial. The two ordered projection
+passes over stored blocks are preserved, although row partitioning can change
+floating-point summation. Unsupported/wider arithmetic retains the serial path;
+the scalar-specialized recurrence retains its existing reorthogonalization.
 
 [`optical_conductivity`](@ref) and [`dynamical_structure_factor`](@ref) forward
 the same control to their underlying response calculation. [`kubo_response`](@ref)
