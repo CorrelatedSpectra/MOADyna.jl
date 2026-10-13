@@ -302,6 +302,10 @@ function _enumerate_partition(p::_Partition, enc::EncodingMap)
     elseif _is_pure_fermion_count(p)
         # Single POPCOUNT, all-fermion modes: pure k-combinations enumerator.
         _walk_popcount!(out, rec, p, enc)
+    elseif length(p.restrictions) > 1 &&
+           all(c -> c.op === POPCOUNT, p.restrictions) &&
+           all(e -> e.kind === :fermion, p.mode_entries)
+        _walk_popcount_grouped!(out, rec, p)
     elseif (pop_idx = _find_popcount_covering(p)) > 0
         # POPCOUNT covers all partition modes; remaining restrictions are
         # filtered per candidate. Common case: Hubbard-style fixed-N + Sz.
@@ -458,6 +462,119 @@ function _walk_popcount!(out::Vector{UInt64}, rec::Vector{UInt64},
         end
     end
     return
+end
+
+# --- Walk: coupled fermion counts -------------------------------------------
+
+function _walk_popcount_grouped!(out::Vector{UInt64}, rec::Vector{UInt64},
+                                 p::_Partition)
+    groups = Vector{ModeEntry}[]
+    keys = Tuple[]
+    group_index = Dict{Tuple,Int}()
+    for e in p.mode_entries
+        key = Tuple((c.mask[e.word_idx] >> e.bit_offset) & UInt64(1)
+                    for c in p.restrictions)
+        g = get(group_index, key, 0)
+        if g == 0
+            push!(groups, ModeEntry[])
+            push!(keys, key)
+            g = length(groups)
+            group_index[key] = g
+        end
+        push!(groups[g], e)
+    end
+
+    R, G = length(p.restrictions), length(groups)
+    incidence = Bool[keys[g][r] != 0 for r in 1:R, g in 1:G]
+    remaining = zeros(Int, R, G + 1)
+    for g in G:-1:1, r in 1:R
+        remaining[r,g] = remaining[r,g+1] +
+                         (incidence[r,g] ? length(groups[g]) : 0)
+    end
+    running = zeros(Int,R)
+    counts = zeros(Int,G)
+    indices = [Vector{Int}(undef,length(group)) for group in groups]
+    _walk_group_counts!(out,rec,p.restrictions,groups,incidence,remaining,
+                        running,counts,indices,1)
+    nothing
+end
+
+function _walk_group_counts!(out::Vector{UInt64}, rec::Vector{UInt64},
+                             restrictions::Vector{CompiledRestriction},
+                             groups::Vector{Vector{ModeEntry}},
+                             incidence::Matrix{Bool}, remaining::Matrix{Int},
+                             running::Vector{Int}, counts::Vector{Int},
+                             indices::Vector{Vector{Int}}, g::Int)
+    if g > length(groups)
+        for r in eachindex(restrictions)
+            c = restrictions[r]
+            c.min <= running[r] <= c.max || return
+        end
+        _emit_group_combinations!(out,rec,groups,counts,indices,1)
+        return
+    end
+
+    lo, hi = 0, length(groups[g])
+    for r in eachindex(restrictions)
+        c = restrictions[r]
+        running[r] > c.max && return
+        running[r] + remaining[r,g] < c.min && return
+        if incidence[r,g]
+            lo = max(lo, max(c.min,running[r]) - running[r] - remaining[r,g+1])
+            hi = min(hi, c.max - running[r])
+        end
+    end
+    lo > hi && return
+    for k in lo:hi
+        counts[g] = k
+        for r in eachindex(restrictions)
+            incidence[r,g] && (running[r] += k)
+        end
+        _walk_group_counts!(out,rec,restrictions,groups,incidence,remaining,
+                            running,counts,indices,g+1)
+        for r in eachindex(restrictions)
+            incidence[r,g] && (running[r] -= k)
+        end
+    end
+    nothing
+end
+
+function _emit_group_combinations!(out::Vector{UInt64}, rec::Vector{UInt64},
+                                   groups::Vector{Vector{ModeEntry}},
+                                   counts::Vector{Int}, indices::Vector{Vector{Int}},
+                                   g::Int)
+    if g > length(groups)
+        append!(out,rec)
+        return
+    end
+    modes, index, k = groups[g], indices[g], counts[g]
+    for j in 1:k
+        index[j] = j
+    end
+    while true
+        for j in 1:k
+            set_span!(rec,1,modes[index[j]],1)
+        end
+        _emit_group_combinations!(out,rec,groups,counts,indices,g+1)
+        for j in 1:k
+            set_span!(rec,1,modes[index[j]],0)
+        end
+        _next_group_combination!(index,length(modes),k) || break
+    end
+    nothing
+end
+
+function _next_group_combination!(index::Vector{Int}, n::Int, k::Int)
+    i = k
+    while i >= 1 && index[i] == n - k + i
+        i -= 1
+    end
+    i == 0 && return false
+    index[i] += 1
+    for j in i+1:k
+        index[j] = index[j-1] + 1
+    end
+    true
 end
 
 # --- Walk: POPCOUNT covering all modes, with extra-restriction filter ------
