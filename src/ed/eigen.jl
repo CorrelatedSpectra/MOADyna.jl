@@ -114,10 +114,19 @@ function _eigen_dense(H_sparse::SparseMatrixCSC; n::Int, which::Symbol)
     # eigensolver (SYEVR). The wrap uses the upper triangle as truth,
     # which is exact for Hermitian input.
     M_H = Hermitian(Matrix(H_sparse))
-    E_full = LinearAlgebra.eigen(M_H)                  # all N eigvals (LAPACK SYEVR)
-    sel = _select_indices(E_full.values, n, which)
-    return LinearAlgebra.Eigen(Float64.(E_full.values[sel]),
-                               Matrix(E_full.vectors[:, sel]))
+    N = size(H_sparse, 1)
+    if n < N && which in (:SR, :LR) &&
+       eltype(H_sparse) <: Union{Float32, Float64, ComplexF32, ComplexF64}
+        # LAPACK can return only the requested edge of the sorted spectrum.
+        indices = which === :SR ? (1:n) : (N-n+1:N)
+        E = LinearAlgebra.eigen(M_H, indices)
+        sel = which === :SR ? (1:n) : (n:-1:1)
+    else
+        E = LinearAlgebra.eigen(M_H)
+        sel = _select_indices(E.values, n, which)
+    end
+    return LinearAlgebra.Eigen(Float64.(E.values[sel]),
+                               Matrix(E.vectors[:, sel]))
 end
 
 # --- Krylov backend ---------------------------------------------------
