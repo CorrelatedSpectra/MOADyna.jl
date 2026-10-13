@@ -386,7 +386,7 @@ function _reachable_block_rows(H, X::Matrix{T}; reorth, krylovdim, max_iter,
     # keep the original path in that regime, including underflowed thresholds.
     eps(RT) <= deflate_tol <= 1 || return nothing
 
-    limit = fld(3N, 4)
+    limit = N - cld(N, 16)
     selected = falses(N)
     queue = Int[]
     source_max = zero(RT)
