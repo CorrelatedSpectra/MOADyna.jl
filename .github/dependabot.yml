@@ -11,9 +11,10 @@ updates:
     commit-message:
       prefix: "compat"
     ignore:
-      # Optim 2.x removed `only_fg!`, which MOADynaOptimExt uses. Re-enable
-      # once the extension is migrated and tested against 2.x.
+      # Optim 2.x no longer provides Optim.only_fg!, used by MOADynaOptimExt.
+      # Re-enable once the extension is migrated and tested against 2.x.
       - dependency-name: "Optim"
+        versions: [">=2"]
         update-types: ["version-update:semver-major"]
 
   - package-ecosystem: julia
@@ -22,6 +23,9 @@ updates:
       interval: weekly
     commit-message:
       prefix: "compat(docs)"
+    ignore:
+      # Documentation builds use the current checkout through Pkg.develop.
+      - dependency-name: "MOADyna"
 
   - package-ecosystem: github-actions
     directory: "/"
