@@ -14,8 +14,8 @@ end
 function _krylov_eigenpairs(action, x0, n, which; tol, maxiter, krylovdim)
     isfinite(tol) && tol > 0 || throw(ArgumentError("tol must be finite and positive"))
     if n == 1
-        return KrylovKit.eigsolve(action, vec(x0), n, which;
-                                  tol, maxiter, krylovdim, ishermitian=true)
+        algorithm = KrylovKit.Lanczos(; tol, maxiter, krylovdim)
+        return KrylovKit.eigsolve(action, vec(x0), n, which, algorithm)
     end
     rng = copy(_DEFAULT_X0_RNG)
     X = randn(rng, eltype(x0), size(x0, 1), n)

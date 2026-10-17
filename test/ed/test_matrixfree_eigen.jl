@@ -1,3 +1,10 @@
+struct ProductOnlyMatrix{T} <: AbstractMatrix{T}
+    data::Matrix{T}
+end
+Base.size(A::ProductOnlyMatrix) = size(A.data)
+Base.getindex(::ProductOnlyMatrix, ::Int, ::Int) = error("scalar indexing is unavailable")
+Base.:*(A::ProductOnlyMatrix, x::AbstractVector) = A.data * x
+
 @testset "Sparse and matrix-free eigenproblems" begin
     using LinearAlgebra
 
@@ -29,6 +36,12 @@
     @test_throws ArgumentError eigen(H, b; backend=:unknown)
     @test_throws ArgumentError eigen(A, basis(h, n_fermion(h) == 1))
     @test_throws ArgumentError eigen(matrixfree(cdag(site, 1) * c(site, 2), b), b)
+
+    # The public entry point has checked Hermiticity before preparing the action.
+    real_matrix = real.(Matrix(M))
+    values, vectors, info = MOADyna.ED._krylov_eigenpairs(ProductOnlyMatrix(real_matrix),
+        ones(8) / sqrt(8), 1, :SR; tol=1e-10, maxiter=100, krylovdim=8)
+    @test info.converged >= 1 && norm(real_matrix * vectors[1] - values[1] * vectors[1]) < 1e-9
 
     s1, s2 = SpinSite{1//2}(:s1), SpinSite{1//2}(:s2)
     spin_basis = basis(Hilbert(:s1 => s1, :s2 => s2))
