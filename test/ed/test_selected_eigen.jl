@@ -42,6 +42,25 @@
     @test result.eigen.values ≈ fill(-0.25, 3)
     @test result.eigen.vectors' * result.eigen.vectors ≈ I atol=1e-12
 
+    # Virtual hopping resolves a flat seed before its full manifold is needed.
+    flat_site = FermionSite{8}(:flat)
+    flat_hilbert = Hilbert(:flat => flat_site)
+    flat_allowed = n_fermion(flat_hilbert) == 1
+    flat_full = basis(flat_hilbert, flat_allowed)
+    flat_seed = MOADyna.Bases._selected_basis(flat_full, UInt64[1, 2, 4, 8]; restrictions=flat_allowed)
+    virtual = sum(4n(flat_site, i + 4) + 0.1i * add_hc(cdag(flat_site, i + 4) * c(flat_site, i))
+                  for i in 1:4)
+    failure = try
+        selected_eigen(virtual, flat_seed; restrictions=flat_allowed,
+            max_states=8, max_candidates=1, residual_tol=1e-9)
+    catch e
+        e
+    end
+    @test failure isa SelectionConvergenceError && length(failure.result.eigen.values) == 2
+    resolved = selected_eigen(virtual, flat_seed; restrictions=flat_allowed,
+        max_states=8, residual_tol=1e-9)
+    @test resolved.eigen.values[1] ≈ (4 - sqrt(16 + 4 * 0.4^2)) / 2 atol=1e-11
+
     sites = [FermionSite{2}(Symbol("s$i")) for i in 1:4]
     h = Hilbert(s.name => s for s in sites)
     allowed = [n_fermion(h) == 4, WeightedParticleCount(sites, repeat([1, -1], 4)) == 0]

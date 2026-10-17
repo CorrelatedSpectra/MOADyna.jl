@@ -18,27 +18,19 @@ struct SelectedEigen{E<:LinearAlgebra.Eigen}
     candidate_count::Union{Nothing,Int}
 end
 
-function _selected_eigenpairs(A, n, initial; backend, residual_tol, tol,
+function _selected_eigenpairs(action, b, n, requested, initial; residual_tol, tol,
                               degen_tol, eig_maxiter, krylovdim, dense_below, threaded)
-    b = A.ket
-    action = backend === :matrixfree ? A : assemble(A.forward, b)
-    requested = min(length(b), n + 1)
-    while true
-        seed = initial === nothing ? nothing : initial[:, 1:min(size(initial, 2), requested)]
-        inner_tol = tol === nothing ? residual_tol / sqrt(2requested) : tol
-        E = eigen(action, b; n=requested, x0=seed, tol=inner_tol, degen_tol,
-                  maxiter=eig_maxiter, krylovdim=max(krylovdim, requested + 2),
-                  dense_below, threaded)
-        kept = min(n, length(b))
-        while kept < requested && abs(E.values[kept + 1] - E.values[min(n, length(b))]) <= degen_tol
-            kept += 1
-        end
-        if kept < requested || requested == length(b)
-            return LinearAlgebra.Eigen(E.values[1:kept], E.vectors[:, 1:kept])
-        end
-        initial = E.vectors
-        requested = min(length(b), max(requested + 1, 2requested))
+    seed = initial === nothing ? nothing : initial[:, 1:min(size(initial, 2), requested)]
+    inner_tol = tol === nothing ? residual_tol / sqrt(2requested) : tol
+    E = eigen(action, b; n=requested, x0=seed, tol=inner_tol, degen_tol,
+              maxiter=eig_maxiter, krylovdim=max(krylovdim, requested + 2),
+              dense_below, threaded)
+    kept = min(n, length(b))
+    while kept < requested && abs(E.values[kept + 1] - E.values[min(n, length(b))]) <= degen_tol
+        kept += 1
     end
+    complete = kept < requested || requested == length(b)
+    return LinearAlgebra.Eigen(E.values[1:kept], E.vectors[:, 1:kept]), complete
 end
 
 """
@@ -58,6 +50,9 @@ combination of the returned states. The lowest `n` states of the selected proble
 are requested, including any projected degenerate cluster crossing that boundary
 (`degen_tol=1e-8`). Residual convergence alone cannot certify the multiplicity
 of the full allowed-space spectrum.
+Each enlarged basis starts with at most `n+1` provisional states. Once their
+full residual passes, the boundary cluster is completed progressively and every
+added member is checked before acceptance.
 
 `max_states` caps the retained basis. `max_candidates=max_states` caps unique
 generated external states before all cancellations are resolved. Each discovery
@@ -77,6 +72,8 @@ as `eigen`. The dense threshold applies only to the sparse backend.
 The Hamiltonian must be Hermitian throughout the allowed space. A small residual
 certifies approximate eigenstates, not discovery of the global ground state or
 all degenerate partners. Unseeded disconnected sectors are unreachable.
+Provisional search can also leave some directions of a degenerate seed unexplored;
+use physically appropriate seeds and check stability under their enlargement.
 Ground-state convergence alone does not certify
 a spectrum; transition and response spaces require their own convergence checks.
 """
@@ -99,24 +96,30 @@ function selected_eigen(H::OperatorSum, seed::EagerBasis;
     A = matrixfree(H, b; threaded)
     initial = nothing
     for iteration in 1:maxiter
-        E = _selected_eigenpairs(A, n, initial; backend, residual_tol, tol,
-            degen_tol, eig_maxiter, krylovdim, dense_below, threaded)
-        projected = A * E.vectors - E.vectors * Diagonal(E.values)
-        external = try
-            _external_action(A, E.vectors; restrictions, max_candidates, threaded)
-        catch e
-            e isa _CandidateLimit || rethrow()
-            result = SelectedEigen(b, E, fill(Inf, length(E.values)), Inf, iteration, nothing)
-            throw(SelectionConvergenceError(:max_candidates, result))
+        action = backend === :matrixfree ? A : assemble(A.forward, b)
+        requested = min(length(b), n + 1)
+        local E, external, result, projected
+        while true
+            E, cluster_complete = _selected_eigenpairs(action, b, n, requested, initial;
+                residual_tol, tol, degen_tol, eig_maxiter, krylovdim, dense_below, threaded)
+            projected = A * E.vectors - E.vectors * Diagonal(E.values)
+            external = try
+                _external_action(A, E.vectors; restrictions, max_candidates, threaded)
+            catch e
+                e isa _CandidateLimit || rethrow()
+                result = SelectedEigen(b, E, fill(Inf, length(E.values)), Inf, iteration, nothing)
+                throw(SelectionConvergenceError(:max_candidates, result))
+            end
+            residuals = [hypot(norm(@view(projected[:, j])), norm(@view(external.values[:, j])))
+                         for j in eachindex(E.values)]
+            result = SelectedEigen(b, E, residuals, norm(residuals), iteration, size(external.values, 1))
+            isfinite(result.residual_norm) || throw(SelectionConvergenceError(:nonfinite_residual, result))
+            result.residual_norm <= residual_tol && length(E.values) >= n || break
+            cluster_complete && return result
+            initial = E.vectors
+            requested = min(length(b), max(requested + 1, 2requested))
         end
-        residuals = [hypot(norm(@view(projected[:, j])), norm(@view(external.values[:, j])))
-                     for j in eachindex(E.values)]
-        result = SelectedEigen(b, E, residuals, norm(residuals), iteration, size(external.values, 1))
-        isfinite(result.residual_norm) || throw(SelectionConvergenceError(:nonfinite_residual, result))
         complete = length(E.values) >= n
-        if result.residual_norm <= residual_tol && complete
-            return result
-        end
         !complete && isempty(external.states) &&
             throw(SelectionConvergenceError(:insufficient_states, result))
         iteration < maxiter || throw(SelectionConvergenceError(:maxiter, result))

@@ -133,6 +133,10 @@ insufficient. Complete degenerate clusters of the selected Hamiltonian crossing
 the requested `n` states are included. Residual convergence alone cannot certify
 the full allowed-space multiplicity, which matters for thermal averages.
 The previous eigenvector block is reused after enlargement.
+Enrichment starts with a bounded provisional target block. Once it meets the
+full residual tolerance, any unresolved boundary cluster is completed in stages,
+checking every added member before returning. This avoids diagonalizing a large
+artificially degenerate seed before its coupling to omitted states is explored.
 
 `max_states` limits retained states and `max_candidates` limits unique generated
 external states before all cancellations, defaulting to `max_states`. Each
@@ -145,6 +149,8 @@ means the candidate limit prevented a complete residual check.
 The allowed-space Hamiltonian must be Hermitian. A small residual identifies
 accurate eigenstates within the reachable sector; it does not prove that an
 unseeded, disconnected sector has no lower state. Ground-state selection also
+need not explore every direction of a degenerate seed; physically appropriate
+seeds and stability under their enlargement remain necessary. It also
 does not establish spectroscopy convergence. Transition sources and response
 spaces must be checked separately with [`selected_response`](@ref).
 
