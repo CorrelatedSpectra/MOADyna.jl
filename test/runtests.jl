@@ -29,6 +29,7 @@ using MOADyna
         include("bases/test_mixed_sites.jl")
         include("bases/test_sparse_action.jl")
         include("bases/test_matrixfree.jl")
+        include("bases/test_discovery.jl")
         include("bases/test_embed.jl")
     end
 
@@ -46,6 +47,7 @@ using MOADyna
     @testset "ED" begin
         include("ed/test_eigen.jl")
         include("ed/test_matrixfree_eigen.jl")
+        include("ed/test_selected_eigen.jl")
         include("ed/test_eigensystem_io.jl")
         include("ed/test_boson_layer.jl")
         include("ed/test_bose_hubbard.jl")

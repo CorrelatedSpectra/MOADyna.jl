@@ -140,6 +140,7 @@ export read_quanty_wavefunction, read_quanty_wavefunctions, read_quanty_eigenval
 
 # From ED
 export ConvergenceError, max_normres
+export selected_eigen, SelectedEigen, SelectionConvergenceError
 export save_eigensystem, load_eigensystem
 
 # From Responses (algorithm internals — block_lanczos, cf_block — stay

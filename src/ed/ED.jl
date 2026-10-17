@@ -23,12 +23,14 @@ using ..Algebra: OperatorSum
 using ..Bases: EagerBasis, compile, assemble
 using ..Bases: MatrixFreeOperator, _build_action, _validate_action_basis
 using ..Bases: _prepare_action, _validate_threading
+using ..Bases: matrixfree, _selected_basis, _external_action, _rebind_action, _embed_block, _CandidateLimit
 
 include("errors.jl")
 include("validation.jl")
 include("utils.jl")
 include("krylov.jl")
 include("eigen.jl")
+include("selection.jl")
 include("eigensystem_io.jl")
 
 # `eigen` is exported by LinearAlgebra; we add methods to it. Re-exporting
@@ -36,6 +38,7 @@ include("eigensystem_io.jl")
 # `eigen` without forcing the user to also `using LinearAlgebra`.
 
 export ConvergenceError, max_normres
+export selected_eigen, SelectedEigen, SelectionConvergenceError
 export save_eigensystem, load_eigensystem
 # Note: `eigen` is intentionally NOT exported here — it lives in
 # LinearAlgebra and our methods extend the existing function. The umbrella

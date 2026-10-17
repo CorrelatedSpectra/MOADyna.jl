@@ -31,7 +31,7 @@ The Hamiltonian is assumed Hermitian; eigenvalues are returned as
 | `maxiter`      | `300`                    | Krylov max iterations                              |
 | `krylovdim`    | `max(20, 2n + 10)`       | Krylov subspace dimension                          |
 | `dense_below`  | `1024`                   | sparse dense-path threshold; ignored for matrix-free input |
-| `x0`           | `nothing`                | initial Krylov vector (seeded random if `nothing`) |
+| `x0`           | `nothing`                | initial vector or block with up to `n` columns (seeded random if `nothing`) |
 | `threaded`     | `:auto`                  | Hamiltonian action: `:auto`, `true`, or `false` |
 
 `threaded=:auto` selects a parallel sparse action when the matrix workload and
@@ -61,7 +61,7 @@ function LinearAlgebra.eigen(H::Union{SparseMatrixCSC,MatrixFreeOperator}, basis
                              maxiter::Int = 300,
                              krylovdim::Int = max(20, 2n + 10),
                              dense_below::Int = 1024,
-                             x0::Union{Nothing, AbstractVector} = nothing,
+                             x0::Union{Nothing, AbstractVecOrMat} = nothing,
                              threaded = :auto)
     _validate_threading(threaded)
     _validate_eigen_inputs(H, basis;
@@ -112,16 +112,19 @@ end
 function _eigen_krylov(H::AbstractMatrix; n::Int, which::Symbol,
                        tol::Real, degen_tol::Real,
                        maxiter::Int, krylovdim::Int,
-                       x0::Union{Nothing, AbstractVector}, threaded = :auto)
+                       x0::Union{Nothing, AbstractVecOrMat}, threaded = :auto)
     T = eltype(H)
     x0_actual = if x0 === nothing
         _default_x0(size(H, 1), T)
     else
-        seed = Vector{T}(x0)
-        seed_norm = norm(seed)
-        isfinite(seed_norm) && seed_norm > 0 || throw(ArgumentError(
-            "x0 must have a finite, nonzero norm"))
-        seed ./= seed_norm
+        seed = Array{T}(x0)
+        for column in eachcol(reshape(seed, size(seed, 1), :))
+            seed_norm = norm(column)
+            isfinite(seed_norm) && seed_norm > 0 || throw(ArgumentError(
+                "each x0 column must have a finite, nonzero norm"))
+            column ./= seed_norm
+        end
+        seed
     end
 
     action = _prepare_action(H; nrhs=n, threaded)

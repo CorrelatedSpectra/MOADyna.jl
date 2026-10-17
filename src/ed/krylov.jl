@@ -14,12 +14,12 @@ end
 function _krylov_eigenpairs(action, x0, n, which; tol, maxiter, krylovdim)
     isfinite(tol) && tol > 0 || throw(ArgumentError("tol must be finite and positive"))
     if n == 1
-        return KrylovKit.eigsolve(action, x0, n, which;
+        return KrylovKit.eigsolve(action, vec(x0), n, which;
                                   tol, maxiter, krylovdim, ishermitian=true)
     end
     rng = copy(_DEFAULT_X0_RNG)
-    X = randn(rng, eltype(x0), length(x0), n)
-    X[:, 1] = x0
+    X = randn(rng, eltype(x0), size(x0, 1), n)
+    X[:, 1:size(x0, 2)] = reshape(x0, size(x0, 1), :)
     # Complete the requested starting space even if a supplied seed coincides
     # with one of the random columns. Householder QR supplies orthogonal columns.
     Q = Matrix(qr(X).Q)

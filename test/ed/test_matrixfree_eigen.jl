@@ -20,6 +20,12 @@
     E = eigen(A, b; n=2, dense_below=1024, x0=ones(8), threaded=true)
     @test E.values ≈ reference.values[1:2] atol=1e-9
     @test eltype(E.vectors) == eltype(A)
+    initial = copy(E.vectors)
+    warm = eigen(A, b; n=3, x0=initial, threaded=false)
+    @test warm.values ≈ reference.values[1:3] atol=1e-9
+    @test initial == E.vectors
+    @test_throws DimensionMismatch eigen(A, b; n=2, x0=ones(7, 2))
+    @test_throws ArgumentError eigen(A, b; n=2, x0=ones(8, 3))
     @test_throws ArgumentError eigen(H, b; backend=:unknown)
     @test_throws ArgumentError eigen(A, basis(h, n_fermion(h) == 1))
     @test_throws ArgumentError eigen(matrixfree(cdag(site, 1) * c(site, 2), b), b)

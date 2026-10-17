@@ -44,6 +44,7 @@ Matrix-free operators always use the iterative solver. Key keywords:
 | `which` | which end of the spectrum (`:SR` smallest-real by default) |
 | `krylovdim`, `tol`, `maxiter` | forwarded to the Krylov path for large sectors |
 | `threaded` | Hamiltonian multiplication: `:auto` (default), `true`, or `false` |
+| `x0` | initial vector or block with at most `n` columns; copied before use |
 
 A [`ConvergenceError`](@ref) is thrown if the Krylov path fails to converge;
 [`max_normres`](@ref) reports the residual.
@@ -99,6 +100,53 @@ The iterative solver uses scalar Lanczos for one eigenvector and block Lanczos
 for several, allowing independent eigenvectors with the same eigenvalue.
 `n` is the number returned and can cut through a multiplet. Request enough states
 to cover the complete manifold when needed for thermal averages or spectroscopy.
+
+## Selecting determinants
+
+[`selected_eigen`](@ref) starts from a small basis and discovers connected states
+without enumerating the full allowed space. Each inner eigensolve uses a fixed
+linear operator. Between solves, the basis grows according to the residual on
+omitted states; necessary small coefficients are retained.
+
+```@example selected
+using MOADyna
+a, b = FermionSite{1}(:a), FermionSite{1}(:b)
+h = Hilbert(:a => a, :b => b)
+allowed = n_fermion(h) == 1
+seed = basis(h, allowed, n_fermion([a]) == 1)
+H = n(b, 1) + 0.01add_hc(cdag(b, 1) * c(a, 1))
+result = selected_eigen(H, seed; restrictions=allowed, max_states=2,
+                         residual_tol=1e-10)
+result.eigen.values
+```
+
+The returned vectors belong to `result.basis`, which can be used with ordinary
+sparse assembly or matrix-free actions. `restrictions` explicitly defines the
+allowed physical space; the extra restriction used to create this seed does
+not constrain discovery.
+
+Convergence requires the full residual block
+`H*Ψ - Ψ*Diagonal(E)` to have Frobenius norm at most `residual_tol`.
+`result.residuals` reports the norm for each eigenstate. The check includes
+omitted determinants, so convergence of the inner projected problem is
+insufficient. Complete degenerate clusters of the selected Hamiltonian crossing
+the requested `n` states are included. Residual convergence alone cannot certify
+the full allowed-space multiplicity, which matters for thermal averages.
+The previous eigenvector block is reused after enlargement.
+
+`max_states` limits retained states and `max_candidates` limits unique generated
+external states before all cancellations, defaulting to `max_states`. Each
+discovery worker holds a single-column and a target-block accumulator, each
+bounded by this limit, in addition to merge and output storage.
+A [`SelectionConvergenceError`](@ref) preserves the latest result when a resource
+or iteration limit prevents convergence. An infinite residual in that result
+means the candidate limit prevented a complete residual check.
+
+The allowed-space Hamiltonian must be Hermitian. A small residual identifies
+accurate eigenstates within the reachable sector; it does not prove that an
+unseeded, disconnected sector has no lower state. Ground-state selection also
+does not establish spectroscopy convergence. Transition sources and response
+spaces must be checked separately.
 
 ## Saving eigensystems
 

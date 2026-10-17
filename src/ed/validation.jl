@@ -9,7 +9,7 @@
 @inline function _validate_eigen_inputs(H::AbstractMatrix, basis::EagerBasis;
                                         n::Int, which::Symbol,
                                         krylovdim::Int,
-                                        x0::Union{Nothing, AbstractVector})
+                                        x0::Union{Nothing, AbstractVecOrMat})
     N = length(basis)
 
     size(H, 1) == size(H, 2) ||
@@ -36,9 +36,10 @@
             "krylovdim=$krylovdim < n+2 = $(n+2); too tight for Krylov."))
 
     if x0 !== nothing
-        length(x0) == N ||
+        size(x0, 1) == N ||
             throw(DimensionMismatch(
-                "x0 has length $(length(x0)); expected $N."))
+                "x0 has $(size(x0, 1)) rows; expected $N."))
+        1 <= size(x0, 2) <= n || throw(ArgumentError("x0 must have between 1 and n columns"))
 
         # Eltype rules:
         #   - Only `Real` or `Complex` element types are accepted (otherwise
