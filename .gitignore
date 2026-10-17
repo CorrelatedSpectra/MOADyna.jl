@@ -10,6 +10,7 @@ deps/usr/
 deps/src/
 docs/build/
 docs/site/
+docs/src/changelog.md
 
 # Reference codebases (cloned for offline reading; not part of MOADyna)
 ref/

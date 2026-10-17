@@ -40,11 +40,10 @@ For arbitrary physical constants beyond MOADyna's small energy-unit helper
 
 ## Citing
 
-**Citing the software.** Please cite the version you used; machine-readable
-metadata is in
+**Citing the software.** Please cite MOADyna using
+[10.5281/zenodo.21808796](https://doi.org/10.5281/zenodo.21808796), the DOI
+covering all versions. Machine-readable metadata is in
 [`CITATION.cff`](https://github.com/CorrelatedSpectra/MOADyna.jl/blob/main/CITATION.cff).
-Each tagged release is archived with its own DOI, which identifies that
-software archive; release DOIs will be listed here once available.
 
 **Methods paper.** A separate paper describing the methods is planned — a
 distinct citation from the software archive. This page will be updated when it
