@@ -108,7 +108,7 @@ function optical_conductivity(H, basis::AbstractBasis,
                               T = nothing, temperature = nothing,
                               N_states = nothing, degen_tol = 1e-8,
                               ψ₀ = nothing, Eg = nothing, threaded = :auto, kwargs...)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     # `temperature` is the canonical thermal kwarg (consistent with xas/rixs/fy);
     # `T` is accepted as an alias. Specifying both raises.
     T = _resolve_pair(temperature, T; default = nothing, name = "temperature")

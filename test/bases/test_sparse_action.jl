@@ -2,7 +2,7 @@ using Test, LinearAlgebra, SparseArrays, MOADyna
 
 @testset "Prepared sparse row action" begin
     RowAction = MOADyna.Bases._SparseRowAction
-    prepare = MOADyna.Bases._prepare_sparse_action
+    prepare = MOADyna.Bases._prepare_action
     H = sparse(ComplexF64[2 0 1+im; 0 0 0; 1-im 0 3])
     X = ComplexF64[1 im; 2 3; 4-im 2]
     action = RowAction(H; nchunks=4)

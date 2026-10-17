@@ -26,6 +26,11 @@ follows from the Lehmann form of `G(ω_out)`). This is *not* a post-hoc
 numerical integration of `rixs(...)` — no outer Lanczos runs, and the
 result is real-valued from the start.
 
+`H_intermediate` may be sparse or matrix-free on `basis`. Transitions may be
+symbolic operators on a shared basis or prebuilt matrix actions. Rectangular
+excitation actions map initial states into `basis`; rectangular decay actions
+use the absorption orientation, mapping final states into `basis`.
+
 Output shape:
 - single ψ → `(n_ω_in,)` of `Float64`
 - list ψ   → `(N_ψ, n_ω_in)` of `Float64`
@@ -50,6 +55,8 @@ threads. `true` requests the row kernels on the available default pool (possibly
 one thread); `false` keeps both serial throughout nested solves. Start Julia with
 `--threads=N` to make multiple threads available. Dense/custom Hamiltonian
 products, basis/assembly scheduling, and BLAS thread settings are independent.
+For matrix-free actions, `:auto` preserves their construction setting; `true`
+and `false` override it throughout the calculation.
 """
 function fluorescence_yield end
 
@@ -57,7 +64,7 @@ function fluorescence_yield end
 function fluorescence_yield(H_i, basis::AbstractBasis, T_excite, T_decay,
                             E::LinearAlgebra.Eigen; Eg = nothing, temperature = nothing,
                             N_states = nothing, degen_tol = 1e-8, threaded = :auto, kwargs...)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     Eg === nothing ||
         throw(ArgumentError("fluorescence_yield: Eg cannot be specified when ψ is an Eigen"))
     if temperature === nothing
@@ -85,7 +92,7 @@ function fluorescence_yield(H_i, basis::AbstractBasis, T_excite, T_decay,
                             tol::Union{Real,Nothing}         = nothing,
                             restrictions_intermediate        = nothing,
                             threaded                         = :auto)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("fluorescence_yield: Eg required for bare vector ψ"))
     return _fy_run(H_i, basis, _to_T_list(T_excite), _to_T_list(T_decay),
@@ -114,7 +121,7 @@ function fluorescence_yield(H_i, basis::AbstractBasis, T_excite, T_decay,
                             tol::Union{Real,Nothing} = nothing,
                             restrictions_intermediate = nothing,
                             threaded = :auto)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("fluorescence_yield: Eg required for bare vector list ψ"))
     Eg isa Real ||
@@ -137,8 +144,8 @@ end
 # --- Driver ---
 
 function _fy_run(H_i, basis::AbstractBasis,
-                 T_excite_list::Vector{<:OperatorSum},
-                 T_decay_list::Vector{<:OperatorSum},
+                 T_excite_list::AbstractVector,
+                 T_decay_list::AbstractVector,
                  ψ_list::Vector{<:AbstractVector},
                  ψ_is_list::Bool;
                  Γ_int_use, ω_in_use, krylovdim_use, reorth_use, tol_use,
@@ -151,14 +158,11 @@ function _fy_run(H_i, basis::AbstractBasis,
     N_ex     = length(T_excite_list)
     N_dec    = length(T_decay_list)
     N_ψ      = length(ψ_list)
-    action_i = _prepare_sparse_action(H_i; nrhs=N_ex, threaded)
-    for ψ in ψ_list
-        length(ψ) == N_states ||
-            throw(DimensionMismatch("fluorescence_yield: ψ length ≠ basis size"))
-    end
-
-    T_ex_assembled  = SparseMatrixCSC[assemble(compile(t, basis), basis) for t in T_excite_list]
-    T_dec_assembled = SparseMatrixCSC[assemble(compile(t, basis), basis) for t in T_decay_list]
+    action_i = _prepare_action(H_i; nrhs=N_ex, threaded)
+    _validate_action_basis(H_i, basis)
+    T_ex_assembled = _transition_actions(T_excite_list, basis, H_i;
+        source_length=_source_dimension(ψ_list), threaded)
+    T_dec_assembled = _transition_actions(T_decay_list, basis, H_i; threaded)
 
     # Per-ψ inner Lanczos pipeline (same machinery as RIXS step 1-2).
     chunks = LanczosChunk{ComplexF64}[]

@@ -1,7 +1,7 @@
 """
     MOADyna.ED
 
-Exact diagonalization for `MOADyna.Bases`-assembled sparse matrices.
+Exact diagonalization for sparse and matrix-free operators.
 
 A thin wrapper around `KrylovKit.eigsolve` and dense LAPACK exposed as a
 single extended `Base.eigen` method. See the **Exact diagonalization**
@@ -21,11 +21,13 @@ using HDF5
 
 using ..Algebra: OperatorSum
 using ..Bases: EagerBasis, compile, assemble
-using ..Bases: _prepare_sparse_action, _validate_sparse_threading
+using ..Bases: MatrixFreeOperator, _build_action, _validate_action_basis
+using ..Bases: _prepare_action, _validate_threading
 
 include("errors.jl")
 include("validation.jl")
 include("utils.jl")
+include("krylov.jl")
 include("eigen.jl")
 include("eigensystem_io.jl")
 

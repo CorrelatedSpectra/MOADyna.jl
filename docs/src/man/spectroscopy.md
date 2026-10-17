@@ -7,7 +7,7 @@ DocTestSetup  = quote
 end
 ```
 
-`MOADyna.Spectroscopy` turns an assembled Hamiltonian and a ground (or thermal) state into a
+`MOADyna.Spectroscopy` turns a sparse or matrix-free Hamiltonian and a ground (or thermal) state into a
 frequency-resolved spectrum. It covers two families:
 
 - **Core-level spectroscopy** — [`xas`](@ref) (X-ray absorption), [`rixs`](@ref)
@@ -91,6 +91,42 @@ calculation. The NiO tutorial works a polarisation-resolved RIXS example.
 
 [`fluorescence_yield`](@ref) (`fluorescence_yield(H_i, basis, T_excite, T_decay, ψ; …)`)
 gives the integrated decay intensity used for partial-fluorescence-yield detection.
+
+## Matrix-free operators and separate sectors
+
+Pass `matrixfree(H, b)` as the Hamiltonian to use matrix-free propagation.
+Symbolic transitions on the shared basis use the same backend. Alternatively,
+pass prebuilt sparse matrices or matrix-free transition actions; these can be
+reused across calculations.
+
+Rectangular transitions connect distinct initial and propagation bases directly:
+
+```julia
+H_int = matrixfree(H_intermediate, basis_int)
+T_actions = [matrixfree(t, basis_int, basis_gs) for t in T]
+spec = xas(H_int, basis_int, T_actions, gs;
+           omega_grid=incident_grid, Gamma=0.6)
+```
+
+Here `gs` is an `Eigen` on `basis_gs`. For RIXS, provide the final basis as the
+positional argument and set `intermediate_basis=basis_int`:
+
+```julia
+H_fin = matrixfree(H_final, basis_final)
+incoming = [matrixfree(t, basis_int, basis_gs) for t in T_in]
+outgoing = [matrixfree(t, basis_int, basis_final) for t in T_out]
+result = rixs(H_fin, H_int, basis_final, incoming, outgoing, gs;
+              intermediate_basis=basis_int,
+              omega_in_grid=incident_grid, omega_out_grid=loss_grid,
+              Gamma_intermediate=0.6, Gamma_final=0.1)
+```
+
+Both transition sets use the absorption orientation; RIXS applies the adjoint
+of each outgoing action. Use the same basis objects when constructing operators
+and calling the solvers. Matrix-free actions carry basis identities that are
+checked where available; for ordinary matrices and bare vectors, the caller
+must ensure the coordinate ordering agrees. Tensor shapes and polarization
+contraction are the same for both backends.
 
 ## Response functions: optical conductivity and dynamical structure factor
 

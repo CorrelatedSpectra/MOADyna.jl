@@ -92,7 +92,7 @@ function kubo_response(H, basis::AbstractBasis,
                        Γ = nothing, Gamma = nothing,
                        N_eigs = nothing, degen_tol = 1e-8,
                        threaded = :auto)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     (temperature isa Real && temperature ≥ 0) || throw(ArgumentError(
         "kubo_response: temperature must be a real number ≥ 0; got $(repr(temperature))"))
     (degen_tol isa Real && isfinite(degen_tol) && degen_tol > 0) || throw(ArgumentError(
@@ -170,7 +170,7 @@ end
 #    within-manifold eigenbasis is arbitrary, so a partial manifold gives a
 #    basis-dependent χ).
 function _kubo_spectrum(H, basis::AbstractBasis, N_eigs, degen_tol; threaded = :auto)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     if N_eigs === nothing
         length(basis) > 4096 && throw(ArgumentError(
             "kubo_response: full-spectrum (N_eigs = nothing) dense pair-Lehmann is only " *

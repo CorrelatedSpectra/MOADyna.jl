@@ -45,6 +45,7 @@ using MOADyna
 
     @testset "ED" begin
         include("ed/test_eigen.jl")
+        include("ed/test_matrixfree_eigen.jl")
         include("ed/test_eigensystem_io.jl")
         include("ed/test_boson_layer.jl")
         include("ed/test_bose_hubbard.jl")
@@ -75,6 +76,7 @@ using MOADyna
         include("spectroscopy/test_rixs.jl")
         include("spectroscopy/test_rixs_solver.jl")
         include("spectroscopy/test_fluorescence_yield.jl")
+        include("spectroscopy/test_matrixfree.jl")
         include("spectroscopy/test_conductivity.jl")
         include("spectroscopy/test_structure_factor.jl")
         include("spectroscopy/test_finite_T_spectra.jl")

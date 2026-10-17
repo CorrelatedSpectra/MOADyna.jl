@@ -7,16 +7,16 @@ DocTestSetup  = quote
 end
 ```
 
-`MOADyna.ED` extends `LinearAlgebra.eigen` with two methods — one taking a symbolic
-[`OperatorSum`](@ref), one taking an already-assembled `SparseMatrixCSC` — each with a
+`MOADyna.ED` extends `LinearAlgebra.eigen` for symbolic
+[`OperatorSum`](@ref), sparse matrices and [`MatrixFreeOperator`](@ref), each with a
 basis constructed with [`basis`](@ref). It diagonalizes the Hamiltonian in that conserved sector and returns a
 standard `LinearAlgebra.Eigen` (so `.values` and `.vectors` work as usual). `eigen` is re-exported
 from `MOADyna`, so `using MOADyna` is enough — no explicit `using LinearAlgebra`.
 
 ## Diagonalizing
 
-`eigen` accepts either the symbolic [`OperatorSum`](@ref) plus a basis, or an
-already-assembled sparse matrix plus the basis it was built on.
+`eigen` accepts a symbolic [`OperatorSum`](@ref) or a prepared operator, together
+with the basis it was built on.
 
 ```@example ed
 using MOADyna
@@ -33,20 +33,35 @@ round.(sys.values; digits = 4)
 
 ## Dense vs Krylov dispatch
 
-The solver dispatches automatically on sector size: small sectors are diagonalized densely
-(`eigen(Hermitian(...))`), large sectors via `KrylovKit.eigsolve`. Key keywords:
+For sparse storage, small sectors are diagonalized densely
+(`eigen(Hermitian(...))`) and large sectors use `KrylovKit.eigsolve`.
+Matrix-free operators always use the iterative solver. Key keywords:
 
 | kwarg | role |
 |---|---|
 | `n` | number of eigenpairs to return |
+| `backend` | for symbolic input: `:sparse` (default) or `:matrixfree` |
 | `which` | which end of the spectrum (`:SR` smallest-real by default) |
 | `krylovdim`, `tol`, `maxiter` | forwarded to the Krylov path for large sectors |
-| `threaded` | sparse Hamiltonian multiplication: `:auto` (default), `true`, or `false` |
+| `threaded` | Hamiltonian multiplication: `:auto` (default), `true`, or `false` |
 
 A [`ConvergenceError`](@ref) is thrown if the Krylov path fails to converge;
 [`max_normres`](@ref) reports the residual.
 
-## Sparse multiplication threads
+To avoid storing Hamiltonian matrix elements, use [`matrixfree`](@ref):
+
+```@example ed
+H_action = matrixfree(H, b; threaded=false)
+sys_matrixfree = eigen(H_action, b; n=4)
+sys_matrixfree.values ≈ sys.values
+```
+
+Equivalently, call `eigen(H, b; backend=:matrixfree, n=4)`. Both forms use
+the same fixed basis as sparse assembly and introduce no determinant cutoff.
+`dense_below` applies only to sparse storage; it never makes a matrix-free
+calculation assemble a dense matrix implicitly.
+
+## Multiplication threads
 
 Start Julia with multiple threads to make workers available. For a batch
 calculation on Julia 1.12 or later, use `julia --threads=4,0 --project`: `4,0`
@@ -65,7 +80,11 @@ sys_threaded = eigen(H, b; n = 4, dense_below = 0, threaded = true)
 sys_threaded.values ≈ sys_serial.values
 ```
 
-This keyword controls sparse matrix–vector multiplication in the Krylov solver.
+For matrix-free operators, `:auto` preserves the threading choice made by
+`matrixfree`; `true` and `false` override it for the current solve. The default
+constructor uses the available Julia threads.
+
+This keyword controls operator multiplication in the Krylov solver.
 It does not change basis construction, Hamiltonian assembly, dense solver
 selection, or BLAS thread settings. `true` uses the available Julia threads and
 still runs on one worker when Julia was started with one thread. The Hamiltonian
@@ -76,10 +95,10 @@ multiplication methods.
 
 ## Degeneracy
 
-The returned eigenvalues respect degeneracy — the solver does not split a degenerate
-multiplet across the `n` cut arbitrarily; request enough states (`n`) to cover a degenerate
-ground manifold when you need the full multiplet (e.g. for a thermal average or a
-degeneracy-complete spectroscopy calculation).
+The iterative solver uses scalar Lanczos for one eigenvector and block Lanczos
+for several, allowing independent eigenvectors with the same eigenvalue.
+`n` is the number returned and can cut through a multiplet. Request enough states
+to cover the complete manifold when needed for thermal averages or spectroscopy.
 
 ## Saving eigensystems
 

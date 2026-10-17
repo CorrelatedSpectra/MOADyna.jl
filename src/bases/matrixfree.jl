@@ -41,7 +41,7 @@ end
 
 function matrixfree(A::CompiledHamiltonian, bra::EagerBasis, ket::EagerBasis;
                     threaded=:auto)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     A.basis_id == basis_id(ket) || throw(ArgumentError(
         "compiled operator does not belong to the source basis"))
     _same_encoding(bra.encoding, ket.encoding) || throw(ArgumentError(
@@ -59,6 +59,24 @@ Base.size(A::MatrixFreeOperator, d::Integer) = d == 1 ? length(A.bra) :
 Base.copy(A::MatrixFreeOperator) = A
 Base.adjoint(A::MatrixFreeOperator) = MatrixFreeOperator(
     A.reverse, A.forward, A.ket, A.bra, A.ket_index, A.bra_index, A.threaded)
+
+function _prepare_action(A::MatrixFreeOperator; nrhs::Int=1, threaded=:auto)
+    _validate_threading(threaded)
+    (threaded === :auto || threaded === A.threaded) && return A
+    return MatrixFreeOperator(A.forward, A.reverse, A.bra, A.ket,
+                               A.bra_index, A.ket_index, threaded)
+end
+
+_action_backend(::MatrixFreeOperator) = :matrixfree
+
+_transition_action(A::MatrixFreeOperator, basis, H; threaded=:auto) =
+    _prepare_action(A; threaded)
+
+function _validate_action_coordinates(A::MatrixFreeOperator, basis)
+    basis_id(A.bra) == basis_id(A.ket) == basis_id(basis) ||
+        throw(ArgumentError("matrix-free Hamiltonian must use the supplied basis on both sides"))
+    return nothing
+end
 
 function Base.show(io::IO, A::MatrixFreeOperator{T}) where {T}
     print(io, "MatrixFreeOperator{", T, "}(", size(A, 1), " × ", size(A, 2),

@@ -1,18 +1,5 @@
-# =====================================================================
-# Block Lanczos — hand-rolled, with rank-revealing initial QR + ragged-
-# block deflation + optional FRO
-# =====================================================================
-#
-# Hand-rolled rather
-# than KrylovKit-wrapped because we need:
-#   - per-iteration α/β block matrices kept around for cf re-evaluation
-#   - the rectangular initial QR factor `R` (B_active × B_raw) for the
-#     `R† G₁ R` user-basis sandwich
-#   - ragged-block deflation (`B_k` may shrink at any iteration)
-#   - in-loop projection for the `P · H · P` restriction semantics
-#
-# KrylovKit's block Lanczos doesn't expose any of those, so we maintain
-# our own primitive.
+# Spectroscopy recurrence retaining alpha/beta blocks, the initial channel map,
+# and optional Krylov vectors for response evaluation and RIXS propagation.
 
 """
     block_lanczos(H, X_raw; kwargs...) -> NamedTuple
@@ -25,9 +12,9 @@ then produces block-α and block-β stacks. Ragged-block deflation drops
 columns of subsequent `V_{k+1}` blocks, shrinking the active block size
 on the fly.
 
-For a single source column, supported sparse, strided dense, and diagonal
-floating-point matrices use a scalar recurrence with vector `mul!` and
-reusable work vectors. The same sparse `threaded` policy applies. Scalar
+For a single source column, supported sparse, matrix-free, strided dense, and
+diagonal floating-point operators use a scalar recurrence with vector `mul!`
+and reusable work vectors. The same operator `threaded` policy applies. Scalar
 normalization may choose different vector phases from QR; response values
 and the matrix-shaped return contract are preserved. Generic operators,
 products requiring wider intermediate precision, and zero or underflowed
@@ -139,7 +126,7 @@ function block_lanczos(H, X_raw::AbstractMatrix;
                        basis               = nothing,
                        retain_basis::Bool  = false,
                        threaded            = :auto)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     T = eltype(X_raw)
     N, B_raw = size(X_raw)
 
@@ -167,7 +154,7 @@ function block_lanczos(H, X_raw::AbstractMatrix;
                                   deflate_tol, restrictions)
     if rows !== nothing
         parent = _block_sparse_parent(H)
-        reduced = _prepare_sparse_action(parent[rows, rows]; nrhs=B_raw, threaded)
+        reduced = _prepare_action(parent[rows, rows]; nrhs=B_raw, threaded)
         result = _block_lanczos(reduced, X[rows, :]; options...)
         if retain_basis
             # Release each private reduced block as its full-basis copy is ready.
@@ -184,7 +171,7 @@ function block_lanczos(H, X_raw::AbstractMatrix;
         end
         return result
     end
-    action = _prepare_sparse_action(H; nrhs=B_raw, threaded)
+    action = _prepare_action(H; nrhs=B_raw, threaded)
     return _block_lanczos(action, X; options...)
 end
 

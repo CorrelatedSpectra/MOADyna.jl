@@ -1,10 +1,9 @@
 """
     MOADyna.Bases
 
-Eager basis enumeration + compiled-Hamiltonian sparse-matrix assembly. Takes a
-`Hilbert` and `Restriction`s from [`MOADyna.Algebra`](@ref), produces an
-[`EagerBasis`](@ref) and an
-`assemble(compile(H, basis), basis) → SparseMatrixCSC`.
+Basis enumeration and compiled operator actions. Takes a `Hilbert` and
+`Restriction`s from [`MOADyna.Algebra`](@ref), produces an [`EagerBasis`](@ref),
+and represents operators as sparse matrices or [`MatrixFreeOperator`](@ref).
 
 This is an internal submodule of `MOADyna`; the names below are
 re-exported from the umbrella package, so users typically write `using MOADyna`
@@ -33,6 +32,7 @@ include("restriction.jl")
 include("basis.jl")
 include("compile.jl")
 include("assemble.jl")
+include("operator_action.jl")
 include("sparse_action.jl")
 include("state_index.jl")
 include("matrixfree.jl")

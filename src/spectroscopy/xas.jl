@@ -26,14 +26,13 @@ in this form; `source` must have `length == length(basis)`.
 
 # Positional arguments
 
-- `H::AbstractMatrix`        — Hamiltonian on the Hilbert space spanned by `basis`.
-                               `SparseMatrixCSC` typical.
-- `basis::AbstractBasis`     — the basis `H`, `T`, `ψ` all live on.
-- `T`                        — `OperatorSum` (single transition operator) or
-                               `AbstractVector{<:OperatorSum}` (cartesian / multi-channel).
-                               Each operator is internally compiled and assembled
-                               on `basis`; cache and reuse if you call `xas` many
-                               times with the same operator set.
+- `H::AbstractMatrix`        — sparse or matrix-free Hamiltonian on `basis`.
+- `basis::AbstractBasis`     — propagation basis of `H` and transition outputs.
+- `T`                        — a symbolic operator, a prebuilt matrix action, or
+                               a vector of these for multiple channels. Symbolic
+                               transitions use `H`'s backend on the shared basis.
+                               Prebuilt rectangular actions may map from a
+                               different initial basis into `basis`.
 - `ψ`                        — `AbstractVector` (single ground state),
                                `AbstractVector{<:AbstractVector}` (list of independent
                                ground states; output gets a leading `N_ψ` axis), or
@@ -66,6 +65,8 @@ threads. `true` requests the row kernels on the available default pool (possibly
 one thread); `false` keeps both serial throughout nested solves. Start Julia with
 `--threads=N` to make multiple threads available. Dense/custom Hamiltonian
 products, basis/assembly scheduling, and BLAS thread settings are independent.
+For matrix-free actions, `:auto` preserves their construction setting; `true`
+and `false` override it throughout the calculation.
 
 **Finite temperature.** Pass `ψ::Eigen` together with `temperature = …` to get
 the Boltzmann ensemble average over initial states (each referenced to its own
@@ -99,7 +100,7 @@ function xas end
 function xas(H, basis::AbstractBasis, T, E::LinearAlgebra.Eigen;
              Eg = nothing, temperature = nothing,
              N_states = nothing, degen_tol = 1e-8, threaded = :auto, kwargs...)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     Eg === nothing ||
         throw(ArgumentError("xas: Eg cannot be specified when ψ is an Eigen"))
     if temperature === nothing
@@ -128,7 +129,7 @@ function xas(H, basis::AbstractBasis, T, ψ::AbstractVector{<:Number};
              tol::Union{Real,Nothing}         = nothing,
              restrictions     = nothing,
              threaded         = :auto)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("xas: Eg is required when ψ is a bare vector " *
                             "(pass `Eg = ...` or call with an Eigen)"))
@@ -163,7 +164,7 @@ function xas(H, basis::AbstractBasis, source::AbstractVector{<:Number};
              tol::Union{Real,Nothing}         = nothing,
              restrictions     = nothing,
              threaded         = :auto)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     Eg === nothing &&
         throw(ArgumentError("xas: Eg is required when calling with a pre-applied " *
                             "source vector (no ψ from which to extract it)"))
@@ -197,7 +198,7 @@ function xas(H, basis::AbstractBasis, T,
              tol::Union{Real,Nothing}         = nothing,
              restrictions     = nothing,
              threaded         = :auto)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     # Multi-ψ contract: a single shared `Eg::Real`. The list of ψ's is
     # interpreted as several ground-state vectors that share a common
     # zero-frequency reference (typical use case: a list of degenerate
@@ -221,16 +222,11 @@ end
 
 # --- Internal helpers ------------------------------------------------------
 
-_to_T_list(T::OperatorSum) = OperatorSum[T]
-_to_T_list(Ts::AbstractVector{<:OperatorSum}) = collect(Ts)
-_is_T_vector(::OperatorSum) = false
-_is_T_vector(::AbstractVector{<:OperatorSum}) = true
-
 # The actual driver. All public methods normalise their inputs to a
-# `T_list::Vector{<:OperatorSum}` and a `ψ_list::Vector{<:AbstractVector}`
+# a transition list and a `ψ_list::Vector{<:AbstractVector}`
 # and route here.
 function _xas_run(H, basis::AbstractBasis,
-                  T_list::Vector{<:OperatorSum},
+                  T_list::AbstractVector,
                   ψ_list::Vector{<:AbstractVector},
                   T_is_vector::Bool, ψ_is_list::Bool;
                   Γ_use, ω_grid_use, krylovdim_use, reorth_use,
@@ -240,21 +236,9 @@ function _xas_run(H, basis::AbstractBasis,
     N_T = length(T_list)
     N_ψ = length(ψ_list)
     N_states = length(basis)
-    for ψ in ψ_list
-        length(ψ) == N_states ||
-            throw(DimensionMismatch("xas: ψ has length $(length(ψ)); basis has $N_states"))
-    end
-
-    # Compile + assemble each transition operator once on the shared basis,
-    # then build the source blocks T·ψ that drive Lanczos.
-    T_assembled = SparseMatrixCSC[]
-    for t in T_list
-        try
-            push!(T_assembled, assemble(compile(t, basis), basis))
-        catch err
-            throw(ArgumentError("xas: failed to compile/assemble transition operator: $err"))
-        end
-    end
+    _validate_action_basis(H, basis)
+    T_assembled = _transition_actions(T_list, basis, H;
+        source_length=_source_dimension(ψ_list), threaded)
 
     source_blocks = Matrix{ComplexF64}[]
     for ψ in ψ_list
@@ -302,6 +286,7 @@ function _xas_run_from_sources(H, basis::AbstractBasis,
                                Γ_use, ω_grid_use, krylovdim_use, reorth_use,
                                tol_use, Eg, restrictions, threaded = :auto)
     isempty(source_blocks) && throw(ArgumentError("xas: source must be non-empty"))
+    _validate_action_basis(H, basis)
     N_ψ = length(source_blocks)
     N_T = size(source_blocks[1], 2)
     N_states = length(basis)
@@ -321,7 +306,7 @@ function _xas_run_from_sources(H, basis::AbstractBasis,
 
     # Forward block-Lanczos tuning kwargs. `restrictions` requires `basis`
     # alongside it — correlator auto-fills basis when restrictions is set.
-    action = _prepare_sparse_action(H; nrhs=N_T, threaded)
+    action = _prepare_action(H; nrhs=N_T, threaded)
     common_kwargs = (threaded = threaded,
                      krylovdim = krylovdim_use,
                      reorth    = reorth_use,

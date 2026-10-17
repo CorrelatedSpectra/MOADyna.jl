@@ -38,8 +38,9 @@ using HDF5
 
 using ..Algebra: OperatorSum, Restriction
 using ..Bases: AbstractBasis, EagerBasis, basis_id, apply_restriction!,
-                compile, assemble
-using ..Bases: _prepare_sparse_action, _validate_sparse_threading
+                compile, assemble, MatrixFreeOperator
+using ..Bases: _prepare_action, _validate_threading
+using ..Bases: _transition_action, _validate_action_basis
 import ..Responses
 import ..Responses: _build_T_K
 
@@ -48,6 +49,7 @@ include("defaults.jl")
 include("kwarg_aliases.jl")
 include("pretty_step.jl")
 include("cf.jl")
+include("transitions.jl")
 include("xas.jl")
 include("rixs.jl")
 include("fluorescence_yield.jl")

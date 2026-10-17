@@ -26,7 +26,8 @@ using OhMyThreads: @tasks
 
 using ..Algebra
 using ..Bases
-using ..Bases: _prepare_sparse_action, _validate_sparse_threading
+using ..Bases: _prepare_action, _validate_threading
+using ..Bases: _transition_action, _validate_action_basis
 
 include("types.jl")
 include("scalar_lanczos.jl")

@@ -8,9 +8,10 @@ end
 ```
 
 `MOADyna.Bases` turns the symbolic [Operator Algebra](@ref) into numbers. It assembles named
-sites into a [`Hilbert`](@ref) space, enumerates the basis of a conserved sector with
-[`EagerBasis`](@ref), and compiles a symbolic [`OperatorSum`](@ref) into a sparse matrix on
-that basis with [`compile`](@ref) / [`assemble`](@ref).
+sites into a [`Hilbert`](@ref) space and enumerates a conserved sector with
+[`basis`](@ref). A symbolic [`OperatorSum`](@ref) can then be assembled as a
+sparse matrix with [`compile`](@ref) / [`assemble`](@ref), or applied without
+storing matrix elements using [`matrixfree`](@ref).
 
 ## Hilbert spaces
 
@@ -31,15 +32,15 @@ Enumerating the full Fock space is exponential and almost never needed: physical
 Hamiltonians conserve particle number, `Sz`, etc., so work in one sector. A
 [`QuantumNumber`](@ref MOADyna.Algebra.QuantumNumber) ([`n_fermion`](@ref), [`Sz_total`](@ref),
 [`WeightedParticleCount`](@ref)) compared with `==` (or `∈` a range) yields a
-[`Restriction`](@ref). [`EagerBasis`](@ref) enumerates exactly the states satisfying all
+[`Restriction`](@ref). [`basis`](@ref) enumerates exactly the states satisfying all
 restrictions.
 
 ```@example bas
 sz_w  = repeat([1, -1], 4)                         # +1 on ↑, −1 on ↓
-basis = EagerBasis(h,
+b = basis(h,
                    n_fermion(h) == 4,              # half-filling
                    WeightedParticleCount(sites, sz_w) == 0)   # Sz = 0
-length(basis)
+length(b)
 ```
 
 `EagerBasis` materializes the sector's state list eagerly (the bit-packed Fock states), so
@@ -55,10 +56,33 @@ supports the parallel sparse-assembly path.
 
 ```@example bas
 H  = -1.0 * sum(add_hc(cdag(sites[i], σ) * c(sites[i+1], σ)) for i in 1:3, σ in 1:2)
-Hc = compile(H, basis)
-Hs = assemble(Hc, basis)
+Hc = compile(H, b)
+Hs = assemble(Hc, b)
 size(Hs)
 ```
+
+## Matrix-free actions
+
+[`matrixfree`](@ref) retains compiled operator terms and determinant lookup
+tables, and generates matrix elements during multiplication. It supports
+vectors, blocks of vectors, `mul!`, adjoints and the same fixed-basis solvers
+as sparse storage.
+
+```@example bas
+A = matrixfree(H, b; threaded=false)
+v = ones(length(b))
+A * v ≈ Hs * v
+```
+
+This construction keeps every state in `b` and applies the projected operator
+exactly, up to floating-point arithmetic. Keep the basis data unchanged while
+using the action. `threaded=:auto` uses the available Julia threads; `true` and
+`false` explicitly select parallel or serial products. `sparse(A)` and `Matrix(A)`
+are explicit conversions when stored matrix elements are needed.
+
+For transitions between different sectors, use `matrixfree(T, bra, ket)`.
+Its output coordinates belong to `bra` and input coordinates to `ket`; both
+bases must use the same site and mode encoding. The adjoint reverses these roles.
 
 ## Embedding between sectors
 

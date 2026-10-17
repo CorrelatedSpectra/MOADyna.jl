@@ -42,19 +42,8 @@ function _SparseRowAction(A::SparseMatrixCSC{T,Ti};
     return _SparseRowAction{T,Ti,conjugate}(A, storage, chunks)
 end
 
-function _validate_sparse_threading(threaded)
-    (threaded === :auto || threaded === true || threaded === false) ||
-        throw(ArgumentError("threaded must be :auto, true, or false; got $(repr(threaded))"))
-    return threaded
-end
-
-function _prepare_sparse_action(H; nrhs::Int = 1, threaded = :auto)
-    _validate_sparse_threading(threaded)
-    return H
-end
-
-function _prepare_sparse_action(H::_SparseRowAction; nrhs::Int = 1, threaded = :auto)
-    _validate_sparse_threading(threaded)
+function _prepare_action(H::_SparseRowAction; nrhs::Int = 1, threaded = :auto)
+    _validate_threading(threaded)
     return threaded === false ? H.parent : H
 end
 
@@ -63,10 +52,10 @@ end
 # initial nrhs for selection: block deflation can later leave just one column.
 const _SPARSE_ACTION_MIN_NNZ = 100_000
 const _SPARSE_ACTION_INTERACTIVE_MIN_NNZ = 1_500_000
-function _prepare_sparse_action(H::SparseMatrixCSC{T}; nrhs::Int = 1,
+function _prepare_action(H::SparseMatrixCSC{T}; nrhs::Int = 1,
                                 threaded = :auto) where
         {T<:Union{Float32,Float64,ComplexF32,ComplexF64}}
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
     threaded === false && return H
     threaded === true && return _SparseRowAction(H)
     minimum_nnz = Threads.threadpool() === :interactive ?
