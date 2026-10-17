@@ -88,6 +88,7 @@ using MOADyna
 
     @testset "Gradients" begin
         include("gradients/test_affine_model.jl")
+        include("gradients/test_matrixfree.jl")
         include("gradients/test_groundstate_grad.jl")
         include("gradients/test_resolvent_jvp.jl")
         include("gradients/test_xas_jvp.jl")

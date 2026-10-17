@@ -10,6 +10,7 @@ module Gradients
 using LinearAlgebra
 using SparseArrays
 using KrylovKit: linsolve
+using ..Bases: MatrixFreeOperator, _linear_combination, _validate_action_basis
 using ..PointGroups: classify_state   # spatial irrep labeling
 
 export AbstractCoefficientMap, AffineMap, coeffs, coeff_jacobian
@@ -69,8 +70,10 @@ coeff_jacobian(m::AffineMap, θ::AbstractVector) = m.J
 """
     AffineModel(terms, cmap, names)
 
-Preassembled-term Hamiltonian model. `terms[i]` are fixed matrices `M_i`
-(assembled once; never rebuilt as `θ` varies), `cmap::AbstractCoefficientMap`
+Hamiltonian model with fixed matrix or matrix-free terms `M_i`.
+Matrix-free terms must use identical source and destination bases; their
+compiled plans are combined without assembling matrix elements.
+`cmap::AbstractCoefficientMap`
 maps `θ` to the per-term coefficients, and `names` are the parameter symbols
 (`length(names) == nparams`).
 
@@ -91,6 +94,7 @@ struct AffineModel{M<:AbstractMatrix, C<:AbstractCoefficientMap}
                 "AffineModel: term $i has size $(size(t)) ≠ $(sz); all terms " *
                 "must be assembled on the same basis."))
         end
+        _check_affine_backend(terms)
         np = length(names)
         c = coeffs(cmap, zeros(np))
         length(c) == length(terms) || throw(DimensionMismatch(
@@ -116,11 +120,7 @@ function hamiltonian(model::AffineModel, θ::AbstractVector)
     length(θ) == n_params(model) || throw(DimensionMismatch(
         "hamiltonian: length(θ)=$(length(θ)) ≠ nparams=$(n_params(model))."))
     c = coeffs(model.cmap, θ)
-    H = c[1] * model.terms[1]
-    for i in 2:length(model.terms)
-        H += c[i] * model.terms[i]
-    end
-    return H
+    return _linear_combination(c, model.terms)
 end
 
 """
@@ -135,11 +135,7 @@ function dhamiltonian(model::AffineModel, θ::AbstractVector, θ̇::AbstractVect
     length(θ̇) == n_params(model) || throw(DimensionMismatch(
         "dhamiltonian: length(θ̇)=$(length(θ̇)) ≠ nparams=$(n_params(model))."))
     dc = coeff_jacobian(model.cmap, θ) * θ̇
-    dH = dc[1] * model.terms[1]
-    for i in 2:length(model.terms)
-        dH += dc[i] * model.terms[i]
-    end
-    return dH
+    return _linear_combination(dc, model.terms)
 end
 
 # --- ZSA onsite-energy Jacobian --------------------------------------------
@@ -228,9 +224,10 @@ end
 """
     groundstate(model::AffineModel, θ; gap_tol=1e-6, dense_max=4096) -> (E0, ψ0, gap)
 
-Lowest eigenpair of `H(θ)` with a non-degeneracy gate. Dense path
-`eigen(Hermitian(Matrix(H)))` computes the spectrum; at least two eigenvalues
-are needed to measure the gap. Errors if `gap = E1 − E0 ≤ gap_tol`: a
+Lowest eigenpair of `H(θ)` with a non-degeneracy gate. Explicit matrices use
+a dense eigensolve up to `dense_max`; matrix-free terms use an iterative solve
+for the two lowest eigenvalues to measure the gap. Errors if
+`gap = E1 − E0 ≤ gap_tol`: a
 (near-)degenerate ground state makes `dψ0` ill-conditioned / undefined. For a
 degenerate ground manifold use [`groundstate_manifold`](@ref), which returns
 the orthonormal manifold basis and gates on the external gap.
@@ -250,20 +247,24 @@ function _groundstate(H::AbstractMatrix; gap_tol::Real = 1e-6,
     d = size(H, 1)
     d ≥ 2 || throw(ArgumentError(
         "groundstate: Hilbert dimension $(d) < 2; cannot measure a gap."))
-    d ≤ dense_max || throw(ArgumentError(
-        "groundstate: dimension $(d) exceeds dense_max=$(dense_max). This is the " *
-        "dense path (full eigen); a Krylov/eigsolve path for large bases is a " *
-        "later build-step. Raise dense_max to override deliberately."))
-    F = eigen(Hermitian(Matrix(H)))
+    F = _groundstate_eigenpairs(H, dense_max, gap_tol)
     E0, E1 = F.values[1], F.values[2]
     gap = E1 - E0
     gap > gap_tol || throw(ArgumentError(
         "groundstate: (near-)degenerate ground state (gap = $(gap) ≤ " *
-        "gap_tol = $(gap_tol)); dψ0 is ill-conditioned. Use a degeneracy-aware " *
-        "treatment (build-step 5)."))
+        "gap_tol = $(gap_tol)); dψ0 is ill-conditioned. Use a degeneracy-aware treatment."))
     ψ0 = F.vectors[:, 1]
     return E0, ψ0 / norm(ψ0), gap
 end
+
+function _groundstate_eigenpairs(H::AbstractMatrix, dense_max, gap_tol)
+    size(H, 1) <= dense_max || throw(ArgumentError(
+        "groundstate: dimension $(size(H, 1)) exceeds dense_max=$dense_max; " *
+        "use matrix-free terms or raise the dense limit explicitly"))
+    return eigen(Hermitian(Matrix(H)))
+end
+
+_require_explicit_spectrum(H) = nothing
 
 """
     grad_E0(model::AffineModel, θ, ψ0) -> Vector{Float64}
@@ -419,8 +420,11 @@ function _check_xas_inputs(g_model::AffineModel, f_model::AffineModel, A, B,
     for (lbl, ops) in (("A", A), ("B", B))
         isempty(ops) && throw(ArgumentError("xas response: $(lbl) is empty."))
         for (i, op) in enumerate(ops)
+            _reject_matrixfree_wrapper(op)
             size(op) == (Nf, Nf) || throw(DimensionMismatch(
                 "xas response: $(lbl)[$(i)] must be N_f×N_f = $(Nf)×$(Nf); got $(size(op))."))
+            first(f_model.terms) isa MatrixFreeOperator &&
+                _validate_action_basis(op, first(f_model.terms).ket)
         end
     end
     (Γ > 0 && isfinite(Γ)) || throw(ArgumentError(
@@ -597,6 +601,7 @@ end
 # ascending-energy clusters. Shared by `groundstate_manifold`, `lowlying_spectrum`,
 # and `classify_groundstate` so the three never disagree on cluster boundaries.
 function _eigen_clusters(H::AbstractMatrix; degen_tol::Real, dense_max::Integer)
+    _require_explicit_spectrum(H)
     (degen_tol > 0 && isfinite(degen_tol)) || throw(ArgumentError(
         "_eigen_clusters: degen_tol must be positive and finite; got $(degen_tol)."))
     d = size(H, 1)
@@ -1078,7 +1083,9 @@ function freeze_windows(model::XASGradientModel, θ_ref::AbstractVector;
     (pad ≥ 0 && isfinite(pad)) || throw(ArgumentError(
         "freeze_windows: pad must be nonnegative and finite; got $(pad)."))
     E0 = groundstate(model.g_model, θ_ref; gap_tol = model.gap_tol)[1]
-    εf = eigvals(Hermitian(Matrix(hamiltonian(model.f_model, θ_ref)))) .- E0
+    Hf = hamiltonian(model.f_model, θ_ref)
+    _require_explicit_spectrum(Hf)
+    εf = eigvals(Hermitian(Matrix(Hf))) .- E0
     ω = model.ω_grid
     windows = FrozenWindow[]
     i = 1
@@ -1185,5 +1192,7 @@ function fit_spectrum end
 
 fit_spectrum(::XASGradientModel, args...; kwargs...) = error(
     "fit_spectrum requires Optim.jl — run `using Optim` to load the MOADynaOptimExt extension.")
+
+include("matrixfree.jl")
 
 end # module Gradients

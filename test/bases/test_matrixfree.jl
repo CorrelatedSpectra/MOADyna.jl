@@ -23,6 +23,9 @@ using Test, MOADyna, LinearAlgebra, SparseArrays, Random
         @test B * X ≈ M * X
         @test A' * X ≈ M' * X
         @test A'' * X ≈ M * X
+        combined = 0.4im * A + (1.2 - 0.3im) * A'
+        @test combined * X ≈ (0.4im * M + (1.2 - 0.3im) * M') * X
+        @test combined' * X ≈ (0.4im * M + (1.2 - 0.3im) * M')' * X
         @test sparse(A) ≈ M
         @test A[3, 2] ≈ M[3, 2]
         @test !ishermitian(A)

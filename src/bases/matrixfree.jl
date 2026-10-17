@@ -30,6 +30,8 @@ conversion with `sparse` or `Matrix`. No coefficients or determinants are
 discarded during multiplication. `threaded=:auto` uses the available Julia
 threads; `true` and `false` explicitly select parallel or serial products.
 Scratch storage belongs to each call, so independent products may run concurrently.
+Scalar multiplication and addition of actions on identical bases combine their
+compiled terms. The result inherits the first action's threading setting.
 """
 matrixfree(A, basis::EagerBasis; kwargs...) = matrixfree(A, basis, basis; kwargs...)
 
