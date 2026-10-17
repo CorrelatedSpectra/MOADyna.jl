@@ -116,6 +116,7 @@ export get_state, get_index, basis_id
 export apply_restriction!
 export CompiledHamiltonian
 export compile, assemble
+export MatrixFreeOperator, matrixfree
 export embed
 
 # From Shells

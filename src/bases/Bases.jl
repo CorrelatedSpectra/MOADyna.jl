@@ -34,6 +34,8 @@ include("basis.jl")
 include("compile.jl")
 include("assemble.jl")
 include("sparse_action.jl")
+include("state_index.jl")
+include("matrixfree.jl")
 include("embed.jl")
 
 # Basis
@@ -46,6 +48,7 @@ export apply_restriction!
 # Hamiltonian compilation / assembly
 export CompiledHamiltonian
 export compile, assemble
+export MatrixFreeOperator, matrixfree
 
 # Cross-basis embedding
 export embed

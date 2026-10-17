@@ -198,20 +198,23 @@ function _compile_one_term(coef::T, chain::Chain, enc::EncodingMap, nwords::Int,
                            entries::Vector{CompiledEntry},
                            masks_flat::Vector{UInt64},
                            boson_reqs::Vector{Tuple{Int,Int,Int}}) where {T}
-    if isempty(chain)
-        # Identity term.
-        return CompiledTerm{T}(coef, EMPTY_CHAIN, length(entries), 0, -1, -1, 0, 0)
-    end
-
     chain_offset = length(entries)
+    for e in chain
+        push!(entries, _lower_entry(e, enc))
+    end
+    return _compiled_term(coef, chain_offset, length(chain), nwords,
+                          entries, masks_flat, boson_reqs)
+end
+
+function _compiled_term(coef::T, chain_offset::Int, chain_length::Int, nwords::Int,
+                        entries::Vector{CompiledEntry}, masks_flat::Vector{UInt64},
+                        boson_reqs::Vector{Tuple{Int,Int,Int}}) where {T}
     has_fermion = false
     has_boson = false
     has_spin = false
 
-    for e in chain
-        ce = _lower_entry(e, enc)
-        push!(entries, ce)
-        kind = ce.kind
+    for k in 1:chain_length
+        kind = entries[chain_offset + k].kind
         if kind === FERM_C || kind === FERM_CDAG
             has_fermion = true
         elseif kind === BOS_B || kind === BOS_BDAG
@@ -220,8 +223,6 @@ function _compile_one_term(coef::T, chain::Chain, enc::EncodingMap, nwords::Int,
             has_spin = true
         end
     end
-    chain_length = length(entries) - chain_offset
-
     # Term kind classification.
     term_kind = if has_fermion && (has_boson || has_spin)
         MIXED_CHAIN
@@ -242,7 +243,7 @@ function _compile_one_term(coef::T, chain::Chain, enc::EncodingMap, nwords::Int,
     cre_off = -1
     if has_fermion
         ann_off, cre_off = _build_fermion_masks!(
-            masks_flat, chain, chain_offset, entries, nwords)
+            masks_flat, chain_length, chain_offset, entries, nwords)
     end
 
     # Bosonic prechecks: per-mode required min occupation. For each boson
@@ -252,7 +253,7 @@ function _compile_one_term(coef::T, chain::Chain, enc::EncodingMap, nwords::Int,
     boson_req_start = length(boson_reqs) + 1
     boson_req_count = 0
     if has_boson
-        boson_req_count = _build_boson_reqs!(boson_reqs, chain, chain_offset, entries)
+        boson_req_count = _build_boson_reqs!(boson_reqs, chain_length, chain_offset, entries)
     end
 
     return CompiledTerm{T}(coef, term_kind, chain_offset, chain_length,
@@ -299,7 +300,7 @@ end
 # Created modes must be empty unless they are also annihilated in the chain.
 
 function _build_fermion_masks!(masks_flat::Vector{UInt64},
-                               chain::Chain, chain_offset::Int,
+                               chain_length::Int, chain_offset::Int,
                                entries::Vector{CompiledEntry},
                                nwords::Int)
     ann_off = length(masks_flat)
@@ -310,7 +311,7 @@ function _build_fermion_masks!(masks_flat::Vector{UInt64},
     # Track which bits are annihilated and which are created.
     ann_bits = zeros(UInt64, nwords)
     cre_bits = zeros(UInt64, nwords)
-    for (k, e) in enumerate(chain)
+    for k in 1:chain_length
         ce = entries[chain_offset + k]
         if ce.kind === FERM_C
             ann_bits[ce.word_idx] |= UInt64(1) << ce.bit_offset
@@ -329,13 +330,13 @@ end
 # --- Bosonic precheck reqs --------------------------------------------------
 
 function _build_boson_reqs!(boson_reqs::Vector{Tuple{Int,Int,Int}},
-                            chain::Chain, chain_offset::Int,
+                            chain_length::Int, chain_offset::Int,
                             entries::Vector{CompiledEntry})
     # Group by (word_idx, bit_offset) — the unique boson mode identifier.
     # Walk the chain right-to-left, tracking running occupation deficit.
     # The "required min occupation" is the maximum deficit reached.
     grouped = Dict{Tuple{Int,Int}, Vector{Int}}()    # mode_id → list of chain idx
-    for k in 1:length(chain)
+    for k in 1:chain_length
         ce = entries[chain_offset + k]
         if ce.kind === BOS_B || ce.kind === BOS_BDAG
             key = (ce.word_idx, ce.bit_offset)
@@ -375,4 +376,31 @@ end
 function _output_eltype(::Type{T}, H::OperatorSum) where {T}
     has_sy = any(any(e.kind === :Sy for e in term.chain) for term in H)
     return has_sy ? complex(float(T)) : T
+end
+
+function _adjoint_compiled_entry(e::CompiledEntry)
+    kind = e.kind === FERM_C ? FERM_CDAG : e.kind === FERM_CDAG ? FERM_C :
+           e.kind === BOS_B ? BOS_BDAG : e.kind === BOS_BDAG ? BOS_B :
+           e.kind === SPIN_SPLUS ? SPIN_SMINUS :
+           e.kind === SPIN_SMINUS ? SPIN_SPLUS : e.kind
+    # A spin entry selects its source m; the inverse selects the destination m.
+    target = e.target_value + (e.kind === SPIN_SPLUS ? 1 : e.kind === SPIN_SMINUS ? -1 : 0)
+    return CompiledEntry(kind, e.word_idx, e.bit_offset, e.nbits, e.max_val, target)
+end
+
+function _adjoint_plan(H::CompiledHamiltonian{T}, basis_id::UInt64) where {T}
+    entries = CompiledEntry[]
+    terms = CompiledTerm{T}[]
+    masks = UInt64[]
+    reqs = Tuple{Int,Int,Int}[]
+    for term in H.terms
+        offset = length(entries)
+        for k in term.chain_length:-1:1
+            push!(entries, _adjoint_compiled_entry(H.entries[term.chain_offset + k]))
+        end
+        push!(terms, _compiled_term(conj(term.coef), offset, term.chain_length,
+                                    H.nwords, entries, masks, reqs))
+    end
+    return CompiledHamiltonian(terms, entries, H.fermion_mask, masks, reqs,
+                               basis_id, H.nwords)
 end
