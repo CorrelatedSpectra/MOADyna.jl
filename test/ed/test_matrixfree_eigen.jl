@@ -57,4 +57,22 @@
         @test seed == fill(1e-20, 8)
         @test_throws ArgumentError eigen(A, b; x0=zeros(8))
     end
+
+    @testset "Rank-deficient complex residual block" begin
+        small = MOADyna.Bases._selected_basis(b, UInt64[1, 2, 4]; restrictions=n_fermion(h) == 1)
+        local_H = 1.08n(site, 1) + 1.54n(site, 2) + 1.94n(site, 3) -
+            0.4add_hc(cdag(site, 1) * c(site, 2) + cdag(site, 2) * c(site, 3)) +
+            0.07im * (cdag(site, 3) * c(site, 1) - cdag(site, 1) * c(site, 3))
+        M = assemble(compile(local_H, small), small)
+        reference = eigen(Hermitian(Matrix(M)))
+        for backend in (:sparse, :matrixfree)
+            E = eigen(local_H, small; backend, n=2, x0=ComplexF64[1, 0, 0],
+                tol=5e-8, krylovdim=6, dense_below=0, threaded=false)
+            @test E.values ≈ reference.values[1:2] atol=1e-10
+            @test norm(M * E.vectors - E.vectors * Diagonal(E.values)) < 1e-10
+            @test E.vectors' * E.vectors ≈ I atol=1e-10
+            @test_throws ConvergenceError eigen(local_H, small; backend, n=2,
+                x0=ComplexF64[1, 0, 0], tol=1e-20, krylovdim=6, dense_below=0, threaded=false)
+        end
+    end
 end

@@ -24,8 +24,9 @@ function _krylov_eigenpairs(action, x0, n, which; tol, maxiter, krylovdim)
     # with one of the random columns. Householder QR supplies orthogonal columns.
     Q = Matrix(qr(X).Q)
     initial = KrylovKit.Block([Q[:, j] for j in 1:n])
-    # Discarding a residual block must fit within the requested residual norm.
-    qr_tol = min(tol / sqrt(n), eps(real(eltype(x0))))
+    # Share the residual budget across columns without resolving roundoff noise.
+    # The unit bound also keeps the normalized initial block at loose tolerances.
+    qr_tol = min(tol, one(tol)) / sqrt(n)
     qr_tol > 0 || throw(ArgumentError("tol is too small for block rank detection"))
     algorithm = KrylovKit.BlockLanczos(; tol, qr_tol, maxiter, krylovdim)
     return KrylovKit.eigsolve(_KrylovBlockAction(action), initial, n, which, algorithm)

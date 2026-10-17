@@ -13,6 +13,7 @@ Compute `n` eigenpairs of `H` in `basis`. Sparse matrices use dense
 `eigen(Hermitian(...))` for small bases and `KrylovKit.eigsolve` otherwise.
 Matrix-free operators always use the iterative solver. Multiple requested
 eigenvectors use block Lanczos, including repeated eigenvalues.
+Returned iterative eigenpairs are checked against `H` with residual norm `tol`.
 The Hamiltonian is assumed Hermitian; eigenvalues are returned as
 `Vector{Float64}`, eigenvectors keep `eltype(H)`.
 
@@ -138,6 +139,16 @@ function _eigen_krylov(H::AbstractMatrix; n::Int, which::Symbol,
 
     λ = Float64[Float64(real(v)) for v in vals[1:n]]
     V = reduce(hcat, vecs[1:n])::Matrix{T}
+    for column in eachcol(V)
+        vector_norm = norm(column)
+        isfinite(vector_norm) && vector_norm > 0 ||
+            throw(ConvergenceError(0, fill(Inf, n), info))
+        column ./= vector_norm
+    end
     _orthonormalize_clusters!(V, λ, degen_tol)
+    residual = action * V - V * Diagonal(λ)
+    normres = Float64[norm(column) for column in eachcol(residual)]
+    converged = count(r -> isfinite(r) && r <= tol, normres)
+    converged == n || throw(ConvergenceError(converged, normres, info))
     return LinearAlgebra.Eigen(λ, V)
 end
