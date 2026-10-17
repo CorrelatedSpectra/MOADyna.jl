@@ -30,7 +30,7 @@ expression `c'(s, 1) * c(s, 2)` is literally the operator
 tracked symbolically and exactly, and the path from a symbolic Hamiltonian through a
 sparse matrix to a spectrum is explicit at every step — no hidden basis choices and no
 opaque solver. Every intermediate object — the [`OperatorSum`](@ref), the
-[`EagerBasis`](@ref), the assembled `SparseMatrixCSC`, the eigensystem, the response
+basis, the assembled `SparseMatrixCSC`, the eigensystem, the response
 function — is an ordinary Julia value you can inspect, store, and reuse.
 
 MOADyna ships as one package of submodules, each exercised by the test suite:
@@ -83,18 +83,18 @@ restrictions = (
     WeightedParticleCount(sites, sz_weights) == 0,  # Sz = 0
 )
 
-basis = EagerBasis(hilbert, restrictions...)
-println("Sector dimension: ", length(basis))
+hub_basis = basis(hilbert, restrictions...)
+println("Sector dimension: ", length(hub_basis))
 
 # ── Sparse assembly ─────────────────────────────────────────────────────────
-H_compiled = compile(H, basis)
-H_sparse   = assemble(H_compiled, basis)
+H_compiled = compile(H, hub_basis)
+H_sparse   = assemble(H_compiled, hub_basis)
 println("Sparse size: ", size(H_sparse), "  nnz = ", count(!iszero, H_sparse))
 
 # ── Exact diagonalization ───────────────────────────────────────────────────
 # `eigen` accepts either the symbolic `OperatorSum` or, as here, the
 # already-assembled sparse matrix together with the basis it was built in.
-result = eigen(H_sparse, basis)
+result = eigen(H_sparse, hub_basis)
 println("Ground-state energy: ", round(result.values[1], digits = 6))
 nothing  # hide
 ```

@@ -20,6 +20,11 @@ ENV["GKSwstype"] = "100"
 using Documenter
 using MOADyna
 
+# Generate the website changelog from the release notes in this checkout.
+write(joinpath(@__DIR__, "src", "changelog.md"),
+    "```@meta\nEditURL = \"https://github.com/CorrelatedSpectra/MOADyna.jl/blob/main/CHANGELOG.md\"\n```\n\n" *
+    read(joinpath(@__DIR__, "..", "CHANGELOG.md"), String))
+
 # All submodules are top-level under MOADyna (see src/MOADyna.jl); list every
 # one so `@autodocs` Library pages and `checkdocs` see the full surface.
 const MOADYNA_MODULES = [
