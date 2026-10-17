@@ -42,7 +42,7 @@ using ..Bases: AbstractBasis, EagerBasis, basis_id, apply_restriction!,
 using ..Bases: _prepare_action, _validate_threading
 using ..Bases: _transition_action, _validate_action_basis
 import ..Responses
-import ..Responses: _build_T_K
+import ..Responses: _build_T_K, _block_resolvent_action
 
 include("types.jl")
 include("defaults.jl")

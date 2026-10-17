@@ -38,6 +38,7 @@ include("sparse_action.jl")
 include("state_index.jl")
 include("matrixfree.jl")
 include("linear_combination.jl")
+include("selection.jl")
 include("selected_basis.jl")
 include("discovery.jl")
 include("embed.jl")
@@ -53,6 +54,7 @@ export apply_restriction!
 export CompiledHamiltonian
 export compile, assemble
 export MatrixFreeOperator, matrixfree
+export SelectionConvergenceError
 
 # Cross-basis embedding
 export embed

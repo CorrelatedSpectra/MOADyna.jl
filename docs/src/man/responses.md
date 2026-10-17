@@ -110,6 +110,64 @@ Ggrid = to_grid(G, range(0.0, 8.0; length = 100))  # evaluate on an ω grid
 A response round-trips to HDF5 with [`save_response`](@ref) / [`load_response`](@ref),
 preserving the representation and metadata.
 
+## Selecting a response space
+
+[`selected_response`](@ref) builds a common selected basis for all source
+channels and sampled energies. It uses the same sparse or matrix-free kernels
+as an ordinary response, enlarging the basis between fixed-space solves.
+Ground-state convergence alone is insufficient: a transition can reach states
+that contribute little or nothing to the ground state.
+
+```@example selected_response
+using MOADyna
+a, b = FermionSite{1}(:a), FermionSite{1}(:b)
+h = Hilbert(:a => a, :b => b)
+allowed = n_fermion(h) == 1
+seed = basis(h, allowed, n_fermion([a]) == 1)
+H = n(b, 1) + 0.2add_hc(cdag(b, 1) * c(a, 1))
+ω = range(-0.5, 1.5; length=41)
+Γ = 0.2
+selected = selected_response(H, seed, [1.0]; restrictions=allowed,
+    shifts=ω .+ im*Γ/2, max_states=2, error_tol=1e-8)
+response = to_grid(selected, ω; Γ)
+(length(selected.basis), maximum(selected.error_bounds))
+```
+
+The source may be a vector or a matrix whose columns are polarization channels.
+For symbolic transitions, use
+`selected_response(H, source_basis, transitions, state; ...)` to discover their
+complete nonzero output support. `restrictions` applies to the destination
+space, so particle-changing transitions can start in a different sector.
+All channels share the selected basis and retain their input ordering.
+
+For each supplied complex energy ``z``, the solver checks the original source
+block ``B`` against the reconstructed action ``X``:
+
+```math
+r_P=B-(z-PHP)X,\qquad r_Q=QHX,\qquad
+\|X_{\mathrm{exact}}-X\|_F\le
+\frac{\sqrt{\|r_P\|_F^2+\|r_Q\|_F^2}}{|\operatorname{Im}z|}.
+```
+
+`error_tol` bounds this absolute block error separately at every checked energy.
+The bound assumes a Hermitian Hamiltonian throughout the allowed space and a
+fixed supplied source and energy reference. It excludes any error in an
+approximate initial eigenstate. Resource limits and insufficient Krylov accuracy
+raise [`SelectionConvergenceError`](@ref) with inspectable diagnostics.
+
+[`resolvent`](@ref)`(selected, z)` reconstructs vectors on `selected.basis` without
+Hamiltonian products. `to_grid(selected, ω; Γ, Eg)` evaluates the channel tensor
+using small retained matrices; polarization contraction and re-broadening require
+no new Lanczos run. Only the original sampled shifts carry measured bounds.
+For the contracted matrix ``B^\dagger X``, multiply the vector bound by
+``\|B\|_2``. New, narrower linewidths require a new convergence check.
+
+RIXS requires separate intermediate and final response checks. The intermediate
+resolvent vectors can seed outgoing symbolic transitions through the same
+four-argument selector. Each resulting bound is conditional on its supplied
+source; an end-to-end RIXS error also needs a bound on the full outgoing transition
+operator and on the initial state.
+
 ## Single-particle Green's function (charged channels)
 
 Beyond the neutral same-sector response, `correlator` computes the ``N\pm 1`` single-particle

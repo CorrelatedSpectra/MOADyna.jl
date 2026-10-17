@@ -18,24 +18,6 @@ struct SelectedEigen{E<:LinearAlgebra.Eigen}
     candidate_count::Union{Nothing,Int}
 end
 
-"""
-    SelectionConvergenceError <: Exception
-
-Selection stopped before satisfying its requested residual tolerance.
-`reason` identifies the stopping condition and `result` retains the latest
-eigenstates and diagnostics. An infinite residual means the external check
-could not finish within `max_candidates`; it is not a measured error.
-"""
-struct SelectionConvergenceError{R} <: Exception
-    reason::Symbol
-    result::R
-end
-
-function Base.showerror(io::IO, e::SelectionConvergenceError)
-    print(io, "selected_eigen stopped at ", e.reason, " with ", length(e.result.basis),
-          " states (residual norm = ", e.result.residual_norm, ")")
-end
-
 function _selected_eigenpairs(A, n, initial; backend, residual_tol, tol,
                               degen_tol, eig_maxiter, krylovdim, dense_below, threaded)
     b = A.ket
@@ -57,20 +39,6 @@ function _selected_eigenpairs(A, n, initial; backend, residual_tol, tol,
         initial = E.vectors
         requested = min(length(b), max(requested + 1, 2requested))
     end
-end
-
-function _enrichment_rows(values, budget, available)
-    weights = [norm(@view values[i, :]) for i in axes(values, 1)]
-    order = sortperm(weights; rev=true)
-    tail = zeros(Float64, length(order) + 1)
-    for k in length(order):-1:1
-        tail[k] = hypot(tail[k + 1], weights[order[k]])
-    end
-    count = 0
-    while count < length(order) && tail[count + 1] > budget
-        count += 1
-    end
-    return order[1:min(count, available)]
 end
 
 """

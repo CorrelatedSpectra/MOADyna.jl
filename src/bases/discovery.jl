@@ -57,7 +57,7 @@ function _accumulator_row!(a::_StateAccumulator{T}, state) where {T}
     return length(a)
 end
 
-function _external_chunk(A, X, restrictions, rows, limit)
+function _external_chunk(A, X, restrictions, rows, limit, excluded)
     T = promote_type(eltype(A), eltype(X))
     width, nw = size(X, 2), A.ket.nwords
     result = _StateAccumulator(T, nw, width, limit)
@@ -67,7 +67,7 @@ function _external_chunk(A, X, restrictions, rows, limit)
         all(iszero, @view(X[j, :])) && continue
         empty!(column)
         _foreach_transition(A.forward, A.ket, j, scratch) do state, value
-            _state_index(A.bra_index, state) == 0 || return
+            excluded === nothing || _state_index(excluded, state) == 0 || return
             all(r -> _check(r, state, 1), restrictions) || return
             row = _accumulator_row!(column, state)
             column.values[row] += value
@@ -87,10 +87,23 @@ end
 
 function _external_action(A::MatrixFreeOperator, X::AbstractMatrix;
                           restrictions, max_candidates::Int, threaded=:auto)
-    _validate_threading(threaded)
     _validate_action_basis(A, A.ket)
+    return _discover_action(A, X; exclude=A.bra, restrictions, max_candidates, threaded)
+end
+
+function _discover_action(A::MatrixFreeOperator, X::AbstractMatrix;
+                          exclude::Union{EagerBasis,Nothing}, restrictions,
+                          max_candidates::Int, threaded=:auto)
+    _validate_threading(threaded)
     size(X, 1) == size(A, 2) || throw(DimensionMismatch("input block and basis disagree"))
     max_candidates > 0 || throw(ArgumentError("max_candidates must be positive"))
+    excluded = if exclude === nothing
+        nothing
+    else
+        _same_encoding(A.ket.encoding, exclude.encoding) ||
+            throw(ArgumentError("excluded states must use the source encoding"))
+        basis_id(exclude) == basis_id(A.bra) ? A.bra_index : _StateIndex(exclude)
+    end
     compiled = [compile_restriction(r, A.ket.encoding) for r in _restriction_list(restrictions)]
     parallel = threaded === :auto ? A.threaded : threaded
     chunks = parallel ? min(Threads.nthreads(), max(1, length(A.ket))) : 1
@@ -98,7 +111,7 @@ function _external_action(A::MatrixFreeOperator, X::AbstractMatrix;
     T = promote_type(eltype(A), eltype(X))
     parts = Vector{Union{_StateAccumulator{T},_CandidateLimit}}(undef, length(ranges))
     run(k) = try
-        _external_chunk(A, X, compiled, ranges[k], max_candidates)
+        _external_chunk(A, X, compiled, ranges[k], max_candidates, excluded)
     catch e
         e isa _CandidateLimit || rethrow()
         e
@@ -125,6 +138,11 @@ function _external_action(A::MatrixFreeOperator, X::AbstractMatrix;
             end
         end
     end
+    return _finish_accumulator(result)
+end
+
+function _finish_accumulator(result::_StateAccumulator{T}) where {T}
+    nw, width = result.nwords, result.width
     rows = [i for i in 1:length(result) if
         any(!iszero, @view(result.values[(i - 1) * width + 1:i * width]))]
     sort!(rows; lt=(i, j) -> _state_less_flat(result.states, nw, i, j))

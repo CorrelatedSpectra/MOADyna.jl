@@ -455,38 +455,3 @@ function _rixs_run(H_f, H_i, basis::AbstractBasis,
     return SpectraTensor{ComplexF64, Float64, N, F}(
         tensor, chunks, grid_pair, Float64(Eg), B_raw_outer, metadata)
 end
-
-# Apply (zI − T_K)^(-1) to a source confined to the first Krylov block.
-# Eliminate blocks from the tail, then recover W in forward order. The
-# Schur factors remain block-sized; no dense M × M Krylov matrix is built.
-function _block_resolvent_action(α::Vector{<:AbstractMatrix},
-                                 β::Vector{<:AbstractMatrix}, z::Number,
-                                 R::AbstractMatrix)
-    K = length(α)
-    K >= 1 || throw(ArgumentError("_block_resolvent_action: empty α stack"))
-    length(β) in (K - 1, K) || throw(ArgumentError(
-        "_block_resolvent_action: β stack does not match α"))
-    size(R, 1) == size(α[1], 1) || throw(DimensionMismatch(
-        "_block_resolvent_action: source does not match first block"))
-    Tc = promote_type(typeof(z), eltype(α[1]), eltype(R))
-    zc = Tc(z)
-    last_factor = lu(zc*I - Matrix{Tc}(α[K]))
-    factors = Vector{typeof(last_factor)}(undef, K)
-    factors[K] = last_factor
-    for k in (K-1):-1:1
-        coupling = β[k]
-        schur = zc*I - Matrix{Tc}(α[k]) -
-                adjoint(coupling)*(factors[k+1] \ coupling)
-        factors[k] = lu(schur)
-    end
-
-    offsets = cumsum(vcat(0, [size(a, 1) for a in α]))
-    W = Matrix{Tc}(undef, offsets[end], size(R, 2))
-    W[1:offsets[2], :] .= factors[1] \ R
-    for k in 2:K
-        previous = (offsets[k-1]+1):offsets[k]
-        current = (offsets[k]+1):offsets[k+1]
-        W[current, :] .= factors[k] \ (β[k-1]*view(W, previous, :))
-    end
-    return W
-end

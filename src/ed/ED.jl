@@ -24,6 +24,7 @@ using ..Bases: EagerBasis, compile, assemble
 using ..Bases: MatrixFreeOperator, _build_action, _validate_action_basis
 using ..Bases: _prepare_action, _validate_threading
 using ..Bases: matrixfree, _selected_basis, _external_action, _rebind_action, _embed_block, _CandidateLimit
+using ..Bases: SelectionConvergenceError, _enrichment_rows
 
 include("errors.jl")
 include("validation.jl")

@@ -148,6 +148,7 @@ export save_eigensystem, load_eigensystem
 export AbstractResponse
 export LanczosResponse, PoleResponse, GridResponse, GreensFunction
 export correlator, to_pole, to_grid
+export selected_response, SelectedResponse, resolvent
 export save_response, load_response
 
 # From Spectroscopy. Algorithm internals (LanczosChunk, BlockTriDiagonal,

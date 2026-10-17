@@ -146,7 +146,7 @@ The allowed-space Hamiltonian must be Hermitian. A small residual identifies
 accurate eigenstates within the reachable sector; it does not prove that an
 unseeded, disconnected sector has no lower state. Ground-state selection also
 does not establish spectroscopy convergence. Transition sources and response
-spaces must be checked separately.
+spaces must be checked separately with [`selected_response`](@ref).
 
 ## Saving eigensystems
 
