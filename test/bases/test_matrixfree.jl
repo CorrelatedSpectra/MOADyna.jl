@@ -59,6 +59,8 @@ using Test, MOADyna, LinearAlgebra, SparseArrays, Random
     cancelled = matrixfree(1e308 * n(g, 1) - 1e308, occupied)
     @test cancelled * [2.0] == [0.0]
     x = ones(ComplexF64, 2)
+    @test (0.4im * A2 + (1.2 - 0.3im) * A2') * x ≈
+        (0.4im * Matrix(A2) + (1.2 - 0.3im) * Matrix(A2)') * x
     @test_throws ArgumentError mul!(x, A2, x)
     @test_throws DimensionMismatch mul!(zeros(ComplexF64, 3), A2, x)
     @test_throws ArgumentError matrixfree(H2, bg; threaded=:invalid)

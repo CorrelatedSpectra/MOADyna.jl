@@ -30,6 +30,8 @@ function _combine_plans(coefficients, plans, id)
                 t.chain_offset + eo, t.chain_length,
                 t.ann_mask_offset < 0 ? -1 : t.ann_mask_offset + mo,
                 t.cre_forbid_mask_offset < 0 ? -1 : t.cre_forbid_mask_offset + mo,
+                t.action_mask_offset < 0 ? -1 : t.action_mask_offset + mo,
+                t.negative_phase,
                 t.boson_req_start + ro, t.boson_req_count))
         end
     end

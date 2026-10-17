@@ -21,6 +21,54 @@
         @test_throws ArgumentError assemble(Hc, b2)
     end
 
+    @testset "Fermion chains across packed words" begin
+        f, padding, g = FermionSite{2}(:f), FermionSite{64}(:padding), FermionSite{2}(:g)
+        phonon = BosonSite{2}(:phonon)
+        h = Hilbert(:f => f, :phonon => phonon, :padding => padding, :g => g)
+        bb = basis(h, n_fermion(h) == 0)
+        B = MOADyna.Bases
+        bit_position(e) = 64(e.word_idx - 1) + e.bit_offset
+        fermion_bits = sort([bit_position(e) for e in values(bb.encoding.entries) if e.kind === :fermion])
+        occupied(state, bit) = !iszero(state[bit ÷ 64 + 1] & (UInt64(1) << (bit % 64)))
+        function primitive_action(state, entries)
+            output, phase = copy(state), 1
+            for entry in reverse(entries)
+                bit = bit_position(entry)
+                occupied(output, bit) == (entry.kind === B.FERM_C) || return output, 0
+                isodd(count(p -> p < bit && occupied(output, p), fermion_bits)) && (phase = -phase)
+                output[entry.word_idx] ⊻= UInt64(1) << entry.bit_offset
+            end
+            return output, phase
+        end
+        ladders = map(op -> only(op).chain[1], (c(f, 1), cdag(f, 1), c(g, 2), cdag(g, 2)))
+        active = map(op -> B._lower_entry(only(op).chain[1], bb.encoding),
+                     (c(f, 1), c(f, 2), c(padding, 64), c(g, 2)))
+        phonon_mode = B.mode_entry(bb.encoding, :phonon, ())
+        errors = zeros(Int, 3)
+        for chain_length in 1:3, chain in Iterators.product(ntuple(_ -> ladders, chain_length)...)
+            raw = OperatorSum{ComplexF64}()
+            raw.terms[chain] = OperatorTerm(1.0 + 2im, chain)
+            compiled = compile(raw, bb)
+            for plan in (compiled, B._adjoint_plan(compiled, basis_id(bb)))
+                term = only(plan.terms)
+                for occupations in 0:15, phonons in (0, 2)
+                    state = zeros(UInt64, bb.nwords)
+                    for (k, mode) in enumerate(active)
+                        isodd(occupations >> (k - 1)) && B.set_bit!(state, 1, mode.word_idx, mode.bit_offset)
+                    end
+                    B.set_span!(state, 1, phonon_mode, phonons)
+                    expected, sign = primitive_action(state, plan.entries)
+                    output = copy(state)
+                    phase = B._apply_chain_rtl!(output, plan, term)
+                    errors[1] += phase != sign
+                    errors[2] += !iszero(sign) && output != expected
+                    errors[3] += B._term_precheck_fails(plan, term, state, 1) != iszero(sign)
+                end
+            end
+        end
+        @test errors == [0, 0, 0]
+    end
+
     @testset "Sx/Sy expansion factor" begin
         s = SpinSite{1//2}(:s)
         h = Hilbert(:s => s)

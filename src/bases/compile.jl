@@ -40,6 +40,8 @@ struct CompiledTerm{T<:Number}
     # `-1` means "no precheck of this kind".
     ann_mask_offset::Int
     cre_forbid_mask_offset::Int
+    action_mask_offset::Int      # flip mask followed by parity mask; -1 if unused
+    negative_phase::Bool
     # Boson prechecks: range into boson_reqs (1-based indices).
     boson_req_start::Int
     boson_req_count::Int
@@ -62,7 +64,7 @@ struct CompiledHamiltonian{T<:Number}
     terms::Vector{CompiledTerm{T}}
     entries::Vector{CompiledEntry}
     fermion_mask::Vector{UInt64}           # fermion bit positions eligible for JW parity
-    masks_flat::Vector{UInt64}              # 2 × nwords per fermion-bearing term
+    masks_flat::Vector{UInt64}              # occupation and action masks
     boson_reqs::Vector{Tuple{Int,Int,Int}}  # (mode_idx into entries, required_min_occ, max_val)
     basis_id::UInt64
     nwords::Int
@@ -113,7 +115,7 @@ function compile(H::OperatorSum{T}, basis::EagerBasis) where {T<:Number}
             ccoef = Tout(coef * factor)
             ccoef == 0 && continue
             term_record = _compile_one_term(ccoef, expanded_chain, enc, nwords,
-                                            entries, masks_flat, boson_reqs)
+                                            entries, masks_flat, boson_reqs, fermion_mask)
             push!(terms, term_record)
         end
     end
@@ -127,18 +129,18 @@ end
 function _compile_one_term(coef::T, chain::Chain, enc::EncodingMap, nwords::Int,
                            entries::Vector{CompiledEntry},
                            masks_flat::Vector{UInt64},
-                           boson_reqs::Vector{Tuple{Int,Int,Int}}) where {T}
+                           boson_reqs::Vector{Tuple{Int,Int,Int}}, fermion_mask) where {T}
     chain_offset = length(entries)
     for e in chain
         push!(entries, _lower_entry(e, enc))
     end
     return _compiled_term(coef, chain_offset, length(chain), nwords,
-                          entries, masks_flat, boson_reqs)
+                          entries, masks_flat, boson_reqs, fermion_mask)
 end
 
 function _compiled_term(coef::T, chain_offset::Int, chain_length::Int, nwords::Int,
                         entries::Vector{CompiledEntry}, masks_flat::Vector{UInt64},
-                        boson_reqs::Vector{Tuple{Int,Int,Int}}) where {T}
+                        boson_reqs::Vector{Tuple{Int,Int,Int}}, fermion_mask) where {T}
     has_fermion = false
     has_boson = false
     has_spin = false
@@ -175,6 +177,9 @@ function _compiled_term(coef::T, chain_offset::Int, chain_length::Int, nwords::I
         ann_off, cre_off = _build_fermion_masks!(
             masks_flat, chain_length, chain_offset, entries, nwords)
     end
+    action_off, negative_phase = term_kind === FERM_CHAIN ?
+        _build_fermion_action!(masks_flat, chain_length, chain_offset, entries,
+                              nwords, fermion_mask) : (-1, false)
 
     # Bosonic prechecks: per-mode required min occupation. For each boson
     # entry we count how many `b` (annihilations) and `bdag` (creations) it
@@ -187,7 +192,8 @@ function _compiled_term(coef::T, chain_offset::Int, chain_length::Int, nwords::I
     end
 
     return CompiledTerm{T}(coef, term_kind, chain_offset, chain_length,
-                           ann_off, cre_off, boson_req_start, boson_req_count)
+                           ann_off, cre_off, action_off, negative_phase,
+                           boson_req_start, boson_req_count)
 end
 
 function _lower_entry(e::LadderEntry, enc::EncodingMap)::CompiledEntry
@@ -226,8 +232,8 @@ end
 
 # --- Fermionic precheck masks ----------------------------------------------
 #
-# For a normally ordered fermion chain, annihilated modes must be occupied.
-# Created modes must be empty unless they are also annihilated in the chain.
+# Express every occupation requirement on the incoming determinant, accounting
+# for earlier flips when walking right-to-left. Conflicting masks reject a chain.
 
 function _build_fermion_masks!(masks_flat::Vector{UInt64},
                                chain_length::Int, chain_offset::Int,
@@ -238,23 +244,38 @@ function _build_fermion_masks!(masks_flat::Vector{UInt64},
     cre_off = length(masks_flat)
     append!(masks_flat, zeros(UInt64, nwords))
 
-    # Track which bits are annihilated and which are created.
-    ann_bits = zeros(UInt64, nwords)
-    cre_bits = zeros(UInt64, nwords)
-    for k in 1:chain_length
+    flipped = zeros(UInt64, nwords)
+    for k in chain_length:-1:1
         ce = entries[chain_offset + k]
-        if ce.kind === FERM_C
-            ann_bits[ce.word_idx] |= UInt64(1) << ce.bit_offset
-        elseif ce.kind === FERM_CDAG
-            cre_bits[ce.word_idx] |= UInt64(1) << ce.bit_offset
+        if ce.kind === FERM_C || ce.kind === FERM_CDAG
+            bit = UInt64(1) << ce.bit_offset
+            occupied = (ce.kind === FERM_C) ⊻ !iszero(flipped[ce.word_idx] & bit)
+            offset = occupied ? ann_off : cre_off
+            masks_flat[offset + ce.word_idx] |= bit
+            flipped[ce.word_idx] ⊻= bit
         end
     end
-    # cre_forbid = cre_bits ∖ ann_bits
-    for w in 1:nwords
-        masks_flat[ann_off + w] = ann_bits[w]
-        masks_flat[cre_off + w] = cre_bits[w] & ~ann_bits[w]
-    end
     return ann_off, cre_off
+end
+
+# A valid fermion chain maps x to x ⊻ F with sign (-1)^(s + parity(x & P)).
+# Earlier flips contribute the constant sign; all spectator fermions enter P.
+function _build_fermion_action!(masks, chain_length, chain_offset, entries,
+                                nwords, fermion_mask)
+    offset = length(masks)
+    append!(masks, zeros(UInt64, 2nwords))
+    negative = false
+    for k in chain_length:-1:1
+        entry = entries[chain_offset + k]
+        for w in 1:entry.word_idx
+            lower = fermion_mask[w]
+            w == entry.word_idx && (lower &= (UInt64(1) << entry.bit_offset) - UInt64(1))
+            masks[offset + nwords + w] ⊻= lower
+            negative ⊻= isodd(count_ones(masks[offset + w] & lower))
+        end
+        masks[offset + entry.word_idx] ⊻= UInt64(1) << entry.bit_offset
+    end
+    return offset, negative
 end
 
 # --- Bosonic precheck reqs --------------------------------------------------
@@ -325,7 +346,7 @@ function _adjoint_plan(H::CompiledHamiltonian{T}, basis_id::UInt64) where {T}
             push!(entries, _adjoint_compiled_entry(H.entries[term.chain_offset + k]))
         end
         push!(terms, _compiled_term(conj(term.coef), offset, term.chain_length,
-                                    H.nwords, entries, masks, reqs))
+                                    H.nwords, entries, masks, reqs, H.fermion_mask))
     end
     return CompiledHamiltonian(terms, entries, H.fermion_mask, masks, reqs,
                                basis_id, H.nwords)

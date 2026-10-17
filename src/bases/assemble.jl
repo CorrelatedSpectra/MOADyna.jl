@@ -216,6 +216,8 @@ function _apply_chain_rtl!(state::AbstractVector{UInt64},
                            term::CompiledTerm{T})::T where {T}
     if term.kind === EMPTY_CHAIN
         return one(T)
+    elseif term.kind === FERM_CHAIN
+        return _apply_fermion_chain!(state, H, term)
     end
     phase = one(T)
     # Walk entries from chain_length down to 1 (right-to-left).
@@ -276,6 +278,19 @@ function _apply_chain_rtl!(state::AbstractVector{UInt64},
         end
     end
     return phase
+end
+
+@inline function _apply_fermion_chain!(state, H::CompiledHamiltonian{T}, term) where {T}
+    negative = term.negative_phase
+    @inbounds for w in 1:H.nwords
+        word = state[w]
+        required = H.masks_flat[term.ann_mask_offset + w]
+        forbidden = H.masks_flat[term.cre_forbid_mask_offset + w]
+        (word & required) == required && iszero(word & forbidden) || return zero(T)
+        negative ⊻= isodd(count_ones(word & H.masks_flat[term.action_mask_offset + H.nwords + w]))
+        state[w] = word ⊻ H.masks_flat[term.action_mask_offset + w]
+    end
+    return negative ? -one(T) : one(T)
 end
 
 # Jordan-Wigner parity: count occupied fermion bits *strictly below*
