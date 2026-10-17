@@ -61,7 +61,7 @@
         errors = map(spin_ops) do op
             chain = ntuple(_ -> only(op).chain[1], 17)
             try
-                MOADyna.Bases._expand_spin_xy(chain)
+                MOADyna.Algebra._expand_spin_xy(chain)
                 nothing
             catch err
                 err
@@ -90,7 +90,7 @@
         end
 
         # The existing limits are inclusive: 256 is quiet, 65536 warns.
-        @test_logs MOADyna.Bases._check_spin_expansion(256)
-        @test_logs (:warn,) MOADyna.Bases._check_spin_expansion(65_536)
+        @test_logs MOADyna.Algebra._check_spin_expansion(256)
+        @test_logs (:warn,) MOADyna.Algebra._check_spin_expansion(65_536)
     end
 end

@@ -29,6 +29,7 @@ using MOADyna
         include("bases/test_mixed_sites.jl")
         include("bases/test_sparse_action.jl")
         include("bases/test_matrixfree.jl")
+        include("bases/test_spin_adjoint.jl")
         include("bases/test_discovery.jl")
         include("bases/test_embed.jl")
     end

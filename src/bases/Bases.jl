@@ -21,6 +21,7 @@ using OhMyThreads: @tasks, tcollect
 
 using ..Algebra
 using ..Algebra: LadderEntry, OperatorTerm, OperatorSum, Chain
+using ..Algebra: _expand_spin_xy, _output_eltype
 using ..Algebra: name, encoding_bits, statistics
 using ..Algebra: AbstractSite, FermionSite, BosonSite, SpinSite
 using ..Algebra: Hilbert, Restriction
