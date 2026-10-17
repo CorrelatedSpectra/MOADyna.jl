@@ -50,7 +50,7 @@ combination of the returned states. The lowest `n` states of the selected proble
 are requested, including any projected degenerate cluster crossing that boundary
 (`degen_tol=1e-8`). Residual convergence alone cannot certify the multiplicity
 of the full allowed-space spectrum.
-Each enlarged basis starts with at most `n+1` provisional states. Once their
+Each enlarged basis starts with at most `n` provisional states. Once their
 full residual passes, the boundary cluster is completed progressively and every
 added member is checked before acceptance.
 
@@ -97,7 +97,7 @@ function selected_eigen(H::OperatorSum, seed::EagerBasis;
     initial = nothing
     for iteration in 1:maxiter
         action = backend === :matrixfree ? A : assemble(A.forward, b)
-        requested = min(length(b), n + 1)
+        requested = min(length(b), n)
         local E, external, result, projected
         while true
             E, cluster_complete = _selected_eigenpairs(action, b, n, requested, initial;

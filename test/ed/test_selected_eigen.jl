@@ -56,7 +56,7 @@
     catch e
         e
     end
-    @test failure isa SelectionConvergenceError && length(failure.result.eigen.values) == 2
+    @test failure isa SelectionConvergenceError && length(failure.result.eigen.values) == 1
     resolved = selected_eigen(virtual, flat_seed; restrictions=flat_allowed,
         max_states=8, residual_tol=1e-9)
     @test resolved.eigen.values[1] ≈ (4 - sqrt(16 + 4 * 0.4^2)) / 2 atol=1e-11
