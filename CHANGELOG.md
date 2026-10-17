@@ -3,6 +3,17 @@
 Notable user-facing changes, following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- Matrix-free operator actions for diagonalization, spectroscopy and fixed-basis gradients.
+- Residual-controlled determinant selection for eigenstates and response tensors.
+
+### Fixed
+
+- Adjoint operations for spin operators resolved by magnetic quantum number.
+
 ## [0.3.3] — 2026-10-17
 
 ### Changed

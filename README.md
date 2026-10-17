@@ -12,10 +12,9 @@
 **Many-body Operators, Algebra, and Dynamics** — a Julia framework for
 exact diagonalization of finite quantum many-body systems and the dynamical
 response functions built on top of it. You write a Hamiltonian as a symbolic
-operator expression; MOADyna enumerates the conserved-sector Hilbert space, assembles
-a sparse matrix, diagonalizes it, and evaluates correlation functions and
-spectra — lattice models and atomic multiplet problems through one operator
-language.
+operator expression; MOADyna solves it using sparse matrices or matrix-free
+operator actions, then evaluates correlation functions and spectra. Lattice
+models and atomic multiplet problems share the same operator language.
 
 **Background.** MOADyna grew out of many years of working with
 [Quanty](https://www.quanty.org/), and owes a real intellectual debt to Maurits
@@ -35,10 +34,12 @@ available where it helps.
 - **Conserved-sector bases.** Particle number, total `Sz`, and weighted particle
   counts are integer/rational valued, so sector enumeration is exact — no state
   is missed to floating-point rounding. Bit-packed states with parallel
-  enumeration and restriction-aware (suffix-pruned) walks.
+  enumeration and restriction-aware (suffix-pruned) walks. Residual-controlled
+  determinant selection can build smaller spaces for eigenstates and responses.
 - **Exact diagonalization.** `eigen(H, basis; n, which)` dispatches between dense
   LAPACK and Krylov (KrylovKit) automatically; the assembled `SparseMatrixCSC` is
-  also usable directly with your own solver.
+  also usable directly with your own solver. `backend=:matrixfree` uses iterative
+  solves without storing the Hamiltonian matrix.
 - **Dynamical correlation functions.** A `correlator` builds matrix-of-ω response
   objects `⟨ψ|A†G(ω)B|ψ⟩` in interchangeable Lanczos / pole / grid
   representations, including single-particle Green's functions (`:addition` /
