@@ -209,7 +209,7 @@ setting is separate from basis/assembly scheduling and BLAS thread counts; it
 does not create additional Julia threads. A calculation prepares the sparse
 action once and reuses it across incident energies or initial states. Keep its
 Hamiltonians fixed until the calculation returns. See
-[Sparse multiplication threads](@ref) in the ED manual for the solver setting.
+[Multiplication threads](@ref) in the ED manual for the solver setting.
 
 ## Restriction-resolved partial excitations
 

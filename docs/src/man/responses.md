@@ -64,7 +64,7 @@ passes. Parallel row products use a small solve-local coefficient workspace;
 they preserve this order but can change floating-point summation. Wider or
 unsupported arithmetic stays serial. The scalar-specialized recurrence retains
 its existing reorthogonalization. The same control is available on
-`MOADyna.Responses.block_lanczos`; see [Sparse multiplication threads](@ref)
+`MOADyna.Responses.block_lanczos`; see [Multiplication threads](@ref)
 for Julia startup. Dense/custom Hamiltonian multiplication, basis assembly and
 BLAS thread settings remain independent.
 
