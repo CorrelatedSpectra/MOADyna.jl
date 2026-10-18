@@ -1,8 +1,8 @@
 """
     MOADyna.Units
 
-Energy-unit conversions for spectroscopy work, plus the one physical constant
-the finite-temperature workflow needs (the Boltzmann constant in eV/K).
+Energy-unit conversions for spectroscopy, with constants used by thermal
+calculations and atomic-length input.
 
 MOADyna's Hamiltonians carry no intrinsic unit — energies are in whatever units the
 caller built `H` in, and the finite-temperature kwarg `temperature` is in those
@@ -28,8 +28,8 @@ exact, not measured):
 - `c   = 299792458 m/s`      (exact)
 - `e   = 1.602176634e-19 C`  (exact, so 1 eV = 1.602176634e-19 J exactly)
 
-The Rydberg energy `Ry = 13.605693122990(15) eV` is a *measured* value (CODATA
-2018) — the only non-exact factor here.
+The Rydberg energy `Ry = 13.605693122990(15) eV` and Bohr radius are measured
+values from CODATA 2018.
 
 # Examples
 
@@ -59,6 +59,14 @@ to turn a Kelvin temperature into the eV-based `temperature` kwarg, e.g.
 `temperature = Units.kB_eV * 300`.
 """
 const kB_eV = _kB_SI / _e_SI
+
+"""
+    Units.bohr_angstrom
+
+Bohr radius in Å, `0.529177210903` (CODATA 2018). Use this factor to convert
+atomic-length input to Angstrom.
+"""
+const bohr_angstrom = 0.529177210903
 
 # Each supported energy unit expressed in JOULES (1 unit = value J).
 # Conversion between any two units a, b is x_b = x_a * (J[a] / J[b]).

@@ -112,6 +112,8 @@ x86_64 binaries from third-party sources require Rosetta on M-series Macs).
 """
 module AtomicParameters
 
+using ..Units: bohr_angstrom
+
 include("haverkort_data.jl")    # provides const HAVERKORT_PARAMETERS
 include("cowan_runner.jl")      # provides _run_cowan(...)
 
