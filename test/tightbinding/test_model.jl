@@ -13,6 +13,9 @@ using LinearAlgebra
 
     @test size(model) == (2, 2)
     @test bloch_hamiltonian(model, k) ≈ expected
+    abstract_input = TightBindingModel(Dict((0,) => reshape(Number[0.7], 1, 1)))
+    @test isconcretetype(eltype(only(abstract_input.hoppings)))
+    @test bloch_hamiltonian(abstract_input, [0.3]) == fill(0.7, 1, 1)
     @test bloch_hamiltonian(model, k) ≈ bloch_hamiltonian(model, k)'
     @test hopping(model, (0, 0)) == h0
     @test iszero(hopping(model, (0, 1)))

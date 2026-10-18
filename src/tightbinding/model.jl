@@ -38,7 +38,10 @@ function TightBindingModel(hoppings::AbstractDict; lattice=nothing, centres=noth
     n > 0 || throw(ArgumentError("the model must contain at least one orbital"))
     all(entry -> last(entry) isa AbstractMatrix{<:Number}, entries) ||
         throw(ArgumentError("hopping blocks must be numeric matrices"))
-    T = mapreduce(entry -> eltype(last(entry)), promote_type, entries; init=Float64)
+    T = mapreduce(entry -> _hopping_eltype(last(entry)), promote_type, entries; init=Float64)
+    C = promote_type(ComplexF64, T)
+    isconcretetype(T) && isconcretetype(C) && C <: Complex || throw(ArgumentError(
+        "hopping entries must promote to a concrete real or complex scalar type"))
     translations = NTuple{D,Int}[]
     blocks = Matrix{T}[]
     for (R, h) in entries
@@ -69,6 +72,9 @@ function TightBindingModel(hoppings::AbstractDict; lattice=nothing, centres=noth
     return TightBindingModel{D,T}(translations, blocks, index, A, tau, names,
                                   Dict{Symbol,Any}(metadata))
 end
+
+_hopping_eltype(h) = isconcretetype(eltype(h)) ? eltype(h) :
+    mapreduce(typeof, promote_type, h; init=Float64)
 
 function _geometry_matrix(value, dims, name)
     value === nothing && return nothing
