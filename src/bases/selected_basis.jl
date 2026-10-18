@@ -40,7 +40,7 @@ function _rebind_action(A::MatrixFreeOperator, basis::EagerBasis)
         throw(ArgumentError("cannot reuse compiled terms with a different encoding"))
     index = _StateIndex(basis)
     rebind(plan) = CompiledHamiltonian(plan.terms, plan.entries, plan.fermion_mask,
-        plan.masks_flat, plan.boson_reqs, basis_id(basis), plan.nwords)
+        plan.masks_flat, plan.boson_reqs, basis_id(basis), plan.nwords, plan.term_groups)
     return MatrixFreeOperator(rebind(A.forward), rebind(A.reverse), basis, basis,
                                index, index, A.threaded)
 end

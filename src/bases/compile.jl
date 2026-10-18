@@ -68,6 +68,49 @@ struct CompiledHamiltonian{T<:Number}
     boson_reqs::Vector{Tuple{Int,Int,Int}}  # (mode_idx into entries, required_min_occ, max_val)
     basis_id::UInt64
     nwords::Int
+    term_groups::Vector{Vector{Int}}
+end
+
+function CompiledHamiltonian{T}(terms, entries, fermion_mask, masks_flat, boson_reqs,
+                                basis_id, nwords) where {T<:Number}
+    return CompiledHamiltonian{T}(terms, entries, fermion_mask, masks_flat, boson_reqs,
+                                  basis_id, nwords, _group_destinations(terms, entries, nwords))
+end
+
+CompiledHamiltonian(terms::Vector{CompiledTerm{T}}, entries, fermion_mask, masks_flat,
+                    boson_reqs, basis_id, nwords) where {T<:Number} =
+    CompiledHamiltonian{T}(terms, entries, fermion_mask, masks_flat, boson_reqs, basis_id, nwords)
+
+# Successful terms with the same occupation changes reach the same determinant.
+function _group_destinations(terms, entries, nwords)
+    groups = Vector{Int}[]
+    indices = Dict{Tuple,Int}()
+    for (i, term) in enumerate(terms)
+        flips = zeros(UInt64, nwords)
+        shifts = Dict{NTuple{3,Int},Int}()
+        for k in 1:term.chain_length
+            entry = entries[term.chain_offset + k]
+            if entry.kind === FERM_C || entry.kind === FERM_CDAG
+                flips[entry.word_idx] ⊻= UInt64(1) << entry.bit_offset
+            else
+                delta = entry.kind in (BOS_BDAG, SPIN_SPLUS) ? 1 :
+                    entry.kind in (BOS_B, SPIN_SMINUS) ? -1 : 0
+                iszero(delta) && continue
+                span = (entry.word_idx, entry.bit_offset, entry.nbits)
+                shifts[span] = get(shifts, span, 0) + delta
+            end
+        end
+        key = (Tuple(flips), Tuple(sort!([(span..., delta)
+            for (span, delta) in shifts if !iszero(delta)])))
+        group = get(indices, key, 0)
+        if group == 0
+            push!(groups, Int[])
+            group = length(groups)
+            indices[key] = group
+        end
+        push!(groups[group], i)
+    end
+    return groups
 end
 
 Base.length(h::CompiledHamiltonian) = length(h.terms)

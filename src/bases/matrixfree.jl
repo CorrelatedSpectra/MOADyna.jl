@@ -97,14 +97,34 @@ end
     return nothing
 end
 
+@inline function _foreach_projected_element(f, plan::CompiledHamiltonian{T}, basis, i,
+                                            index, scratch) where {T}
+    offset = state_offset(basis, i)
+    for group in plan.term_groups
+        coefficient::T = zero(T)
+        j = 0
+        for k in group
+            term = plan.terms[k]
+            _term_precheck_fails(plan, term, basis.states, offset) && continue
+            copy_state!(scratch, basis.states, offset, basis.nwords)
+            phase = _apply_chain_rtl!(scratch, plan, term)
+            iszero(phase) && continue
+            if j == 0
+                j = _state_index(index, scratch)
+                j == 0 && break
+            end
+            coefficient += term.coef * phase
+        end
+        iszero(coefficient) || f(j, coefficient)
+    end
+    return nothing
+end
+
 function _projected_column!(column, plan, basis, i, index, scratch)
     empty!(column)
-    _foreach_transition(plan, basis, i, scratch) do state, value
-        j = _state_index(index, state)
-        j == 0 && return
-        column[j] = get(column, j, zero(value)) + value
+    _foreach_projected_element(plan, basis, i, index, scratch) do j, value
+        column[j] = value
     end
-    filter!(p -> !iszero(last(p)), column)
     return column
 end
 
@@ -146,14 +166,12 @@ end
 
 function _mul_matrixfree_rows!(Y, A::MatrixFreeOperator{T}, X, alpha, beta, rows) where {T}
     scratch = Vector{UInt64}(undef, A.bra.nwords)
-    coefficients = Dict{Int,T}()
     sums = zeros(promote_type(T, eltype(X), eltype(Y)), size(X, 2))
     for i in rows
         fill!(sums, zero(eltype(sums)))
         # Combine contributions before multiplying: cancellation can prevent
         # overflow even when the individual term-times-vector products cannot.
-        _projected_column!(coefficients, A.reverse, A.bra, i, A.ket_index, scratch)
-        for (j, value) in coefficients
+        _foreach_projected_element(A.reverse, A.bra, i, A.ket_index, scratch) do j, value
             a = conj(value)
             @inbounds for q in axes(X, 2)
                 sums[q] += a * X[j, q]

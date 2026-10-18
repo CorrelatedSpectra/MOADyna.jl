@@ -8,8 +8,10 @@ using Test, MOADyna, LinearAlgebra, SparseArrays, Random
     padding = FermionSite{64}(:padding)
     h = Hilbert(:f => f, :p => p, :padding => padding, :s => s)
     bb = basis(h, n_fermion([padding]) == 0)
+    # The final spin chain can fail after changing the temporary state.
     H = (0.3 + 0.4im) * cdag(f, 3) * c(f, 1) * bdag(p) +
-        (0.7 - 0.2im) * c(f, 2) * Splus(s, 0) + 0.9 * Sz(s, -1) + 0.2
+        (0.7 - 0.2im) * c(f, 2) * Splus(s, 0) + 0.9 * Sz(s, -1) + 0.2 +
+        Splus(s, -1) + Sminus(s, 0) * Splus(s, 0) * Splus(s, -1)
     M = assemble(compile(H, bb), bb)
     X = randn(rng, ComplexF64, length(bb), 3)
     original_states = copy(bb.states)
@@ -68,6 +70,13 @@ using Test, MOADyna, LinearAlgebra, SparseArrays, Random
 
     # Creation maps the vacuum sector to the one-particle sector.
     vacuum = basis(hg, n_fermion(hg) == 0)
+    # Projected-out coefficients need not have a representable sum.
+    large = (typemax(Int) ÷ 2 + 1) // 1
+    rational_terms = OperatorSum{Rational{Int}}()
+    for mode in 1:2
+        MOADyna.Algebra._push!(rational_terms, large, first(n(g, mode)).chain)
+    end
+    @test matrixfree(rational_terms, occupied, vacuum) * [2.0] == [0.0]
     T = matrixfree(cdag(g, 1) + 2im * cdag(g, 2), bg, vacuum)
     @test size(T) == (2, 1)
     @test T * [3.0] ≈ [3.0, 6im]
