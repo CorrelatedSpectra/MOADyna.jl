@@ -20,6 +20,8 @@ using MOADyna
         include("algebra/test_operator_io.jl")
     end
 
+    include("tightbinding/runtests.jl")
+
     @testset "Bases" begin
         include("bases/test_encoding.jl")
         include("bases/test_basis.jl")

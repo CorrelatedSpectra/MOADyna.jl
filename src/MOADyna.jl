@@ -42,6 +42,7 @@ Internal submodules; the names below are re-exported from `MOADyna`, so users
 almost never reach for these directly.
 
 - [`MOADyna.Algebra`](@ref) — symbolic operators, conserved quantities, `rotate`
+- [`MOADyna.TightBinding`](@ref) — real-space hoppings and Bloch Hamiltonians
 - [`MOADyna.Bases`](@ref) — eager basis enumeration, sparse assembly
 - [`MOADyna.ED`](@ref) — sparse eigensolver (`eigen(H, basis; n, which, …)`)
 - [`MOADyna.Spectroscopy`](@ref) — `xas`, `rixs`, `fluorescence_yield`, broadening
@@ -62,6 +63,7 @@ module MOADyna
 
 include("units/Units.jl")
 include("algebra/Algebra.jl")
+include("tightbinding/TightBinding.jl")
 include("bases/Bases.jl")
 include("shells/Shells.jl")
 include("quantyio/QuantyIO.jl")
@@ -75,6 +77,7 @@ include("gradients/Gradients.jl")
 
 using .Units
 using .Algebra
+using .TightBinding
 using .Bases
 using .Shells
 using .QuantyIO
@@ -109,6 +112,9 @@ export QuantumNumber, QN, ParticleCount, TotalSz, WeightedParticleCount
 export n_fermion, n_boson, Sz_total
 export Restriction
 export density_density, kanamori, Ssqr
+
+# From TightBinding
+export TightBindingModel, hopping, bloch_hamiltonian, bloch_hamiltonian!
 
 # From Bases
 export AbstractBasis, EagerBasis, basis
