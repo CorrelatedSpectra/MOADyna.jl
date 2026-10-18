@@ -115,6 +115,7 @@ export density_density, kanamori, Ssqr
 
 # From TightBinding
 export TightBindingModel, hopping, bloch_hamiltonian, bloch_hamiltonian!
+export KPath, BandStructure, kpath, bandstructure
 
 # From Bases
 export AbstractBasis, EagerBasis, basis
