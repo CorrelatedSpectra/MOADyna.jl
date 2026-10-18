@@ -31,6 +31,7 @@ using MOADyna
         include("bases/test_matrixfree.jl")
         include("bases/test_spin_adjoint.jl")
         include("bases/test_discovery.jl")
+        include("bases/test_sampling.jl")
         include("bases/test_embed.jl")
     end
 
@@ -49,6 +50,7 @@ using MOADyna
         include("ed/test_eigen.jl")
         include("ed/test_matrixfree_eigen.jl")
         include("ed/test_selected_eigen.jl")
+        include("ed/test_workflow.jl")
         include("ed/test_eigensystem_io.jl")
         include("ed/test_boson_layer.jl")
         include("ed/test_bose_hubbard.jl")

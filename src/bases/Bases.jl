@@ -16,6 +16,7 @@ module Bases
 
 using SparseArrays
 using LinearAlgebra
+using Random: rand
 using OhMyThreads
 using OhMyThreads: @tasks, tcollect
 
@@ -40,6 +41,7 @@ include("matrixfree.jl")
 include("linear_combination.jl")
 include("selection.jl")
 include("selected_basis.jl")
+include("sampling.jl")
 include("discovery.jl")
 include("embed.jl")
 

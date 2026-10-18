@@ -139,6 +139,7 @@ export read_quanty_operator, read_quanty_operators
 export read_quanty_wavefunction, read_quanty_wavefunctions, read_quanty_eigenvalues
 
 # From ED
+export Eigenstates
 export ConvergenceError, max_normres
 export selected_eigen, SelectedEigen, SelectionConvergenceError
 export save_eigensystem, load_eigensystem

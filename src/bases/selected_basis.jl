@@ -1,6 +1,7 @@
 _restriction_list(::Nothing) = Restriction[]
 _restriction_list(r::Restriction) = Restriction[r]
 _restriction_list(rs::AbstractVector{<:Restriction}) = collect(Restriction, rs)
+_restriction_list(rs::Tuple{Vararg{Restriction}}) = collect(Restriction, rs)
 
 function _selected_basis(template::EagerBasis, states::AbstractVector{UInt64}; restrictions)
     nw = template.nwords
