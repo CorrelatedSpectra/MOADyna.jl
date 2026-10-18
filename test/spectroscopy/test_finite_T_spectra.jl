@@ -78,6 +78,12 @@ using MOADyna.Spectroscopy: SpectraTensor
     χgs = xas(d.H, d.basis, d.T, d.E; ω_grid = ωs, Γ = Γ)
     @test maximum(abs, r0.tensor .- χgs.tensor) < 1e-10
     @test r0.metadata[:N_kept] == 1                  # zero-weight excited states dropped
+    tensor = xas(d.H, d.basis, [d.T, 0.5d.T], d.E;
+                 temperature=τ, N_states=Nst, ω_grid=ωs, Γ=Γ)
+    @test polarise(tensor, [1, 0]) ≈ -imag.(r.tensor)
+    tensor0 = xas(d.H, d.basis, [d.T, 0.5d.T], d.E;
+                  temperature=0.0, ω_grid=ωs, Γ=Γ)
+    @test polarise(tensor0, [1, 0]) ≈ -imag.(χgs.tensor)
 
     # --- σ/S temperature alias: temperature= matches T= --------------------
     s = FermionSite{4}(:s2)

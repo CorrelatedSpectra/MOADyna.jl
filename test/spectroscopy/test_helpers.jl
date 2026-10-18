@@ -133,7 +133,7 @@
         s = a + b
         @test s.tensor ≈ a.tensor .+ b.tensor
         @test s.chunks === nothing
-        @test s.metadata[:function] === :algebraic_combination
+        @test s.metadata[:function] === :xas && s.metadata[:algebraic_combination]
 
         d = a - b
         @test d.tensor ≈ a.tensor .- b.tensor
@@ -149,6 +149,23 @@
 
         w = weighted_sum([a, b], [0.3, 0.7])
         @test w.tensor ≈ 0.3 .* a.tensor .+ 0.7 .* b.tensor
+
+        tensor = xas(sys.H, sys.basis, [sys.T, 0.5sys.T], sys.ψ;
+                     ω_grid=ωs, Γ=0.2, Eg=sys.Eg)
+        ε = ComplexF64[1, im] / sqrt(2)
+        combined = average([tensor, 2tensor])
+        @test polarise(combined, ε) ≈ 1.5polarise(tensor, ε)
+        @test !haskey(tensor.metadata, :algebraic_combination)
+        @test_throws ArgumentError re_broaden(combined; Γ=0.4)
+        mktempdir() do dir
+            file = joinpath(dir, "combined.h5")
+            save_spectra(combined, file)
+            @test polarise(load_spectra(file), ε) ≈ polarise(combined, ε)
+        end
+        different_method = deepcopy(a)
+        different_method.metadata[:function] = :fluorescence_yield
+        @test_throws ArgumentError a + different_method
+        @test !haskey((a + re_broaden(a; Γ=0.4)).metadata, :Γ)
     end
 
     @testset "Spectrum algebra: grid mismatch raises" begin
@@ -243,6 +260,9 @@
         # ε_in[l] T_d has scale[l] = 0.5. Total: 0.5⁴ = 1/16.
         ε_second = ComplexF64[0, 1]
         s_second = polarise(r_tensor, ε_second, ε_second)
+        ε_complex = ComplexF64[1, im] / sqrt(2)
+        @test polarise(average([r_tensor, 2r_tensor]), ε_complex, ε_second) ≈
+              1.5polarise(r_tensor, ε_complex, ε_second)
         @test s_second ≈ (1/16) .* (-imag.(r_scalar.tensor))   atol = 1e-9
     end
 
