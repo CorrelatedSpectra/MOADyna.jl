@@ -196,6 +196,7 @@ Useful entry points:
 
 - [Getting started](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/getting_started/) — installation and first calculation
 - [Matrix-free calculations](docs/src/tut/matrixfree.md) — choosing a backend, threading, and selected spaces
+- [Wannier bands to bilayer XAS](docs/src/tut/la3ni2o7.md) — a DFT-derived La₃Ni₂O₇ cluster with downloadable inputs
 - [NiO: XAS, RIXS, and nIXS](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/nio/) — a complete worked multiplet calculation
 - [Manual](https://correlatedspectra.github.io/MOADyna.jl/stable/man/intro/) — operator algebra, bases, ED, responses, spectroscopy
 - [Library reference](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/) — every exported function

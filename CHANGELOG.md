@@ -9,6 +9,12 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Wannier90 and tight-binding models, with band reconstruction and DFT comparisons.
 - Cluster and supercell construction, ligand-basis rotations, and a one-body operator builder.
+- A La₃Ni₂O₇ tutorial connecting DFT bands to double-cluster XAS.
+
+### Fixed
+
+- Polarization contraction and plotting after spectrum scaling or averaging.
+- Requested Lanczos lengths above 500 iterations are now honored.
 
 ## [0.3.4] — 2026-10-18
 

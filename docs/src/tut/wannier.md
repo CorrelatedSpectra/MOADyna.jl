@@ -8,6 +8,8 @@ A Wannier Hamiltonian can supply both a periodic band structure and the
 one-electron part of an interacting cluster. This tutorial follows that route:
 read a hopping model, compare its bands, select a cluster, and add interactions.
 The self-contained example is `examples/10_wannier.jl`.
+For a material calculation with downloadable DFT inputs, see
+[From Wannier bands to bilayer XAS](@ref).
 
 ## Read a Wannier calculation
 
@@ -75,6 +77,8 @@ Load Plots to draw the bands:
 ```@example wannier
 using Plots
 plot(bands; label="Two-orbital chain", size=(560, 360), linewidth=2,
+     color="#44AA99", framestyle=:box, tick_direction=:in, grid=false,
+     widen=false, xlims=(first(path.distance), last(path.distance)), ylims=(-1, 3),
      guidefontsize=12, tickfontsize=11, legendfontsize=10)
 ```
 

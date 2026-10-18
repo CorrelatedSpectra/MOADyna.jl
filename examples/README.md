@@ -20,6 +20,8 @@ julia --project=. examples/01_hubbard_chain.jl
 | `07_nio_xas_compact.jl` | NiO L₂,₃ XAS — compact-basis (n_2p = 5 only) workflow |
 | `08_nio_nixs.jl` | NiO 3d d-d nIXS — `nixs` multipole scattering operator → `S(q,ω)` |
 | `09_matrixfree.jl` | Matrix-free Hubbard ground state and response, with residual-controlled basis selection |
+| `10_wannier.jl` | Tight-binding bands, clusters, ligand rotations and supercells |
+| `la3ni2o7/` | DFT bands and bilayer-cluster XAS with separately downloaded inputs |
 
 ## Future example ideas
 
