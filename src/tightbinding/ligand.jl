@@ -9,7 +9,7 @@ retained, so this is a complete unitary transformation.
 
 Returns a named tuple with `hamiltonian = U' * h * U`, the full `U` (old rows,
 new columns), and index ranges `correlated`, `direct`, and `tail`. Use the same
-`U` with [`rotate`](@ref) to transform other operators.
+`U` with [`rotate`](@ref MOADyna.Algebra.rotate) to transform other operators.
 
 Singular values above `max(atol, rtol*smax)` define the direct block. The default
 `rtol` is the coupling-matrix dimension times machine precision.

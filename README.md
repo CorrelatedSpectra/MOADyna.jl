@@ -34,6 +34,9 @@ core-level spectroscopy.
 - **Exact diagonalization.** `eigen(H, basis; n, which)` dispatches between dense
   LAPACK and Krylov (KrylovKit) automatically; the assembled `SparseMatrixCSC` is
   also usable directly with your own solver.
+- **Wannier and tight-binding models.** Read Wannier90 Hamiltonians, reconstruct
+  bands and compare with DFT output. Extract interacting clusters, rotate ligand
+  orbitals, or group cells while retaining their intercluster hoppings.
 - **Matrix-free calculations.** `matrixfree(H, basis)` applies operators without
   storing matrix elements, using the same eigensolvers and spectroscopy interfaces.
   Products support Julia threads, with explicit serial and parallel controls.

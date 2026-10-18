@@ -30,6 +30,7 @@ write(joinpath(@__DIR__, "src", "changelog.md"),
 const MOADYNA_MODULES = [
     MOADyna,
     MOADyna.Algebra,
+    MOADyna.TightBinding,
     MOADyna.Bases,
     MOADyna.ED,
     MOADyna.Responses,
@@ -61,10 +62,12 @@ const PAGES = [
     "Tutorials" => [
         "Getting started"      => "tut/getting_started.md",
         "Matrix-free calculations" => "tut/matrixfree.md",
+        "Wannier models and clusters" => "tut/wannier.md",
         "NiO: XAS, RIXS, and nIXS" => "tut/nio.md",
     ],
     "Library" => [
         "Algebra"          => "lib/algebra.md",
+        "TightBinding"     => "lib/tightbinding.md",
         "Bases"            => "lib/bases.md",
         "ED"               => "lib/ed.md",
         "Responses"        => "lib/responses.md",

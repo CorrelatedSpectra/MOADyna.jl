@@ -3,6 +3,13 @@
 Notable user-facing changes, following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Wannier90 and tight-binding models, with band reconstruction and DFT comparisons.
+- Cluster and supercell construction, ligand-basis rotations, and a one-body operator builder.
+
 ## [0.3.4] — 2026-10-18
 
 ### Added

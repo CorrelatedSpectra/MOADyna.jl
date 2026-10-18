@@ -127,6 +127,7 @@ Depth = 2
 Pages = [
     "tut/getting_started.md",
     "tut/matrixfree.md",
+    "tut/wannier.md",
     "tut/nio.md",
 ]
 Depth = 2
@@ -137,6 +138,7 @@ Depth = 2
 ```@contents
 Pages = [
     "lib/algebra.md",
+    "lib/tightbinding.md",
     "lib/bases.md",
     "lib/ed.md",
     "lib/responses.md",
@@ -173,7 +175,8 @@ builds the operators and parameters the pipeline consumes (plus small utilities)
 - **Pipeline:** [Operator Algebra](@ref) → [Hilbert Spaces & Bases](@ref) →
   [Exact Diagonalization](@ref) → [Responses](@ref) → [Spectroscopy](@ref).
 - **Toolkit:** [Multiplets & Standard Operators](@ref), [Point Groups](@ref),
-  [Atomic Parameters](@ref), and [energy-unit conversions](@ref MOADyna.Units).
+  [Atomic Parameters](@ref), [Wannier models and clusters](@ref), and
+  [energy-unit conversions](@ref MOADyna.Units).
 - **Utilities:** diagnostics for ground-state inspection and shared HDF5 I/O.
 
 The [Introduction](@ref) walks through this organisation in full.
