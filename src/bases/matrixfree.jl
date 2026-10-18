@@ -85,49 +85,6 @@ function Base.show(io::IO, A::MatrixFreeOperator{T}) where {T}
           ", ", length(A.forward), " terms)")
 end
 
-@inline function _foreach_transition(f, plan, basis, i, scratch)
-    offset = state_offset(basis, i)
-    for term in plan.terms
-        _term_precheck_fails(plan, term, basis.states, offset) && continue
-        copy_state!(scratch, basis.states, offset, basis.nwords)
-        phase = _apply_chain_rtl!(scratch, plan, term)
-        iszero(phase) && continue
-        f(scratch, term.coef * phase)
-    end
-    return nothing
-end
-
-@inline function _foreach_projected_element(f, plan::CompiledHamiltonian{T}, basis, i,
-                                            index, scratch) where {T}
-    offset = state_offset(basis, i)
-    for group in plan.term_groups
-        coefficient::T = zero(T)
-        j = 0
-        for k in group
-            term = plan.terms[k]
-            _term_precheck_fails(plan, term, basis.states, offset) && continue
-            copy_state!(scratch, basis.states, offset, basis.nwords)
-            phase = _apply_chain_rtl!(scratch, plan, term)
-            iszero(phase) && continue
-            if j == 0
-                j = _state_index(index, scratch)
-                j == 0 && break
-            end
-            coefficient += term.coef * phase
-        end
-        iszero(coefficient) || f(j, coefficient)
-    end
-    return nothing
-end
-
-function _projected_column!(column, plan, basis, i, index, scratch)
-    empty!(column)
-    _foreach_projected_element(plan, basis, i, index, scratch) do j, value
-        column[j] = value
-    end
-    return column
-end
-
 function Base.getindex(A::MatrixFreeOperator{T}, i::Int, j::Int) where {T}
     checkbounds(A, i, j)
     column = _projected_column!(Dict{Int,T}(), A.forward, A.ket, j, A.bra_index,
@@ -135,20 +92,7 @@ function Base.getindex(A::MatrixFreeOperator{T}, i::Int, j::Int) where {T}
     return get(column, i, zero(T))
 end
 
-function SparseArrays.sparse(A::MatrixFreeOperator{T}) where {T}
-    rows, cols, values = Int[], Int[], T[]
-    column = Dict{Int,T}()
-    scratch = Vector{UInt64}(undef, A.ket.nwords)
-    for j in 1:size(A, 2)
-        _projected_column!(column, A.forward, A.ket, j, A.bra_index, scratch)
-        for (i, value) in column
-            push!(rows, i)
-            push!(cols, j)
-            push!(values, value)
-        end
-    end
-    return sparse(rows, cols, values, size(A)...)
-end
+SparseArrays.sparse(A::MatrixFreeOperator) = _assemble_projected(A.forward, A.ket, A.bra_index)
 
 Base.Matrix(A::MatrixFreeOperator) = Matrix(sparse(A))
 

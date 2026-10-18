@@ -32,3 +32,46 @@ function _validate_action_basis(H, basis)
 end
 
 _validate_action_coordinates(H, basis) = nothing
+
+@inline function _foreach_transition(f, plan, basis, i, scratch)
+    offset = state_offset(basis, i)
+    for term in plan.terms
+        _term_precheck_fails(plan, term, basis.states, offset) && continue
+        copy_state!(scratch, basis.states, offset, basis.nwords)
+        phase = _apply_chain_rtl!(scratch, plan, term)
+        iszero(phase) && continue
+        f(scratch, term.coef * phase)
+    end
+    return nothing
+end
+
+@inline function _foreach_projected_element(f, plan::CompiledHamiltonian{T}, basis, i,
+                                            index, scratch) where {T}
+    offset = state_offset(basis, i)
+    for group in plan.term_groups
+        coefficient::T = zero(T)
+        j = 0
+        for k in group
+            term = plan.terms[k]
+            _term_precheck_fails(plan, term, basis.states, offset) && continue
+            copy_state!(scratch, basis.states, offset, basis.nwords)
+            phase = _apply_chain_rtl!(scratch, plan, term)
+            iszero(phase) && continue
+            if j == 0
+                j = _state_index(index, scratch)
+                j == 0 && break
+            end
+            coefficient += term.coef * phase
+        end
+        iszero(coefficient) || f(j, coefficient)
+    end
+    return nothing
+end
+
+function _projected_column!(column, plan, basis, i, index, scratch)
+    empty!(column)
+    _foreach_projected_element(plan, basis, i, index, scratch) do j, value
+        column[j] = value
+    end
+    return column
+end

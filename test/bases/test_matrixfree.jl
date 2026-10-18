@@ -60,6 +60,7 @@ using Test, MOADyna, LinearAlgebra, SparseArrays, Random
     occupied = basis(hg, n_fermion(hg) == 2)
     cancelled = matrixfree(1e308 * n(g, 1) - 1e308, occupied)
     @test cancelled * [2.0] == [0.0]
+    @test nnz(sparse(cancelled)) == 0
     x = ones(ComplexF64, 2)
     @test (0.4im * A2 + (1.2 - 0.3im) * A2') * x ≈
         (0.4im * Matrix(A2) + (1.2 - 0.3im) * Matrix(A2)') * x
@@ -77,6 +78,7 @@ using Test, MOADyna, LinearAlgebra, SparseArrays, Random
         MOADyna.Algebra._push!(rational_terms, large, first(n(g, mode)).chain)
     end
     @test matrixfree(rational_terms, occupied, vacuum) * [2.0] == [0.0]
+    @test nnz(sparse(matrixfree(rational_terms, occupied, vacuum))) == 0
     T = matrixfree(cdag(g, 1) + 2im * cdag(g, 2), bg, vacuum)
     @test size(T) == (2, 1)
     @test T * [3.0] ≈ [3.0, 6im]
@@ -87,6 +89,9 @@ using Test, MOADyna, LinearAlgebra, SparseArrays, Random
     @test_throws ArgumentError matrixfree(cdag(g, 1), bg, basis(Hilbert(:other => other)))
     empty_basis = basis(hg, n_fermion(hg) == 0, n_fermion(hg) == 1)
     @test size(matrixfree(H2, empty_basis) * zeros(0, 2)) == (0, 2)
+    empty_actions = (matrixfree(H2, empty_basis), matrixfree(H2, empty_basis, bg),
+                     matrixfree(H2, bg, empty_basis))
+    @test size.(sparse.(empty_actions)) == ((0, 0), (0, 2), (2, 0))
 
     # Real operators keep their storage type and promote complex right-hand sides.
     for R in (Float32, Float64)
