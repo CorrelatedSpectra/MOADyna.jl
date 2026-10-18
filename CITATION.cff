@@ -15,8 +15,8 @@ url: "https://github.com/CorrelatedSpectra/MOADyna.jl"
 repository-code: "https://github.com/CorrelatedSpectra/MOADyna.jl"
 license: MIT
 type: software
-version: 0.3.3
-date-released: "2026-10-17"
+version: 0.3.4
+date-released: "2026-10-18"
 doi: 10.5281/zenodo.21808796
 identifiers:
   - type: doi
