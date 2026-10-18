@@ -24,9 +24,9 @@ Compute absorption from basis-carrying eigenstates and symbolic operators.
 the initial-state sector. Construct its basis, Hamiltonian action and rectangular
 transition actions automatically. `backend` selects `:sparse` or `:matrixfree`.
 
-The propagation basis is fully enumerated, even if `states` came from an adaptive
-ground-state solve; its selected basis is not reused as a response approximation.
-Other keywords, including broadening, grids and `temperature`, follow `xas`.
+The propagation basis contains every state satisfying `restrictions`. Response
+basis selection is provided by `selected_response`. Other keywords, including
+broadening, grids and `temperature`, follow `xas`.
 For repeated calculations with the same actions, use the explicit-basis interface.
 """
 function xas(H::OperatorSum, T, states::Eigenstates;
@@ -48,9 +48,9 @@ restrictions. `T_in` maps initial to intermediate states; `T_out` is written in
 absorption orientation, mapping final to intermediate states. Rectangular actions
 and their basis coordinates are managed internally.
 
-These response sectors are fully enumerated independently of any adaptive
-ground-state selection. Other keywords, including thermal ensembles, follow
-`rixs`. Use explicit actions to reuse preparation across calls.
+Each response basis contains all states in its specified sector. Other keywords,
+including thermal ensembles, follow `rixs`. Use explicit actions to reuse
+preparation across calls.
 """
 function rixs(H_f::OperatorSum, H_i::OperatorSum, T_in, T_out, states::Eigenstates;
               restrictions_final, restrictions_intermediate,
@@ -72,8 +72,8 @@ end
 
 Compute fluorescence yield with automatically constructed, complete intermediate
 and final sectors. `T_decay` uses absorption orientation (final to intermediate);
-the final sector includes all allowed decay destinations, not just selected
-ground-state determinants. Other keywords follow `fluorescence_yield`.
+the final sector includes all decay destinations allowed by `restrictions_final`.
+Other keywords follow `fluorescence_yield`.
 """
 function fluorescence_yield(H_i::OperatorSum, T_excite, T_decay, states::Eigenstates;
                             restrictions_intermediate, restrictions_final,

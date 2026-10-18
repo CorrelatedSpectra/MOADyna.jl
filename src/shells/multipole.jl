@@ -47,8 +47,7 @@ The Racah-normalized rank-k spherical-tensor matrix element
 with `m_b = m_a + q`. Returns `0.0` when `m_b` is out of range `[-ℓ_b, ℓ_b]`,
 when `|q| > k`, or when the diagonal 3j vanishes (parity: `ℓ_a + ℓ_b + k`
 must be even). This is the rank-k cross-shell generalization of the inline
-coefficient in `dipole.jl` (the k=1 case) and matches Quanty's
-`SlaterCoefficientC(k, ℓ_b, m_b, ℓ_a, m_a)` bit-for-bit.
+coefficient in `dipole.jl` (the k=1 case).
 """
 function _ckq_coeff(ℓ_b::Integer, ℓ_a::Integer, k::Integer,
                     q::Integer, m_a::Integer)
@@ -249,11 +248,10 @@ single `shell`, as the six Cartesian components in the documented order
 
     [ Q_xx, Q_yy, Q_zz, Q_xy, Q_xz, Q_yz ].
 
-DIMENSIONLESS by default (Quanty `CreateOperatorQ*`, `StandardOperators.cpp:3315-3786`,
-are bare angular C² combinations with no radial moment); the optional `radial`
-scale (e.g. `⟨r²⟩`, in the caller's units) multiplies all six components. This
-is a same-shell expectation operator (NOT a transition); it is spin-summed and
-Hermitian. The verified C²_m combinations (`r ≡ √(3/2)`) are
+The default `radial=1.0` returns dimensionless angular operators. Setting
+`radial` to a radial moment such as `⟨r²⟩` scales all six components in the
+caller's units. The components are Hermitian, spin-summed operators within one
+shell. Their C²_m combinations (`r ≡ √(3/2)`) are
 
     Q_xx = −C²₀ + r(C²₋₂+C²₂),   Q_yy = −C²₀ − r(C²₋₂+C²₂),   Q_zz = 2·C²₀,
     Q_xy = i·r(C²₋₂−C²₂),        Q_xz = r(C²₋₁−C²₁),          Q_yz = i·r(C²₋₁+C²₁).
@@ -286,21 +284,16 @@ end
     spin_dipole_T(m::ShellModel, shell::Symbol) -> Vector{OperatorSum}
 
 The spin-dipole tensor operator `T = Σ_i [ s_i − 3 r̂_i (r̂_i · s_i) ]` on a
-single `shell`, as the three Cartesian components `[T_x, T_y, T_z]`. This is
-the operator that enters the XMCD spin sum rule — **NOT** the magnetic-dipole
-(M1) operator `L + 2S`.
-
-`T` is a rank-2 spatial tensor (C²) coupled to spin, built term-by-term to
-match Quanty `CreateOperatorT{x,y,z}` (`StandardOperators.cpp:2600-2886`)
-bit-for-bit. Writing `v_q(m) ≡ ⟨m+q|C²_q|m⟩` (the same-shell Racah C²; the
-`_ckq_coeff` value), e.g.
+single `shell`, as the three Cartesian components `[T_x, T_y, T_z]`. This
+operator enters the XMCD spin sum rule and couples a rank-2 spatial tensor
+(C²) to spin. Writing `v_q(m) ≡ ⟨m+q|C²_q|m⟩`, the z component is
 
     T_z = Σ_m [ −v₀(m)(c†_{m↑}c_{m↑} − c†_{m↓}c_{m↓})
                 − (√6/2) v₋₁(m) c†_{m−1,↑}c_{m,↓}
                 + (√6/2) v₊₁(m) c†_{m+1,↓}c_{m,↑} ],
 
-with the C⁰ piece `= −2·C²₀·s_z`. Each component is Hermitian (the physical
-observable); the operator is spin-summed/spin-coupled and raw. Requires `ℓ ≥ 1`.
+The spin-diagonal term is `−2·C²₀·s_z`. Each component is Hermitian.
+Requires `ℓ ≥ 1`.
 
 # Example
 ```julia

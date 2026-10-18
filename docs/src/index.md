@@ -158,7 +158,7 @@ Depth = 1
 Pages = [
     "app/conventions.md",
     "app/point_groups.md",
-    "app/from_quanty.md",
+    "app/importing_data.md",
     "app/acknowledgments.md",
 ]
 Depth = 2

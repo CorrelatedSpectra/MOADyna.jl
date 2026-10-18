@@ -50,7 +50,7 @@ almost never reach for these directly.
   Akm, hop, dipole, to_real, to_jlmj, onsite_energies)
 - [`MOADyna.Diagnostics`](@ref) — post-eigenstate analysis (`expectation_table`,
   `configuration_weights`)
-- [`MOADyna.QuantyIO`](@ref) — read Quanty operator dumps into `OperatorSum`s
+- [`MOADyna.QuantyIO`](@ref) — read operator text dumps into `OperatorSum`s
 - [`MOADyna.AtomicParameters`](@ref) — atomic Slater-Condon parameters
   (`atomic_parameters`, static Haverkort dict + optional Cowan)
 - [`MOADyna.Units`](@ref) — energy-unit conversions (`convert_energy`, `Units.kB_eV`)

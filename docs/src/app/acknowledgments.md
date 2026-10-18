@@ -54,7 +54,4 @@ appears.
 MOADyna grew out of many years of working with
 [Quanty](https://www.quanty.org/) and owes a real intellectual debt to **Maurits
 Haverkort** — his code and ideas shaped how the author thinks about multiplet and
-core-level spectroscopy (the author is a Quanty coauthor). MOADyna is an independent
-Julia project with its own API, data structures, and development direction; the
-[Coming from Quanty](@ref) appendix documents the interoperability and the
-multiplet-physics correspondence.
+core-level spectroscopy (the author is a Quanty coauthor).

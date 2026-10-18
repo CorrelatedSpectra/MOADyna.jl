@@ -79,43 +79,31 @@ calculation assemble a dense matrix implicitly.
 
 ## Choosing a representation
 
-**Use the default sparse backend for routine spectroscopy.** It is the recommended
-starting point for typical atomic multiplet and modest cluster or impurity
-calculations: matrix storage is usually manageable, and stored entries often
-make repeated products faster.
-
-Matrix-free calculations are an advanced option for very large systems where
-Hamiltonian storage becomes limiting. Adaptive basis selection additionally
-requires experience with the model's sectors and convergence checks. Neither
-option is an automatic speed improvement.
+Sparse storage is recommended for routine spectroscopy, including typical atomic
+multiplet and modest cluster or impurity calculations. Stored matrix entries
+make repeated products efficient. Matrix-free storage is useful for large
+systems where storing the Hamiltonian becomes limiting; the basis and solver
+vectors still need to fit in memory.
 
 | Situation | Starting point |
 |---|---|
-| The Hamiltonian fits comfortably in memory | The default sparse backend; stored entries can make repeated products faster |
-| Matrix storage is limiting, but the basis and solver vectors fit | `backend=:matrixfree` on the same basis |
-| Full basis enumeration is impractical | `eigen(H, h; restrictions=allowed, adaptive=true, backend=:matrixfree)`, with seed and residual convergence checks |
+| Routine spectroscopy; the Hamiltonian fits in memory | The default sparse backend |
+| Hamiltonian storage is limiting | `backend=:matrixfree` |
+| Full basis enumeration is impractical | `adaptive=true`, with seed and residual convergence checks |
 
-**Fixed basis** means that the determinant list stays unchanged. Both sparse and
-matrix-free actions implement ``P H P``, where ``P`` projects onto that list:
-contributions to determinants outside it are discarded. For a complete invariant
-sector, such as a conserved particle-number sector, there are no couplings out
-of the sector. For an incomplete subset, those couplings are omitted and a
-converged projected solve alone does not establish full-space accuracy.
+A fixed-basis operator represents ``P H P``, where ``P`` projects onto the
+supplied determinant list. Matrix elements connecting to determinants outside
+that list are omitted. A complete invariant sector contains every state coupled
+by the Hamiltonian within that sector.
 
-**Adaptive** means that the determinant list changes during the calculation.
-MOADyna starts from a small seed, solves on that fixed working basis, checks the
-residual including omitted allowed determinants, and adds states as needed.
-Previously selected states are retained. This is separate from increasing the
-Krylov dimension within a solve. Quanty's
-[Eigensystem](https://www.quanty.org/documentation/language_reference/functions/eigensystem)
-is also adaptive when `ExpandBasis=true` (its documented default); the selection
-and truncation rules differ.
-Quanty's restriction-based call samples its initial wavefunction using
-`StartRestrictions`, which need not hold after expansion. In MOADyna,
-`restrictions` defines the allowed space throughout the solve; an optional
-explicit `seed` can impose narrower starting conditions.
+Adaptive selection grows the determinant basis during the calculation. Each
+iteration solves on a fixed working basis, evaluates the residual including
+omitted allowed states, and adds determinants as needed. Previously selected
+states are retained. This is useful when the eigenstates can be represented
+accurately in a small part of the allowed space.
 
-The [Matrix-free Calculations](@ref) tutorial demonstrates both workflows.
+See [Matrix-free Calculations](@ref) for a worked example and
+[Selecting determinants](@ref) for selection controls.
 
 ## Multiplication threads
 
@@ -167,30 +155,33 @@ gs.values
 gs.selection.residual_norm
 ```
 
-`allowed` is only a variable name. Each restriction applies to **every basis
-state**, not to the expectation value of the full wavefunction. For example,
-`n_fermion(h) == 4` permits only four-particle states. It does not permit a mixture
-of three- and five-particle states whose average occupation happens to be four.
+`restrictions` defines the physical space for the entire solve: each selected
+determinant must satisfy these conditions. The initial basis samples up to
+`krylovdim` allowed determinants. `seed_size` changes its size, and `rng` supplies
+a local random-number generator. To start from a chosen configuration, pass an
+explicit `seed` basis.
 
-The automatic seed samples up to `krylovdim` allowed states without materializing
-the full basis. Use `seed_size` or a local `rng` to check seed stability, or pass
-an explicit `seed` for a physically chosen starting space. Complicated restrictions
-can make counting expensive; `seed_max_work` bounds this work, and an explicit
-seed bypasses counting. A diagonal Hamiltonian illustrates the limitation: a
-sampled determinant can have zero residual while a lower, unsampled determinant
-exists. Automatic initialization does not remove the need to check sectors and
-seed dependence.
+Check convergence by tightening `tol` and enlarging the seed. Selection explores
+Hamiltonian connections from the seed; disconnected symmetry sectors need
+appropriate initial coverage. Include enough eigenstates to resolve degeneracy
+when calculating thermal averages.
 
-Set `max_states` and `max_candidates` to bound retained and generated state counts;
-these limits are unset by default in the automatic interface. They are resource
-limits, not accuracy settings. `tol` is the full residual tolerance,
-`maxiter` controls the inner eigensolver, and `selection_maxiter` controls outer
-selection iterations. The lower-level interface gives explicit control:
+| Keyword | Role |
+|---|---|
+| `tol` | Full residual tolerance, including omitted allowed states |
+| `maxiter` | Maximum inner eigensolver iterations |
+| `selection_maxiter` | Maximum selection iterations; default `50` |
+| `max_states` | Limit on retained determinants |
+| `max_candidates` | Limit on generated external states; defaults to `max_states` |
+| `seed_max_work` | Work budget for automatic seed construction; default `100_000` |
 
-[`selected_eigen`](@ref) starts from a small basis and discovers connected states
-without enumerating the full allowed space. Each inner eigensolve uses a fixed
-linear operator. Between solves, the basis grows according to the residual on
-omitted states; necessary small coefficients are retained.
+State and candidate limits are unset by default in this interface. Reaching a
+selection limit raises [`SelectionConvergenceError`](@ref) with the latest result.
+An inner eigensolver failure raises [`ConvergenceError`](@ref). Exceeding
+`seed_max_work` raises `ArgumentError`; supply an explicit seed to bypass
+automatic seed construction, or increase that work budget.
+
+For direct control over the starting basis, use [`selected_eigen`](@ref):
 
 ```@example selected
 using MOADyna
@@ -204,39 +195,25 @@ result = selected_eigen(H, seed; restrictions=allowed, max_states=2,
 result.eigen.values
 ```
 
-The returned vectors belong to `result.basis`, which can be used with ordinary
-sparse assembly or matrix-free actions. `restrictions` explicitly defines the
-allowed physical space; the extra restriction used to create this seed does
-not constrain discovery.
+The returned vectors use `result.basis`. The physical `restrictions` apply during
+basis growth; the additional condition defining this seed only selects its
+starting configuration.
 
-Convergence requires the full residual block
-`H*Ψ - Ψ*Diagonal(E)` to have Frobenius norm at most `residual_tol`.
-`result.residuals` reports the norm for each eigenstate. The check includes
-omitted determinants, so convergence of the inner projected problem is
-insufficient. Complete degenerate clusters of the selected Hamiltonian crossing
-the requested `n` states are included. Residual convergence alone cannot certify
-the full allowed-space multiplicity, which matters for thermal averages.
-The previous eigenvector block is reused after enlargement.
-Enrichment starts with a bounded provisional target block. Once it meets the
-full residual tolerance, any unresolved boundary cluster is completed in stages,
-checking every added member before returning. This avoids diagonalizing a large
-artificially degenerate seed before its coupling to omitted states is explored.
+`selected_eigen` uses `residual_tol` for the full residual block
+`H*Ψ - Ψ*Diagonal(E)`. Its Frobenius norm bounds the residual of every normalized
+combination of the returned states. `result.residuals` gives individual norms.
+The lowest `n` states include any degenerate cluster crossing that boundary in
+the selected Hamiltonian. Resolving the multiplicity of the full allowed space
+also requires adequate seed coverage.
 
-`max_states` limits retained states and `max_candidates` limits unique generated
-external states before all cancellations, defaulting to `max_states`. Each
-discovery worker holds a single-column and a target-block accumulator, each
-bounded by this limit, in addition to merge and output storage.
-A [`SelectionConvergenceError`](@ref) preserves the latest result when a resource
-or iteration limit prevents convergence. An infinite residual in that result
-means the candidate limit prevented a complete residual check.
+`max_states` is required by this lower-level interface. `max_candidates` bounds
+unique generated states before cancellation; discovery uses per-thread
+workspaces, so temporary memory also depends on the thread count. An infinite
+residual in a failed result indicates that the candidate limit prevented the
+residual check from finishing.
 
-The allowed-space Hamiltonian must be Hermitian. A small residual identifies
-accurate eigenstates within the reachable sector; it does not prove that an
-unseeded, disconnected sector has no lower state. Ground-state selection also
-need not explore every direction of a degenerate seed; physically appropriate
-seeds and stability under their enlargement remain necessary. It also
-does not establish spectroscopy convergence. Transition sources and response
-spaces must be checked separately with [`selected_response`](@ref).
+For spectroscopy on a selected response basis, use [`selected_response`](@ref)
+to check convergence at the frequencies and broadening of interest.
 
 ## Saving eigensystems
 

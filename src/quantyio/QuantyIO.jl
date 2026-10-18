@@ -1,10 +1,9 @@
 """
     MOADyna.QuantyIO
 
-I/O bridge for the Quanty multiplet code. Reads the text format produced by
-Quanty's `print(operator)` and constructs the equivalent symbolic operator in
-[`MOADyna.Algebra`](@ref), applying a user-supplied mapping from Quanty's
-0-indexed mode integers to MOADyna `(site, label)` addresses.
+Readers for operator and wavefunction text dumps. Operator files are converted
+to symbolic values in [`MOADyna.Algebra`](@ref), using a supplied mapping from
+zero-based file indices to `(site, label)` addresses.
 
 This is an internal submodule of `MOADyna`; the user-facing function
 [`read_quanty_operator`](@ref) is re-exported from the umbrella package.

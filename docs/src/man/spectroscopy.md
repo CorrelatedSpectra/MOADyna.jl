@@ -51,15 +51,13 @@ sparse storage; `backend=:matrixfree` can be selected in the solve or overridden
 in a spectrum call. The same result supports finite-temperature keywords when
 enough initial eigenstates have been computed.
 
-These calls enumerate the **complete response sectors**, even if the ground state
-used `adaptive=true`. They do not approximate a spectrum using the selected
-ground-state determinant list. Adaptive responses require separate convergence
-with [`selected_response`](@ref). For fluorescence yield, also give
-`restrictions_final`: it defines all allowed decay destinations, even though no
-final-state Hamiltonian is needed.
+Each call enumerates the response sectors specified by its restrictions and
+constructs transitions from the initial-state basis. For fluorescence yield,
+`restrictions_final` defines the decay destinations. Response basis selection
+and its convergence controls are provided by [`selected_response`](@ref).
 
-The explicit interfaces below remain available when bases and prepared actions
-should be reused across calculations.
+Use the explicit interfaces below to reuse bases and prepared actions across
+calculations.
 
 ## X-ray absorption (XAS)
 

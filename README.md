@@ -19,12 +19,7 @@ models and atomic multiplet problems share the same operator language.
 **Background.** MOADyna grew out of many years of working with
 [Quanty](https://www.quanty.org/), and owes a real intellectual debt to Maurits
 Haverkort — his code and ideas shaped how the author thinks about multiplet and
-core-level spectroscopy. MOADyna is an independent Julia project with its own design
-goals: explicit, inspectable operator algebra; programmable exact-diagonalization
-workflows; and a path toward parameter estimation / inverse problems, lattice
-methods, and time-dependent dynamics. `MOADyna.QuantyIO` and the [Coming from
-Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/) appendix keep practical interoperability
-available where it helps.
+core-level spectroscopy.
 
 ## What it does
 
@@ -201,16 +196,15 @@ Useful entry points:
 - [NiO: XAS, RIXS, and nIXS](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/nio/) — a complete worked multiplet calculation
 - [Manual](https://correlatedspectra.github.io/MOADyna.jl/stable/man/intro/) — operator algebra, bases, ED, responses, spectroscopy
 - [Library reference](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/) — every exported function
-- [Coming from Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/) — command mapping and interop notes
+- [Importing calculation data](docs/src/app/importing_data.md) — operator and wavefunction text files
 
-The docs are built from [`docs/src/`](docs/src/) with Documenter.jl. Cross-code
-validation reports and reference data live under
+The docs are built from [`docs/src/`](docs/src/) with Documenter.jl. Developer
+validation notes and reference data live under
 [`docs/dev/validation/`](docs/dev/validation/).
 
 ## Interoperability
 
-`MOADyna.QuantyIO` reads [Quanty](https://www.quanty.org/) text dumps (operators and
-related data), so an external operator can be imported as a native
+An operator text dump can be imported as a native
 [`OperatorSum`](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/):
 
 ```julia
@@ -219,8 +213,8 @@ mode_map = i -> (:s, i + 1)           # external 0-indexed → MOADyna 1-indexed
 H        = read_quanty_operator("hamiltonian_dump.txt", hilbert, mode_map)
 ```
 
-For Quanty-to-MOADyna command mapping and interop notes, see [Coming from
-Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/).
+See [Importing calculation data](docs/src/app/importing_data.md) for operator,
+wavefunction, and eigenvalue readers.
 
 ## Citing
 
@@ -239,9 +233,8 @@ when it appears.
 MOADyna was developed with substantial assistance from a blend of LLM-based
 tools, used for both implementation and code review. I directed the design,
 reviewed the resulting code by hand, and am responsible for the package.
-Correctness is checked by the test suite in CI and by cross-code
-numerical validation against [Quanty](https://www.quanty.org/) and
-[QuSpin](https://quspin.github.io/QuSpin/) — see
+The test suite checks analytical results and independent numerical references
+in CI — see
 [`docs/dev/validation/`](docs/dev/validation/).
 
 ## Acknowledgments
@@ -256,7 +249,7 @@ StaticArrays.jl, and DataStructures.jl. See
 MIT — see [`LICENSE`](LICENSE).
 
 A small amount of third-party material is redistributed here under its own
-terms — a Quanty tutorial script and the NiO reference spectra, both CC-BY.
+terms — a tutorial script and the NiO reference spectra, both CC-BY.
 See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md), which also records the
 typeface credit for the logo and the sources of the atomic parameter tables.
 

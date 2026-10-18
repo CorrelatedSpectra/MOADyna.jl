@@ -30,10 +30,10 @@
 """
     ParsedTerm
 
-A single operator term parsed from a Quanty dump:
+A single term parsed from an operator text dump:
 
 - `kinds`       — vector of `:cdag` / `:c` symbols, in chain order
-- `indices`     — vector of Quanty mode integers (0-indexed) in chain order
+- `indices`     — vector of file mode indices (zero-based) in chain order
 - `coefficient` — `ComplexF64`. For real (`QComplex=0`) blocks the imaginary
                   part is exactly zero; the builder collapses such operators
                   to a real `OperatorSum{Float64}` automatically.
@@ -47,7 +47,7 @@ end
 """
     ParsedOperator
 
-The contents of one Quanty operator dump, returned by `parse_quanty_operator`.
+The contents of one operator text dump, returned by `parse_quanty_operator`.
 
 # Fields
 - `terms::Vector{ParsedTerm}` — flat list of all ladder chains across every
@@ -75,8 +75,9 @@ end
 """
     parse_quanty_operator(text::AbstractString) -> ParsedOperator
 
-Parse the full text of a Quanty operator dump (output of Quanty's
-`print(operator)`) and return a `ParsedOperator` intermediate.
+Parse an operator text dump into a `ParsedOperator`. The format uses
+`MaxLength`, `NFermionic modes`, and `NBosonic modes` headers, followed by
+`Operator of Length N` blocks containing ladder chains and coefficients.
 
 The function runs a two-step pipeline:
 

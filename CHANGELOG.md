@@ -108,7 +108,7 @@ Initial feature-complete version.
 - Operator algebra, Hilbert-space construction and exact diagonalization.
 - XAS/RIXS spectrum tensors, fluorescence yield, polarization contraction and rebroadening.
 - Point groups, crystal fields, atomic multiplets and atomic parameters.
-- Spectrum and operator I/O, Quanty interoperability, diagnostics and plotting support.
+- Spectrum and operator I/O, text import, diagnostics and plotting support.
 
 ### Breaking changes
 
@@ -118,7 +118,7 @@ Initial feature-complete version.
 
 ## [pre-0.1.0] — internal milestones
 
-Consolidated the experimental algebra, basis and Quanty components into a single package.
+Consolidated the experimental algebra, basis and import components into a single package.
 
 [0.3.3]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.1...v0.3.2

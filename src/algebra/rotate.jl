@@ -25,11 +25,6 @@ non-orthonormal `U` is rejected.
 
 # Extended help
 
-**Quanty convention**: this follows Sakurai, which is the Hermitian conjugate
-of Quanty's `Rotate(...)` convention. If you have a Quanty `rotMat`, pass
-`adjoint(rotMat)` here. For real-valued matrices (e.g. cubic-harmonic
-transforms) the two conventions agree.
-
 **Two regimes via the `project` kwarg**:
 
 - Default `project = false` — basis change. `U` must be square and unitary

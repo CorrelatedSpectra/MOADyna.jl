@@ -72,7 +72,7 @@ const PAGES = [
         "Shells"           => "lib/shells.md",
         "AtomicParameters" => "lib/atomic.md",
         "PointGroups"      => "lib/pointgroups.md",
-        "QuantyIO"         => "lib/quantyio.md",
+        "Text import"      => "lib/quantyio.md",
         "Diagnostics"      => "lib/diagnostics.md",
         "Units"            => "lib/units.md",
         "Gradients"        => "lib/gradients.md",
@@ -81,7 +81,7 @@ const PAGES = [
     "Appendix" => [
         "Conventions"        => "app/conventions.md",
         "Point-group theory primer" => "app/point_groups.md",
-        "Coming from Quanty" => "app/from_quanty.md",
+        "Importing calculation data" => "app/importing_data.md",
         "Acknowledgments"    => "app/acknowledgments.md",
     ],
 ]
