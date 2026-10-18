@@ -30,15 +30,27 @@ end
             0.7 3.0 0.0
             0.0 0.0 4.0
             end unit_cell_cart
+            begin atoms_frac
+            Ni 0.1 0.2 0.3
+            O 0.5 0.0 0.0
+            end atoms_frac
             """)
         k = [0.17, 0.23, 0.11]
         plain = read_wannier90(seed)
         @test bloch_hamiltonian(plain, k) ≈ h0 + cispi(2k[1])*t + cispi(-2k[1])*t'
         @test plain.lattice == [2.0 0.7 0.0; 0.0 3.0 0.0; 0.0 0.0 4.0]
         @test plain.metadata[:interpolation] == :plain
+        @test plain.metadata[:atoms].labels == ["Ni", "O"]
+        @test plain.metadata[:atoms].positions ≈ plain.lattice * [0.1 0.5; 0.2 0; 0.3 0]
         write(seed * ".win", replace(read(seed * ".win", String), "ang" => "bohr"))
         @test read_wannier90(seed).lattice ≈ 0.529177210903 * plain.lattice
         write(seed * ".win", replace(read(seed * ".win", String), "bohr" => "ang"))
+        fractional_input = read(seed * ".win", String)
+        write(seed * ".win", replace(fractional_input,
+            "atoms_frac" => "atoms_cart", "Ni 0.1" => "bohr\nNi 0.1"))
+        @test read_wannier90(seed).metadata[:atoms].positions ≈
+              0.529177210903 * [0.1 0.5; 0.2 0; 0.3 0]
+        write(seed * ".win", fractional_input)
 
         tbseed = joinpath(dir, "combined")
         write(tbseed * ".win", "use_ws_distance=false\n")

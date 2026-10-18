@@ -17,6 +17,30 @@ function _win_lattice(block)
     return factor * reduce(hcat, rows)
 end
 
+function _win_atoms(win, lattice)
+    keys = filter(key -> haskey(win.blocks, key), ("atoms_cart", "atoms_frac"))
+    isempty(keys) && return nothing
+    length(keys) == 1 || throw(ArgumentError("supply either atoms_cart or atoms_frac, not both"))
+    fractional = only(keys) == "atoms_frac"
+    lines = copy(win.blocks[only(keys)])
+    factor = 1.0
+    if !fractional && !isempty(lines) && length(_w90_fields(first(lines))) == 1
+        factor = _w90_length_factor(popfirst!(lines))
+    end
+    rows = _w90_fields.(lines)
+    !isempty(rows) && all(row -> length(row) == 4, rows) ||
+        throw(ArgumentError("atom records must contain a label and three coordinates"))
+    positions = reduce(hcat, [_w90_float.(row[2:4]) for row in rows])
+    all(isfinite, positions) || throw(ArgumentError("atomic coordinates must be finite"))
+    if fractional
+        lattice === nothing && throw(ArgumentError("atoms_frac requires lattice vectors"))
+        positions = lattice * positions
+    else
+        positions *= factor
+    end
+    return (; labels=String[first(row) for row in rows], positions)
+end
+
 function _wout_lattice(text, factor)
     rows = Vector{Float64}[]
     for i in 1:3

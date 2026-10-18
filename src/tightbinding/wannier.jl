@@ -174,6 +174,11 @@ representatives; these modes require explicit `centres` for geometric operations
 All weights are normalized once into the stored hoppings. The selected route
 and source metadata are recorded in `model.metadata`; projection text is retained
 as input information, without assigning final orbital characters automatically.
+When a win atom block is present, `metadata[:atoms]` contains its `labels` and
+Cartesian `positions` (columns in Å). Labels are preserved as written, including
+numeric labels used by some converters; they need not be chemical symbols.
+This entry describes the source cell and is absent without an atom block;
+operations such as `supercell` retain it as source metadata.
 """
 function read_wannier90(path::AbstractString; interpolation=:auto, lattice=nothing,
                         centres=nothing, labels=nothing, atol::Real=1e-10, rtol::Real=1e-10)
@@ -207,6 +212,8 @@ function read_wannier90(path::AbstractString; interpolation=:auto, lattice=nothi
     metadata = Dict{Symbol,Any}(:source => abspath(file), :source_version => geometry.version,
         :projections => get(win.blocks, "projections", String[]),
         :centres_source => geometry.centres_source)
+    atoms = _win_atoms(win, geometry.lattice)
+    atoms === nothing || (metadata[:atoms] = atoms)
     blocks, route = if applied === true
         all(==(1), values(raw.degeneracies)) || throw(ArgumentError("expanded Wannier files must have unit degeneracy weights"))
         normalized, :expanded
