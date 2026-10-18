@@ -217,8 +217,6 @@ function _fy_run(H_i, basis::AbstractBasis,
         # blocks but cf's T_K only uses the first K. See rixs.jl for the
         # detailed comment.
         V_int = hcat(inner.V_basis[1:length(inner.α)]...)::Matrix{ComplexF64}
-        T_int = _build_T_K(inner.α, inner.β)
-        M = size(T_int, 1)
 
         # Save inner chunk (diagnostic — FY has no outer Lanczos chunks
         # per ω_in, so these inner chunks are what `poles(fy_result)`
@@ -228,16 +226,11 @@ function _fy_run(H_i, basis::AbstractBasis,
             inner.n_iter, inner.converged))
         push!(converged_list, inner.converged)
 
-        # Pad ζ.
-        B_active_inner = size(inner.R, 1)
-        ζ = zeros(ComplexF64, M, N_ex)
-        ζ[1:B_active_inner, :] .= inner.R
-
         n_ω_in = length(ω_in_resolved)
         fy = zeros(Float64, n_ω_in)
         for (i, ω_in) in enumerate(ω_in_resolved)
             z_in = ComplexF64(ω_in + Eg + im * Γ_int_use / 2)
-            W = (z_in * I - T_int) \ ζ        # M × N_ex
+            W = _block_resolvent_action(inner.α, inner.β, z_in, inner.R)
             Y = V_int * W                      # N × N_ex
             # FY = π · Σ_{k, l} ‖T_decay_k† · Y[:, l]‖²
             acc = 0.0

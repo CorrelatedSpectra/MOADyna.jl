@@ -47,6 +47,24 @@
         @test maximum(abs, result.tensor .- ref) < 1e-10
     end
 
+    @testset "Coupled levels with finite or zero broadening" begin
+        site = FermionSite{2}(:coupled)
+        hilbert = Hilbert(:coupled => site)
+        bb = basis(hilbert, n_fermion(hilbert) == 1)
+        H = sparse([0.0 1.0; 1.0 0.0])
+        transition = Matrix{Float64}(I, 2, 2)
+        for Γ in (0.0, 2e-310, 0.5)
+            result = fluorescence_yield(H, bb, transition, transition, [1.0, 0.0];
+                Eg=0.0, Γ_intermediate=Γ, ω_in_grid=0.0:1.0:0.0,
+                krylovdim=2, reorth=:full)
+            @test only(result.tensor) ≈ π / (1 + (Γ / 2)^2) rtol=1e-12
+        end
+        @test_throws SingularException fluorescence_yield(
+            H, bb, transition, transition, [1.0, 0.0];
+            Eg=0.0, Γ_intermediate=0.0, ω_in_grid=1.0:1.0:1.0,
+            krylovdim=2, reorth=:full)
+    end
+
     @testset "FY peak at ω_in = ε_i" begin
         sys = build_3level()
         result = fluorescence_yield(sys.H, sys.basis,
