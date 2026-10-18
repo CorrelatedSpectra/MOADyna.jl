@@ -65,4 +65,18 @@ end
     zero_coupling = ligand_basis(Matrix(Diagonal([1.0, 2.0, 3.0])), [1])
     @test isempty(zero_coupling.direct)
     @test eigvals(Hermitian(zero_coupling.hamiltonian)) ≈ [1.0, 2.0, 3.0]
+
+    C = ComplexF64[1 im; 0.3 0.7; 0.2im 0.4]
+    h2 = [Matrix{ComplexF64}(I, 2, 2) C'; C Matrix{ComplexF64}(I, 3, 3)]
+    aligned = ligand_basis(h2, 1:2)
+    q = aligned.U[3:5, aligned.direct]
+    @test q' * C ≈ C' * q
+    @test minimum(eigvals(Hermitian(q' * C))) > 0
+    W = ComplexF64[1 im; im 1] / sqrt(2)
+    changed = [Matrix{ComplexF64}(I, 2, 2) W'*C'; C*W Matrix{ComplexF64}(I, 3, 3)]
+    transformed = ligand_basis(changed, 1:2)
+    @test transformed.U[3:5, transformed.direct] ≈ q * W
+    wide = ligand_basis(h2, 3:5)
+    @test length(wide.direct) == 2 && isempty(wide.tail)
+    @test wide.U' * wide.U ≈ I
 end

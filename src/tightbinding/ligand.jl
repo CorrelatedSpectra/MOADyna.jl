@@ -13,6 +13,10 @@ new columns), and index ranges `correlated`, `direct`, and `tail`. Use the same
 
 Singular values above `max(atol, rtol*smax)` define the direct block. The default
 `rtol` is the coupling-matrix dimension times machine precision.
+For full column rank, its columns follow the correlated orbital order through
+the polar factor of the coupling matrix: the direct coupling is then Hermitian
+positive definite. Otherwise, the direct block uses the nonzero left singular
+vectors. The tail has an arbitrary orthonormal basis.
 `coupling_residual` measures direct correlated-to-tail coupling; `tail_coupling`
 measures the coupling between the direct ligand block and its tail. Discarding
 the tail is a further approximation when either is nonzero.
@@ -44,6 +48,9 @@ function ligand_basis(h::AbstractMatrix{<:Number}, correlated; atol::Real=0.0, r
         threshold = max(atol, relative * maximum(factor.S; init=0.0))
         rank = count(>(threshold), factor.S)
         U[environment, nd+1:n] = factor.U
+        if rank == nd
+            U[environment, nd+1:nd+rank] = factor.U[:, 1:rank] * factor.Vt
+        end
     end
     transformed = U' * h * U
     direct = nd+1:nd+rank
