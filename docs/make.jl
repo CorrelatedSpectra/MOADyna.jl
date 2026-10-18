@@ -57,9 +57,10 @@ const PAGES = [
         "Point groups"                   => "man/pointgroups.md",
         "Atomic parameters"              => "man/atomic.md",
     ],
-    # Worked spectroscopy examples have their own section.
+    # Worked calculations have their own section.
     "Tutorials" => [
         "Getting started"      => "tut/getting_started.md",
+        "Matrix-free calculations" => "tut/matrixfree.md",
         "NiO: XAS, RIXS, and nIXS" => "tut/nio.md",
     ],
     "Library" => [

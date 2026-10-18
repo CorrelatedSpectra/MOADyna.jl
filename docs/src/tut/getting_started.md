@@ -56,10 +56,10 @@ mode weights `+1` on ↑ and `−1` on ↓ (so ``\sum_i w_i n_i = 2 S_z``).
 ```@example gs
 sz_weights = repeat([1, -1], L)        # (+1, −1) per site
 
-basis = EagerBasis(hilbert,
-                   n_fermion(hilbert) == L,                       # half-filling
-                   WeightedParticleCount(sites, sz_weights) == 0) # Sz = 0
-length(basis)
+hub_basis = basis(hilbert,
+                  n_fermion(hilbert) == L,                       # half-filling
+                  WeightedParticleCount(sites, sz_weights) == 0) # Sz = 0
+length(hub_basis)
 ```
 
 ## Assemble and diagonalize
@@ -69,13 +69,18 @@ builds the sparse `SparseMatrixCSC`, and `eigen` (the MOADyna extension, dispatc
 `KrylovKit` automatically; see [Exact Diagonalization](@ref)) returns the eigensystem.
 
 ```@example gs
-H_compiled = compile(H, basis)
-H_sparse   = assemble(H_compiled, basis)
-result     = eigen(H_sparse, basis; n = 4)
+H_compiled = compile(H, hub_basis)
+H_sparse   = assemble(H_compiled, hub_basis)
+result     = eigen(H_sparse, hub_basis; n = 4)
 round.(result.values; digits = 4)
 ```
 
 The ground-state energy of the half-filled `Sz = 0` 4-site Hubbard chain at `U/t = 4` is
-the value printed above. From here the same `H_sparse`/`basis` feed the [Responses](@ref)
+the value printed above. From here the same `H_sparse`/`hub_basis` feed the [Responses](@ref)
 and [Spectroscopy](@ref) layers; the [NiO: XAS, RIXS, and nIXS](@ref) tutorial scales this
 workflow up to a full multiplet calculation.
+
+To use the same physical basis without assembling the Hamiltonian, call
+`eigen(H, hub_basis; backend=:matrixfree, n=4)`. See
+[Matrix-free Calculations](@ref) for a worked example, threading controls, and
+adaptive basis selection.

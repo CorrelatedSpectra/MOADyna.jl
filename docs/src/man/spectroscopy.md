@@ -99,6 +99,10 @@ Symbolic transitions on the shared basis use the same backend. Alternatively,
 pass prebuilt sparse matrices or matrix-free transition actions; these can be
 reused across calculations.
 
+The basis and solver vectors remain explicit. Choose this backend when avoiding
+matrix storage is useful; sparse propagation can be faster when the matrix fits.
+See [Matrix-free Calculations](@ref) for a runnable introduction.
+
 Rectangular transitions connect distinct initial and propagation bases directly:
 
 ```julia
@@ -184,10 +188,11 @@ diamagnetic weight is not included). Both wrappers take the finite-`T` path via 
 
 [`xas`](@ref), [`rixs`](@ref), and [`fluorescence_yield`](@ref) accept
 `threaded=:auto` (the default), `threaded=true`, or `threaded=false`. This controls
-sparse Hamiltonian products and supported block full reorthogonalization,
+Hamiltonian products and supported block full reorthogonalization,
 including nested recursions and thermal averages. Automatic mode uses workers
-for sufficiently large products and applies a conservative per-block work floor
-to reorthogonalization. `true` requests these row kernels on the available default
+for sufficiently large sparse products, preserves the threading choice of
+matrix-free actions, and applies a conservative per-block work floor to
+reorthogonalization. `true` requests these row kernels on the available default
 pool (possibly one worker); `false` keeps both serial. The two ordered projection
 passes over stored blocks are preserved, although row partitioning can change
 floating-point summation. Unsupported/wider arithmetic retains the serial path;

@@ -8,8 +8,8 @@ end
 ```
 
 `MOADyna.Responses` is the foundational layer beneath all of [Spectroscopy](@ref): it
-represents a matrix-valued frequency response ``C_{ab}(\omega)`` and computes it from an
-assembled Hamiltonian with a block-Lanczos / continued-fraction kernel. Every spectrum in
+represents a matrix-valued frequency response ``C_{ab}(\omega)`` and computes it from a
+sparse or matrix-free Hamiltonian with a block-Lanczos / continued-fraction kernel. Every spectrum in
 MOADyna — XAS, RIXS, ``\sigma(\omega)``, ``S(\mathbf q,\omega)`` — is a thin wrapper over the one constructor
 [`correlator`](@ref).
 
@@ -52,12 +52,17 @@ The ground state is computed internally (`state = :ground_state`) or supplied as
 (the default) the constructor returns a [`LanczosResponse`](@ref); pass an ω grid (or
 call [`to_grid`](@ref)) to evaluate.
 
-The `threaded=:auto` keyword controls sparse Hamiltonian multiplication and
+The `threaded=:auto` keyword controls Hamiltonian multiplication and
 supported block full reorthogonalization, including nested response calculations.
-Sparse products in any ground-state solve use the same control. `threaded=true`
+Products in any ground-state solve use the same control. `threaded=true`
 requests the row kernels on the available default Julia pool (possibly one worker);
-`threaded=false` keeps both serial. Automatic mode keeps small products serial
-and uses a conservative per-block work floor for reorthogonalization.
+`threaded=false` keeps both serial. Automatic mode keeps small sparse products
+serial and preserves the constructor's threading choice for matrix-free actions.
+It uses a conservative per-block work floor for reorthogonalization.
+
+See [Matrix-free Calculations](@ref) for a response calculation without Hamiltonian
+assembly. Selecting a smaller response space is a separate operation, described
+under [Selecting a response space](@ref).
 
 Block reorthogonalization visits every stored block in order for two complete
 passes. Parallel row products use a small solve-local coefficient workspace;

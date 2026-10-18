@@ -11,7 +11,7 @@ build, examine, and reuse.
 
 The guiding idea is that **the code should read like the operators**. `c'(s, 1) * c(s, 2)`
 *is* the operator ``\hat{c}^\dagger_{s\uparrow}\,\hat{c}_{s\downarrow}``; fermionic anticommutation is tracked symbolically and
-exactly; and the path from a symbolic Hamiltonian to a sparse matrix to a spectrum is
+exactly; and the path from a symbolic Hamiltonian through a sparse matrix or matrix-free action to a spectrum is
 transparent at every step — no hidden basis choices, no opaque solver. You can stop at any
 layer and inspect what you have.
 
@@ -40,9 +40,11 @@ parameters the pipeline consumes.
 1. **[Operator Algebra](@ref)** (`Algebra`) — sites, modes, ladder operators, the
    symbolic [`OperatorSum`](@ref), quantum numbers.
 2. **[Hilbert Spaces & Bases](@ref)** (`Bases`) — conserved-sector enumeration with
-   [`EagerBasis`](@ref); [`compile`](@ref) / [`assemble`](@ref) to a sparse matrix.
+   [`basis`](@ref); [`compile`](@ref) / [`assemble`](@ref) to a sparse matrix, or
+   [`matrixfree`](@ref) for operator application without matrix storage.
 3. **[Exact Diagonalization](@ref)** (`ED`) — the `eigen(H, basis)` extension with
-   automatic dense ↔ Krylov dispatch.
+   automatic dense ↔ Krylov dispatch for sparse storage, iterative matrix-free
+   solves, and residual-controlled determinant selection.
 4. **[Responses](@ref)** (`Responses`) — the matrix-of-ω [`correlator`](@ref) and its
    Lanczos / Pole / Grid representations.
 5. **[Spectroscopy](@ref)** (`Spectroscopy`) — [`xas`](@ref), [`rixs`](@ref),
@@ -66,6 +68,8 @@ operators and parameters it runs on:
 
 - New to MOADyna? The [Getting Started](@ref) tutorial builds and solves a Hubbard chain end
   to end.
+- Need to avoid Hamiltonian storage or full basis enumeration? See
+  [Matrix-free Calculations](@ref) for the two distinct choices.
 - Here for spectroscopy? Jump to [Multiplets & Standard Operators](@ref) and the
   [NiO: XAS, RIXS, and nIXS](@ref) tutorial.
 

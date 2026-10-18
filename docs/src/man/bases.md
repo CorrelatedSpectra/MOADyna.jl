@@ -80,6 +80,11 @@ using the action. `threaded=:auto` uses the available Julia threads; `true` and
 `false` explicitly select parallel or serial products. `sparse(A)` and `Matrix(A)`
 are explicit conversions when stored matrix elements are needed.
 
+Matrix-free storage is useful when the Hamiltonian's nonzero entries dominate
+memory. The basis and solver vectors are still stored explicitly; generating
+matrix elements at each multiplication can cost more time than sparse products.
+See [Matrix-free Calculations](@ref) for a worked example and selected-basis options.
+
 For transitions between different sectors, use `matrixfree(T, bra, ket)`.
 Its output coordinates belong to `bra` and input coordinates to `ket`; both
 bases must use the same site and mode encoding. The adjoint reverses these roles.

@@ -62,6 +62,19 @@ the same fixed basis as sparse assembly and introduce no determinant cutoff.
 `dense_below` applies only to sparse storage; it never makes a matrix-free
 calculation assemble a dense matrix implicitly.
 
+## Choosing a representation
+
+| Situation | Starting point |
+|---|---|
+| The Hamiltonian fits comfortably in memory | The default sparse backend; stored entries can make repeated products faster |
+| Matrix storage is limiting, but the basis and solver vectors fit | `backend=:matrixfree` on the same basis |
+| Full basis enumeration is impractical | `selected_eigen`, with physical restrictions, appropriate seeds, and a checked residual tolerance |
+
+Matrix-free multiplication changes storage, not the physical space. Adaptive
+selection changes the space and requires its own convergence checks. Neither
+choice guarantees a speedup. The [Matrix-free Calculations](@ref) tutorial works
+through both on a small Hubbard model.
+
 ## Multiplication threads
 
 Start Julia with multiple threads to make workers available. For a batch

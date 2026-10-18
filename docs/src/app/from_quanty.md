@@ -19,7 +19,7 @@ up closely.
 | `Qxx…` quadrupole moment | `quadrupole(m, shell)` | six dimensionless Cartesian components |
 | `Tx/Ty/Tz` spin-dipole | `spin_dipole_T(m, shell)` | XMCD sum-rule operator |
 | nIXS `e^{iq·r}` | `nixs(m, :A=>:B; theta, phi, radial_integrals)` | + `radial_integral` for `Rj_k(q)` |
-| `Eigensystem(H, …)` | `eigen(H, basis; n, which)` | dense ↔ Krylov auto-dispatch |
+| `Eigensystem(H, …)` | `eigen(H, basis; n, which, backend)` | sparse (default) or matrix-free; `selected_eigen` for adaptive spaces |
 | `CreateSpectra(psi, H, …)` | `xas(H, basis, T, ψ; …)` | also `rixs`, `fluorescence_yield` |
 | `CreateResonantSpectra` | `rixs(H_f, H_i, basis, T_in, T_out, ψ; …)` | |
 | — | `optical_conductivity`, `dynamical_structure_factor` | response-function extras |
@@ -67,9 +67,16 @@ wavefunction/eigenvalue readers in `MOADyna.QuantyIO`.
 
 ## Scope
 
-MOADyna currently builds an explicit sparse Hamiltonian for each conserved sector and diagonalises
-it, so the tractable Hilbert-space size is bounded by what fits in memory as a sparse matrix.
-The principal difference from Quanty is the **matrix-free** (on-the-fly) operator
-application — applying ``H`` to a vector directly on the bit-packed basis without
-materialising a sparse matrix, which reaches much larger Hilbert spaces. In MOADyna this
-is planned for a future *matrix-free + symmetry* release.
+MOADyna supports both sparse Hamiltonians and matrix-free operator actions. With
+`backend=:matrixfree`, `eigen` uses the same explicit basis but generates matrix
+elements during multiplication. This removes Hamiltonian storage; the basis,
+lookup tables, and solver vectors still occupy memory. Sparse storage remains
+the default and can be faster when the matrix fits comfortably in memory.
+
+To avoid enumerating the full allowed space, [`selected_eigen`](@ref) and
+[`selected_response`](@ref) enlarge a selected basis between fixed-space solves.
+Selection is controlled by residuals that include omitted states, with explicit
+limits on retained and generated determinants. These controls are not direct
+equivalents of Quanty's wavefunction truncation parameters. The
+[Matrix-free Calculations](@ref) tutorial explains the workflows and their
+convergence requirements.

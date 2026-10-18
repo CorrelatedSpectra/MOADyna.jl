@@ -38,8 +38,12 @@ available where it helps.
   determinant selection can build smaller spaces for eigenstates and responses.
 - **Exact diagonalization.** `eigen(H, basis; n, which)` dispatches between dense
   LAPACK and Krylov (KrylovKit) automatically; the assembled `SparseMatrixCSC` is
-  also usable directly with your own solver. `backend=:matrixfree` uses iterative
-  solves without storing the Hamiltonian matrix.
+  also usable directly with your own solver.
+- **Matrix-free calculations.** `matrixfree(H, basis)` applies operators without
+  storing matrix elements, using the same eigensolvers and spectroscopy interfaces.
+  Products support Julia threads, with explicit serial and parallel controls.
+  Fixed-basis actions introduce no determinant cutoff; adaptive basis selection
+  has a separate residual tolerance.
 - **Dynamical correlation functions.** A `correlator` builds matrix-of-ω response
   objects `⟨ψ|A†G(ω)B|ψ⟩` in interchangeable Lanczos / pole / grid
   representations, including single-particle Green's functions (`:addition` /
@@ -110,6 +114,11 @@ hub_basis = basis(hilbert,
 E = eigen(H, hub_basis; n = 4)        # 4 lowest states; or assemble() for your own solver
 ```
 
+To solve on the same basis without assembling the Hamiltonian, use
+`eigen(H, hub_basis; backend=:matrixfree, n=4)`. The
+[matrix-free tutorial](docs/src/tut/matrixfree.md) explains when to choose this
+backend and how to grow a selected basis when full enumeration is impractical.
+
 ## A complete NiO L₂,₃ XAS calculation
 
 Full d-shell + 2p core + ligand band, Slater–Condon Coulomb, atomic spin–orbit,
@@ -176,6 +185,8 @@ The [`examples/`](examples/) directory contains runnable scripts:
 - **NiO L₃ RIXS** — full (ω_in, ω_out) intensity map
 - **NiO L₂,₃ XAS (compact)** — same calculation on a `n_2p = 5`-only basis
 - **NiO 3d nIXS** — non-resonant inelastic X-ray scattering multipoles
+- **[Matrix-free Hubbard chain](examples/09_matrixfree.jl)** — ground state,
+  dynamical response, and residual-controlled basis selection
 
 ## Documentation
 
@@ -185,6 +196,7 @@ reference.
 Useful entry points:
 
 - [Getting started](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/getting_started/) — installation and first calculation
+- [Matrix-free calculations](docs/src/tut/matrixfree.md) — choosing a backend, threading, and selected spaces
 - [NiO: XAS, RIXS, and nIXS](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/nio/) — a complete worked multiplet calculation
 - [Manual](https://correlatedspectra.github.io/MOADyna.jl/stable/man/intro/) — operator algebra, bases, ED, responses, spectroscopy
 - [Library reference](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/) — every exported function
@@ -257,6 +269,5 @@ fix, please open an issue first to discuss the design.
 MOADyna is under active development toward a stable v1.0 API; pre-1.0
 minor releases may contain breaking changes (semver 0.x). See
 [`CHANGELOG.md`](CHANGELOG.md) for what each release added. Planned
-directions — matrix-free operator application, symmetry-adapted bases,
-lattice-cluster methods — land as they mature, without version or
-date commitments.
+directions — symmetry-adapted bases and lattice-cluster methods — land as they
+mature, without version or date commitments.
