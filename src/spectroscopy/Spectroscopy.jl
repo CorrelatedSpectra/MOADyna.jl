@@ -41,6 +41,8 @@ using ..Bases: AbstractBasis, EagerBasis, basis_id, apply_restriction!,
                 compile, assemble, MatrixFreeOperator
 using ..Bases: _prepare_action, _validate_threading
 using ..Bases: _transition_action, _validate_action_basis
+using ..Bases: basis, matrixfree, _restriction_list, _build_action
+using ..ED: Eigenstates
 import ..Responses
 import ..Responses: _build_T_K, _block_resolvent_action
 
@@ -58,6 +60,7 @@ include("structure_factor.jl")
 include("kubo.jl")
 include("helpers.jl")
 include("thermal.jl")
+include("workflow.jl")
 include("re_broaden_table.jl")
 include("io.jl")
 

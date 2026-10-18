@@ -80,6 +80,31 @@
     fr = fluorescence_yield(Mi, all_states, Tin, Tout, ψfull; fy_settings...)
     fm = fluorescence_yield(Ai, bi, incoming, outgoing, ψg; fy_settings...)
     @test fm.tensor ≈ fr.tensor atol=1e-10
+
+    gs = eigen(Hi, h; restrictions=bg.restrictions, adaptive=true, backend=:matrixfree)
+    spectra_settings = (; Γ_intermediate=0.4, Γ_final=0.3,
+                         ω_in_grid=settings.ω_in_grid, ω_out_grid=grid, tuning...)
+    for backend in (:sparse, :matrixfree)
+        xs = xas(Hi, Tin, gs; restrictions=bi.restrictions, backend,
+                 Γ=0.4, ω_grid=grid, tuning...)
+        @test xs.tensor ≈ xr.tensor atol=1e-10
+        rs = rixs(Hf, Hi, Tin, Tout, gs; restrictions_final=bf.restrictions,
+                  restrictions_intermediate=bi.restrictions, backend, spectra_settings...)
+        @test rs.tensor ≈ reference.tensor atol=1e-10
+        fs = fluorescence_yield(Hi, Tin, Tout, gs; restrictions_final=bf.restrictions,
+                  restrictions_intermediate=bi.restrictions, backend,
+                  Γ_intermediate=0.4, ω_in_grid=settings.ω_in_grid, tuning...)
+        @test fs.tensor ≈ fr.tensor atol=1e-10
+    end
+    scalar = xas(Hi, first(Tin), gs; restrictions=bi.restrictions, Γ=0.4,
+                 ω_grid=grid, tuning...)
+    @test scalar.tensor ≈ xr.tensor[1, 1, :] atol=1e-10
+    spin_states = eigen(H, b.hilbert; restrictions=nothing, n=3)
+    thermal = xas(H, transitions, spin_states; restrictions=nothing,
+                  temperature=0.3, Γ=0.3, ω_grid=grid, tuning...)
+    thermal_reference = xas(M, b, transitions, E; temperature=0.3,
+                            Γ=0.3, ω_grid=grid, tuning...)
+    @test thermal.tensor ≈ thermal_reference.tensor atol=1e-10
     different_bi = basis(h, n_fermion(h) == 1, n_fermion([i]) == 1)
     @test_throws ArgumentError xas(Ai, different_bi, incoming, ψg;
                                    Eg=0, Γ=0.4, ω_grid=grid, tuning...)
