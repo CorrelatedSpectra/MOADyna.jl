@@ -28,12 +28,13 @@ only.
 
 | Field | Default | Meaning |
 |:------|--------:|:--------|
-| `krylovdim` | 200 | Maximum Krylov-space dimension per block-Lanczos run |
-| `min_iter` | 5 | Minimum number of Lanczos iterations |
-| `max_iter` | 500 | Hard iteration cap |
-| `tol` | 1e-10 | Convergence tolerance (relative residual) |
-| `deflate_tol` | 1e-12 | Deflation threshold for near-zero singular values |
-| `reorth` | `:none` | Re-orthogonalisation strategy (`:none`, `:partial`, `:full`) |
+| `krylovdim` | 200 | Number of block-Lanczos iterations |
+| `tol` | 1e-10 | Soft-stop threshold on the relative Lanczos coupling norm |
+| `reorth` | `:none` | Reorthogonalization strategy (`:none` or `:full`) |
+
+Set `min_iter`, `max_iter` and `deflate_tol` directly through `block_lanczos`
+or `correlator`. The legacy fields with those names are retained in `Defaults`
+for compatibility but are not read by the spectroscopy wrappers.
 
 **Broadenings (FWHM, in eV)**
 

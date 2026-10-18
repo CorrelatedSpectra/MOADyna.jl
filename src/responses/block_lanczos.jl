@@ -42,7 +42,7 @@ Defaults shown here are the kernel-level literals used by
 | `reorth::Symbol` | `:none` | `:none` (3-term) or `:full` (FRO) |
 | `tol::Real` | `1e-10` | soft-stop threshold on `‖β_k‖_F / ‖β_1‖_F` |
 | `min_iter::Int` | `5` | consecutive sub-tol iters → soft-stop |
-| `max_iter::Int` | `500` | hard cap (in case user pushes `krylovdim` very high) |
+| `max_iter::Int` | `krylovdim` | optional explicit hard cap |
 | `deflate_tol::Real` | `1e-12` | rank-revealing QR pivot threshold (relative) |
 | `restrictions` | `nothing` | `Restriction` / `Vector{<:Restriction}` / `nothing` |
 | `basis` | `nothing` | required when `restrictions !== nothing` |
@@ -120,7 +120,7 @@ function block_lanczos(H, X_raw::AbstractMatrix;
                        reorth::Symbol      = :none,
                        tol::Real           = 1e-10,
                        min_iter::Int       = 5,
-                       max_iter::Int       = 500,
+                       max_iter::Int       = krylovdim,
                        deflate_tol::Real   = 1e-12,
                        restrictions        = nothing,
                        basis               = nothing,
