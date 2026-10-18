@@ -8,9 +8,9 @@ end
 Base.size(H::SparseThreadControlProbe) = size(H.parent)
 Base.getindex(H::SparseThreadControlProbe,i::Int,j::Int) = H.parent[i,j]
 Base.:*(H::SparseThreadControlProbe,X::AbstractMatrix) = H.parent*X
-function MOADyna.Bases._prepare_sparse_action(H::SparseThreadControlProbe;
+function MOADyna.Bases._prepare_action(H::SparseThreadControlProbe;
                                               nrhs::Int=1,threaded=:auto)
-    MOADyna.Bases._validate_sparse_threading(threaded)
+    MOADyna.Bases._validate_threading(threaded)
     push!(H.modes,threaded)
     H
 end

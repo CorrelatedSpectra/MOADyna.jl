@@ -28,6 +28,10 @@ using MOADyna
         include("bases/test_golden.jl")
         include("bases/test_mixed_sites.jl")
         include("bases/test_sparse_action.jl")
+        include("bases/test_matrixfree.jl")
+        include("bases/test_spin_adjoint.jl")
+        include("bases/test_discovery.jl")
+        include("bases/test_sampling.jl")
         include("bases/test_embed.jl")
     end
 
@@ -44,6 +48,9 @@ using MOADyna
 
     @testset "ED" begin
         include("ed/test_eigen.jl")
+        include("ed/test_matrixfree_eigen.jl")
+        include("ed/test_selected_eigen.jl")
+        include("ed/test_workflow.jl")
         include("ed/test_eigensystem_io.jl")
         include("ed/test_boson_layer.jl")
         include("ed/test_bose_hubbard.jl")
@@ -74,6 +81,7 @@ using MOADyna
         include("spectroscopy/test_rixs.jl")
         include("spectroscopy/test_rixs_solver.jl")
         include("spectroscopy/test_fluorescence_yield.jl")
+        include("spectroscopy/test_matrixfree.jl")
         include("spectroscopy/test_conductivity.jl")
         include("spectroscopy/test_structure_factor.jl")
         include("spectroscopy/test_finite_T_spectra.jl")
@@ -83,6 +91,7 @@ using MOADyna
 
     @testset "Gradients" begin
         include("gradients/test_affine_model.jl")
+        include("gradients/test_matrixfree.jl")
         include("gradients/test_groundstate_grad.jl")
         include("gradients/test_resolvent_jvp.jl")
         include("gradients/test_xas_jvp.jl")

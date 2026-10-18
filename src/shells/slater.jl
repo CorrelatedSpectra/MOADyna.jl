@@ -191,24 +191,9 @@ with c^k(l1, m1; l2, m2) = (−1)^m1 · sqrt((2l1+1)(2l2+1))
                             · 3j(l1, k, l2; 0, 0, 0)
                             · 3j(l1, k, l2; −m1, m1−m2, m2).
 
-PREFACTORS (LOCKED, asymmetric direct vs exchange):
-- DIRECT:   +1.  The single-shell case has +1/2 (m1↔m2 / m3↔m4 swap
-  is a symmetry of the summand). With distinct A/B labels that swap is
-  not a symmetry, so no 1/2 — net +1. Matches Quanty's
-  `CreateOperatorCoulombTwoShellsConstantOccupation` direct loop after
-  anticommuting the inner-pair (Quanty writes c(A) c(B); MOADyna writes
-  c(B) c(A) → sign flip on canonicalization, then Quanty's −1 → MOADyna's +1).
-- EXCHANGE: −1.  Quanty writes c(B) c(A) in the exchange loop — the
-  SAME order as MOADyna — so canonicalization does NOT insert a sign flip.
-  Quanty's −1 stays −1 in MOADyna. (This asymmetry vs the direct branch
-  is a real consequence of the operator-order difference between
-  Quanty's two loops, not a sign-pinning oversight.)
-
-The asymmetry is regression-tested in `test/shells/test_slater.jl`
-("coulomb two-shell — exchange-only centroid matches Quanty convention")
-and end-to-end-tested by the NiO L₂,₃ XAS native acceptance
-(`test/shells/validation/test_nio_xas_native.jl`, residuals at 1.5e-12
-of peak vs the PyQuanty reference).
+With the displayed normal ordering, the direct and exchange terms have
+prefactors +1 and −1, respectively. The cross-shell direct term has no
+single-shell double-counting factor of 1/2.
 
 F^0(ℓ_A, ℓ_B) is auto-derived from the spherical centroid `U_AB`. Only
 the EXCHANGE Gᵏ contributes (direct F^k>0 averages to zero in the

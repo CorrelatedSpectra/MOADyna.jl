@@ -3,6 +3,18 @@
 Notable user-facing changes, following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] — 2026-10-18
+
+### Added
+
+- Matrix-free operator actions for diagonalization, spectroscopy and fixed-basis gradients.
+- Residual-controlled determinant selection for eigenstates and response tensors.
+- Automatic basis management for eigensolves and spectroscopy.
+
+### Fixed
+
+- Adjoint operations for spin operators resolved by magnetic quantum number.
+
 ## [0.3.3] — 2026-10-17
 
 ### Changed
@@ -96,7 +108,7 @@ Initial feature-complete version.
 - Operator algebra, Hilbert-space construction and exact diagonalization.
 - XAS/RIXS spectrum tensors, fluorescence yield, polarization contraction and rebroadening.
 - Point groups, crystal fields, atomic multiplets and atomic parameters.
-- Spectrum and operator I/O, Quanty interoperability, diagnostics and plotting support.
+- Spectrum and operator I/O, text import, diagnostics and plotting support.
 
 ### Breaking changes
 
@@ -106,8 +118,9 @@ Initial feature-complete version.
 
 ## [pre-0.1.0] — internal milestones
 
-Consolidated the experimental algebra, basis and Quanty components into a single package.
+Consolidated the experimental algebra, basis and import components into a single package.
 
+[0.3.4]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.0...v0.3.1

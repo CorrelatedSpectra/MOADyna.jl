@@ -7,7 +7,7 @@ _scalar_lanczos_type(::Type{T}) where {T} =
 
 _supports_scalar_lanczos_action(::Any) = false
 _supports_scalar_lanczos_action(
-    ::Union{SparseMatrixCSC{T},StridedMatrix{T},Diagonal{T},Bases._SparseRowAction{T}}
+    ::Union{SparseMatrixCSC{T},StridedMatrix{T},Diagonal{T},Bases._SparseRowAction{T},MatrixFreeOperator{T}}
 ) where {T} = _scalar_lanczos_type(T)
 
 function _scalar_lanczos(action, X::Matrix{T}, source_norm;

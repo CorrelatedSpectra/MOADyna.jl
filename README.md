@@ -12,20 +12,14 @@
 **Many-body Operators, Algebra, and Dynamics** — a Julia framework for
 exact diagonalization of finite quantum many-body systems and the dynamical
 response functions built on top of it. You write a Hamiltonian as a symbolic
-operator expression; MOADyna enumerates the conserved-sector Hilbert space, assembles
-a sparse matrix, diagonalizes it, and evaluates correlation functions and
-spectra — lattice models and atomic multiplet problems through one operator
-language.
+operator expression; MOADyna solves it using sparse matrices or matrix-free
+operator actions, then evaluates correlation functions and spectra. Lattice
+models and atomic multiplet problems share the same operator language.
 
 **Background.** MOADyna grew out of many years of working with
 [Quanty](https://www.quanty.org/), and owes a real intellectual debt to Maurits
 Haverkort — his code and ideas shaped how the author thinks about multiplet and
-core-level spectroscopy. MOADyna is an independent Julia project with its own design
-goals: explicit, inspectable operator algebra; programmable exact-diagonalization
-workflows; and a path toward parameter estimation / inverse problems, lattice
-methods, and time-dependent dynamics. `MOADyna.QuantyIO` and the [Coming from
-Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/) appendix keep practical interoperability
-available where it helps.
+core-level spectroscopy.
 
 ## What it does
 
@@ -35,10 +29,16 @@ available where it helps.
 - **Conserved-sector bases.** Particle number, total `Sz`, and weighted particle
   counts are integer/rational valued, so sector enumeration is exact — no state
   is missed to floating-point rounding. Bit-packed states with parallel
-  enumeration and restriction-aware (suffix-pruned) walks.
+  enumeration and restriction-aware (suffix-pruned) walks. Residual-controlled
+  determinant selection can build smaller spaces for eigenstates and responses.
 - **Exact diagonalization.** `eigen(H, basis; n, which)` dispatches between dense
   LAPACK and Krylov (KrylovKit) automatically; the assembled `SparseMatrixCSC` is
   also usable directly with your own solver.
+- **Matrix-free calculations.** `matrixfree(H, basis)` applies operators without
+  storing matrix elements, using the same eigensolvers and spectroscopy interfaces.
+  Products support Julia threads, with explicit serial and parallel controls.
+  Fixed-basis actions introduce no determinant cutoff; adaptive basis selection
+  has a separate residual tolerance.
 - **Dynamical correlation functions.** A `correlator` builds matrix-of-ω response
   objects `⟨ψ|A†G(ω)B|ψ⟩` in interchangeable Lanczos / pole / grid
   representations, including single-particle Green's functions (`:addition` /
@@ -109,6 +109,12 @@ hub_basis = basis(hilbert,
 E = eigen(H, hub_basis; n = 4)        # 4 lowest states; or assemble() for your own solver
 ```
 
+Sparse storage is recommended for routine spectroscopy. To solve on the same
+basis without storing the Hamiltonian matrix, use
+`eigen(H, hub_basis; backend=:matrixfree, n=4)`. The
+[matrix-free tutorial](docs/src/tut/matrixfree.md) explains when to choose this
+backend and how to let the solver construct or adapt a basis automatically.
+
 ## A complete NiO L₂,₃ XAS calculation
 
 Full d-shell + 2p core + ligand band, Slater–Condon Coulomb, atomic spin–orbit,
@@ -175,6 +181,8 @@ The [`examples/`](examples/) directory contains runnable scripts:
 - **NiO L₃ RIXS** — full (ω_in, ω_out) intensity map
 - **NiO L₂,₃ XAS (compact)** — same calculation on a `n_2p = 5`-only basis
 - **NiO 3d nIXS** — non-resonant inelastic X-ray scattering multipoles
+- **[Matrix-free Hubbard chain](examples/09_matrixfree.jl)** — ground state,
+  dynamical response, and residual-controlled basis selection
 
 ## Documentation
 
@@ -184,19 +192,19 @@ reference.
 Useful entry points:
 
 - [Getting started](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/getting_started/) — installation and first calculation
+- [Matrix-free calculations](docs/src/tut/matrixfree.md) — choosing a backend, threading, and selected spaces
 - [NiO: XAS, RIXS, and nIXS](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/nio/) — a complete worked multiplet calculation
 - [Manual](https://correlatedspectra.github.io/MOADyna.jl/stable/man/intro/) — operator algebra, bases, ED, responses, spectroscopy
 - [Library reference](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/) — every exported function
-- [Coming from Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/) — command mapping and interop notes
+- [Importing calculation data](docs/src/app/importing_data.md) — operator and wavefunction text files
 
-The docs are built from [`docs/src/`](docs/src/) with Documenter.jl. Cross-code
-validation reports and reference data live under
+The docs are built from [`docs/src/`](docs/src/) with Documenter.jl. Developer
+validation notes and reference data live under
 [`docs/dev/validation/`](docs/dev/validation/).
 
 ## Interoperability
 
-`MOADyna.QuantyIO` reads [Quanty](https://www.quanty.org/) text dumps (operators and
-related data), so an external operator can be imported as a native
+An operator text dump can be imported as a native
 [`OperatorSum`](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/):
 
 ```julia
@@ -205,8 +213,8 @@ mode_map = i -> (:s, i + 1)           # external 0-indexed → MOADyna 1-indexed
 H        = read_quanty_operator("hamiltonian_dump.txt", hilbert, mode_map)
 ```
 
-For Quanty-to-MOADyna command mapping and interop notes, see [Coming from
-Quanty](https://correlatedspectra.github.io/MOADyna.jl/stable/app/from_quanty/).
+See [Importing calculation data](docs/src/app/importing_data.md) for operator,
+wavefunction, and eigenvalue readers.
 
 ## Citing
 
@@ -225,9 +233,8 @@ when it appears.
 MOADyna was developed with substantial assistance from a blend of LLM-based
 tools, used for both implementation and code review. I directed the design,
 reviewed the resulting code by hand, and am responsible for the package.
-Correctness is checked by the test suite in CI and by cross-code
-numerical validation against [Quanty](https://www.quanty.org/) and
-[QuSpin](https://quspin.github.io/QuSpin/) — see
+The test suite checks analytical results and independent numerical references
+in CI — see
 [`docs/dev/validation/`](docs/dev/validation/).
 
 ## Acknowledgments
@@ -242,7 +249,7 @@ StaticArrays.jl, and DataStructures.jl. See
 MIT — see [`LICENSE`](LICENSE).
 
 A small amount of third-party material is redistributed here under its own
-terms — a Quanty tutorial script and the NiO reference spectra, both CC-BY.
+terms — a tutorial script and the NiO reference spectra, both CC-BY.
 See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md), which also records the
 typeface credit for the logo and the sources of the atomic parameter tables.
 
@@ -256,6 +263,5 @@ fix, please open an issue first to discuss the design.
 MOADyna is under active development toward a stable v1.0 API; pre-1.0
 minor releases may contain breaking changes (semver 0.x). See
 [`CHANGELOG.md`](CHANGELOG.md) for what each release added. Planned
-directions — matrix-free operator application, symmetry-adapted bases,
-lattice-cluster methods — land as they mature, without version or
-date commitments.
+directions — symmetry-adapted bases and lattice-cluster methods — land as they
+mature, without version or date commitments.

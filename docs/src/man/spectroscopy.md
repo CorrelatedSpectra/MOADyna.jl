@@ -7,7 +7,7 @@ DocTestSetup  = quote
 end
 ```
 
-`MOADyna.Spectroscopy` turns an assembled Hamiltonian and a ground (or thermal) state into a
+`MOADyna.Spectroscopy` turns a sparse or matrix-free Hamiltonian and a ground (or thermal) state into a
 frequency-resolved spectrum. It covers two families:
 
 - **Core-level spectroscopy** — [`xas`](@ref) (X-ray absorption), [`rixs`](@ref)
@@ -25,6 +25,39 @@ re-broadened and polarization-sliced without recomputing ([`re_broaden_table`](@
 response wrappers ([`optical_conductivity`](@ref), [`dynamical_structure_factor`](@ref))
 return an already-evaluated algebraic tensor (`chunks = nothing`), so `re_broaden_table` does
 not apply to them — re-run with a new `Γ` instead.
+
+## Spectroscopy from eigenstates
+
+Pass a symbolic Hamiltonian and physical restrictions to `eigen` to keep the
+solved states together with their basis. The spectroscopy functions can then
+construct their own sectors and transitions automatically:
+
+```julia
+gs = eigen(H_GS, m; restrictions=initial_sector, n=1)
+T = dipole(m, :Ni_2p => :Ni_3d)
+spec = xas(H_XAS, T, gs; restrictions=core_hole_sector,
+           omega_grid=incident_grid, Gamma=0.6)
+result = rixs(H_final, H_XAS, T, T, gs;
+              restrictions_intermediate=core_hole_sector,
+              restrictions_final=final_sector,
+              omega_in_grid=incident_grid, omega_out_grid=loss_grid,
+              Gamma_intermediate=0.6, Gamma_final=0.1)
+```
+
+Here `m` is a `ShellModel` (a `Hilbert` also works), and each sector is a
+restriction or collection of restrictions on individual determinants. The
+initial and core-hole occupations must be specified separately. The default is
+sparse storage; `backend=:matrixfree` can be selected in the solve or overridden
+in a spectrum call. The same result supports finite-temperature keywords when
+enough initial eigenstates have been computed.
+
+Each call enumerates the response sectors specified by its restrictions and
+constructs transitions from the initial-state basis. For fluorescence yield,
+`restrictions_final` defines the decay destinations. Response basis selection
+and its convergence controls are provided by [`selected_response`](@ref).
+
+Use the explicit interfaces below to reuse bases and prepared actions across
+calculations.
 
 ## X-ray absorption (XAS)
 
@@ -92,6 +125,46 @@ calculation. The NiO tutorial works a polarisation-resolved RIXS example.
 [`fluorescence_yield`](@ref) (`fluorescence_yield(H_i, basis, T_excite, T_decay, ψ; …)`)
 gives the integrated decay intensity used for partial-fluorescence-yield detection.
 
+## Matrix-free operators and separate sectors
+
+Pass `matrixfree(H, b)` as the Hamiltonian to use matrix-free propagation.
+Symbolic transitions on the shared basis use the same backend. Alternatively,
+pass prebuilt sparse matrices or matrix-free transition actions; these can be
+reused across calculations.
+
+The basis and solver vectors remain explicit. Choose this backend when avoiding
+matrix storage is useful; sparse propagation can be faster when the matrix fits.
+See [Matrix-free Calculations](@ref) for a runnable introduction.
+
+Rectangular transitions connect distinct initial and propagation bases directly:
+
+```julia
+H_int = matrixfree(H_intermediate, basis_int)
+T_actions = [matrixfree(t, basis_int, basis_gs) for t in T]
+spec = xas(H_int, basis_int, T_actions, gs;
+           omega_grid=incident_grid, Gamma=0.6)
+```
+
+Here `gs` is an `Eigen` on `basis_gs`. For RIXS, provide the final basis as the
+positional argument and set `intermediate_basis=basis_int`:
+
+```julia
+H_fin = matrixfree(H_final, basis_final)
+incoming = [matrixfree(t, basis_int, basis_gs) for t in T_in]
+outgoing = [matrixfree(t, basis_int, basis_final) for t in T_out]
+result = rixs(H_fin, H_int, basis_final, incoming, outgoing, gs;
+              intermediate_basis=basis_int,
+              omega_in_grid=incident_grid, omega_out_grid=loss_grid,
+              Gamma_intermediate=0.6, Gamma_final=0.1)
+```
+
+Both transition sets use the absorption orientation; RIXS applies the adjoint
+of each outgoing action. Use the same basis objects when constructing operators
+and calling the solvers. Matrix-free actions carry basis identities that are
+checked where available; for ordinary matrices and bare vectors, the caller
+must ensure the coordinate ordering agrees. Tensor shapes and polarization
+contraction are the same for both backends.
+
 ## Response functions: optical conductivity and dynamical structure factor
 
 The response wrappers are statistics-agnostic and operator-agnostic — you supply the
@@ -148,10 +221,11 @@ diamagnetic weight is not included). Both wrappers take the finite-`T` path via 
 
 [`xas`](@ref), [`rixs`](@ref), and [`fluorescence_yield`](@ref) accept
 `threaded=:auto` (the default), `threaded=true`, or `threaded=false`. This controls
-sparse Hamiltonian products and supported block full reorthogonalization,
+Hamiltonian products and supported block full reorthogonalization,
 including nested recursions and thermal averages. Automatic mode uses workers
-for sufficiently large products and applies a conservative per-block work floor
-to reorthogonalization. `true` requests these row kernels on the available default
+for sufficiently large sparse products, preserves the threading choice of
+matrix-free actions, and applies a conservative per-block work floor to
+reorthogonalization. `true` requests these row kernels on the available default
 pool (possibly one worker); `false` keeps both serial. The two ordered projection
 passes over stored blocks are preserved, although row partitioning can change
 floating-point summation. Unsupported/wider arithmetic retains the serial path;
@@ -173,7 +247,7 @@ setting is separate from basis/assembly scheduling and BLAS thread counts; it
 does not create additional Julia threads. A calculation prepares the sparse
 action once and reuses it across incident energies or initial states. Keep its
 Hamiltonians fixed until the calculation returns. See
-[Sparse multiplication threads](@ref) in the ED manual for the solver setting.
+[Multiplication threads](@ref) in the ED manual for the solver setting.
 
 ## Restriction-resolved partial excitations
 

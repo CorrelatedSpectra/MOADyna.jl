@@ -8,11 +8,9 @@
 #
 # where each A_m(ω) is the spectrum computed from initial state |m⟩ referenced
 # to its own E_m. The initial ensemble is supplied as a `LinearAlgebra.Eigen`
-# whose eigenvectors live in the propagation `basis` (in MOADyna's single-`H`
-# core-spectroscopy formulation the initial multiplet ARE the lowest eigenstates
-# of `H` on `basis`; the dipole-like operator maps to the core-excited sector,
-# which sits hundreds of eV higher and carries negligible Boltzmann weight). The
-# weights / degeneracy-complete truncation reuse `Responses._boltzmann_ensemble`.
+# on the initial-state basis. Prebuilt rectangular transitions can map these
+# vectors into a separate propagation basis. Ensemble weights and complete
+# degenerate clusters are handled by `Responses._boltzmann_ensemble`.
 #
 # Design notes:
 #  - Thermal wrappers REQUIRE an explicit ω grid: per-state `:auto` windows differ
@@ -22,8 +20,6 @@
 #    unavailable on a thermal spectrum (same as `average`).
 #  - The combined result is relabelled with `Eg = E₀` and carries
 #    `:temperature`, `:ensemble_energies`, `:ensemble_weights`, `:N_kept`.
-#  - Users with a *separate* initial basis must build an `Eigen` whose vectors
-#    live in `basis` (embed) or run the per-state loop themselves.
 
 # Relabel a `weighted_sum` result: stamp Eg → E₀ and the thermal metadata.
 # (`weighted_sum` inherits the FIRST per-state Eg, which is wrong for the
@@ -61,7 +57,7 @@ function _xas_thermal(H, basis::AbstractBasis, T_op, E::LinearAlgebra.Eigen;
         "combined; pass ω_grid = ..."))
     states, energies, weights, E0 = Responses._boltzmann_ensemble(
         E.values, E.vectors, Float64(temperature), N_states, degen_tol)
-    action = _prepare_sparse_action(H; nrhs=length(_to_T_list(T_op)), threaded)
+    action = _prepare_action(H; nrhs=length(_to_T_list(T_op)), threaded)
     χs = [xas(action, basis, T_op, states[m]; Eg = energies[m], ω_grid = ω_use,
               threaded, kwargs...)
           for m in eachindex(states)]
@@ -86,8 +82,8 @@ function _rixs_thermal(H_f, H_i, basis::AbstractBasis, T_in, T_out,
     states, energies, weights, E0 = Responses._boltzmann_ensemble(
         E.values, E.vectors, Float64(temperature), N_states, degen_tol)
     n_in, n_out = length(_to_T_list(T_in)), length(_to_T_list(T_out))
-    action_i = _prepare_sparse_action(H_i; nrhs=n_in, threaded)
-    action_f = _prepare_sparse_action(H_f; nrhs=n_in*n_out, threaded)
+    action_i = _prepare_action(H_i; nrhs=n_in, threaded)
+    action_f = _prepare_action(H_f; nrhs=n_in*n_out, threaded)
     χs = [rixs(action_f, action_i, basis, T_in, T_out, states[m];
                Eg = energies[m], ω_in_grid = ω_in_use, ω_out_grid = ω_out_use,
                threaded, kwargs...)
@@ -110,7 +106,7 @@ function _fy_thermal(H_i, basis::AbstractBasis, T_excite, T_decay,
         "ω_in_grid — per-state :auto grids differ and cannot be combined"))
     states, energies, weights, E0 = Responses._boltzmann_ensemble(
         E.values, E.vectors, Float64(temperature), N_states, degen_tol)
-    action = _prepare_sparse_action(H_i; nrhs=length(_to_T_list(T_excite)), threaded)
+    action = _prepare_action(H_i; nrhs=length(_to_T_list(T_excite)), threaded)
     χs = [fluorescence_yield(action, basis, T_excite, T_decay, states[m];
                              Eg = energies[m], ω_in_grid = ω_in_use,
                              threaded, kwargs...)

@@ -4,8 +4,8 @@
 exact diagonalization and core-level spectroscopy of small, strongly correlated
 quantum systems: atomic multiplets, Anderson impurity and cluster models, and small
 lattices built from fermions, bosons, and spins. You write a Hamiltonian as a symbolic
-operator expression, restrict it to a conserved-quantum-number sector, assemble that
-sector into a sparse matrix, diagonalize, and compute dynamical response functions —
+operator expression, restrict it to a conserved-quantum-number sector, solve with
+sparse matrices or matrix-free operator actions, and compute dynamical response functions —
 XAS, RIXS, fluorescence yield, optical conductivity, the dynamical structure factor,
 and single-particle Green's functions — all within a single package.
 
@@ -28,9 +28,9 @@ The organizing principle is that *the code should read like the operators*. The
 expression `c'(s, 1) * c(s, 2)` is literally the operator
 ``\hat{c}^{\dagger}_{s\uparrow}\,\hat{c}_{s\downarrow}``; fermionic anticommutation is
 tracked symbolically and exactly, and the path from a symbolic Hamiltonian through a
-sparse matrix to a spectrum is explicit at every step — no hidden basis choices and no
+sparse matrix or matrix-free action to a spectrum is explicit at every step — no hidden basis choices and no
 opaque solver. Every intermediate object — the [`OperatorSum`](@ref), the
-basis, the assembled `SparseMatrixCSC`, the eigensystem, the response
+basis, the `SparseMatrixCSC` or [`MatrixFreeOperator`](@ref), the eigensystem, the response
 function — is an ordinary Julia value you can inspect, store, and reuse.
 
 MOADyna ships as one package of submodules, each exercised by the test suite:
@@ -40,7 +40,8 @@ and [spectroscopy](@ref "Spectroscopy"), together with the multiplet-physics mac
 Slater–Condon ``F^{k}``/``G^{k}`` Coulomb interactions, spin–orbit coupling,
 point-group-projected crystal fields, and tabulated atomic parameters for
 transition-metal and lanthanide ions. The quick start below builds and solves a
-Hubbard chain; the tutorials carry a full ``L``-edge multiplet calculation end to end.
+Hubbard chain; the tutorials cover [Matrix-free Calculations](@ref) and carry a full
+``L``-edge multiplet calculation end to end.
 
 ```@meta
 CurrentModule = MOADyna
@@ -125,6 +126,7 @@ Depth = 2
 ```@contents
 Pages = [
     "tut/getting_started.md",
+    "tut/matrixfree.md",
     "tut/nio.md",
 ]
 Depth = 2
@@ -156,7 +158,7 @@ Depth = 1
 Pages = [
     "app/conventions.md",
     "app/point_groups.md",
-    "app/from_quanty.md",
+    "app/importing_data.md",
     "app/acknowledgments.md",
 ]
 Depth = 2

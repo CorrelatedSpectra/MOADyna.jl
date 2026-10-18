@@ -4,7 +4,7 @@
 #
 # Two-pass construction writes CSC directly without a COO scratch buffer:
 #   Pass 1: each chunk produces a *mini-CSC* (colptr, rowval, nzval)
-#           for its column slab. Per-column Dict dedup; sort by row.
+#           for its column slab, with grouped elements sorted by row.
 #   Pass 2: stitch the mini-CSCs into the final SparseMatrixCSC by
 #           concatenating rowval/nzval and offsetting each chunk's
 #           colptr. No global COO triplets, no sparse(I,J,V) scratch.
@@ -31,31 +31,23 @@ function assemble(H::CompiledHamiltonian{T}, basis::EagerBasis) where {T}
         throw(ArgumentError("CompiledHamiltonian was compiled against a different " *
                             "basis (got id $(H.basis_id), basis id $(basis.basis_id))."))
 
-    N = length(basis)
-    if N <= typemax(Int32) - 1
-        return _assemble_with_idx(H, basis, Int32)
-    else
-        return _assemble_with_idx(H, basis, Int)
-    end
+    return _assemble_projected(H, basis, _StateIndex(basis))
 end
 
-function _assemble_with_idx(H::CompiledHamiltonian{T}, basis::EagerBasis,
+function _assemble_projected(H, basis, index)
+    largest_dimension = max(length(basis), length(index.basis))
+    Idx = largest_dimension <= typemax(Int32) - 1 ? Int32 : Int
+    return _assemble_with_idx(H, basis, index, Idx)
+end
+
+function _assemble_with_idx(H::CompiledHamiltonian{T}, basis::EagerBasis, index,
                             ::Type{Idx}) where {T, Idx<:Integer}
     N = length(basis)
-    nwords = basis.nwords
     chunks = collect(Iterators.partition(1:N, _assemble_chunk_size(N)))
 
-    # ---- Pass 1: per-chunk mini-CSC with per-column Dict dedup -----------
-    #
-    # Each chunk owns a contiguous range of columns (chunks are produced
-    # by `Iterators.partition(1:N, …)`), so its mini-CSC slots in
-    # cleanly into the final colptr/rowval/nzval without needing any
-    # cross-chunk merge. An eager assemble can hit the same (i, j) slot
-    # up to R times per column (R = compiled-term count); the Dict
-    # accumulator dedups per column at almost no memory cost (Dict stays
-    # tiny — ~hundreds of entries — and is cleared+reused).
+    # Contiguous column slabs need no cross-chunk element merge.
     locals = tmap(chunks; scheduler = :dynamic) do chunk
-        _assemble_chunk(chunk, H, basis, nwords, T, Idx)
+        _assemble_chunk(chunk, H, basis, index, T, Idx)
     end
 
     # If Idx is Int32 but nnz overflows it, retry with Int. We can't
@@ -68,17 +60,17 @@ function _assemble_with_idx(H::CompiledHamiltonian{T}, basis::EagerBasis,
         # Repack and retry. Rare path; not worth optimizing.
         locals = nothing
         GC.gc()
-        return _assemble_with_idx(H, basis, Int)
+        return _assemble_with_idx(H, basis, index, Int)
     end
 
-    return _pass2_stitch(locals, chunks, N, total_nnz_int, T, Idx)
+    return _pass2_stitch(locals, chunks, N, total_nnz_int, T, Idx, length(index.basis))
 end
 
 # Helper kept out-of-line so the inner `@tasks` does not capture local
 # variables of `_assemble_with_idx` (OhMyThreads' boxing detector
 # otherwise refuses to compile the loop).
 function _pass2_stitch(locals, chunks, N::Int, total_nnz::Int,
-                       ::Type{T}, ::Type{Idx}) where {T, Idx<:Integer}
+                       ::Type{T}, ::Type{Idx}, nrows::Int=N) where {T, Idx<:Integer}
     n_chunks = length(locals)
 
     # Per-chunk row offset into the global rowval/nzval arrays.
@@ -120,7 +112,7 @@ function _pass2_stitch(locals, chunks, N::Int, total_nnz::Int,
         end
     end
 
-    return SparseMatrixCSC{T, Idx}(N, N, colptr, rowval, nzval)
+    return SparseMatrixCSC{T, Idx}(nrows, N, colptr, rowval, nzval)
 end
 
 @inline _assemble_chunk_size(N::Int) = max(64, N ÷ (8 * Threads.nthreads()))
@@ -137,54 +129,31 @@ end
 # would temporarily exceed `typemax(Idx)` does not throw before
 # `_assemble_with_idx` has had a chance to verify the *global* nnz against
 # `typemax(Idx)` and (if needed) retry with `Idx = Int`. Row indices are
-# bounded by `length(basis) ≤ typemax(Idx)-1` (checked at the call site)
+# bounded by the destination basis size (checked at the call site),
 # so converting them to `Idx` here is always safe.
 function _assemble_chunk(chunk, H::CompiledHamiltonian{T}, basis::EagerBasis,
-                         nwords::Int, ::Type{T}, ::Type{Idx}) where {T, Idx<:Integer}
+                         index, ::Type{T}, ::Type{Idx}) where {T, Idx<:Integer}
     n_cols = length(chunk)
-    accum     = Dict{Int, T}()       # i → accumulated coefficient at column j
-    keys_buf  = Int[]                # scratch for per-column key sort
+    elements = Tuple{Int,T}[]
 
     colptr_chunk = Vector{Int}(undef, n_cols + 1)
     rowval_chunk = Idx[]
     nzval_chunk  = T[]
-    new_state    = Vector{UInt64}(undef, nwords)
+    new_state    = Vector{UInt64}(undef, basis.nwords)
 
     colptr_chunk[1] = 1
 
     for (j_local, j) in enumerate(chunk)
-        off_j = state_offset(basis, j)
-        empty!(accum)
-        for term in H.terms
-            _term_precheck_fails(H, term, basis.states, off_j) && continue
-            copy_state!(new_state, basis.states, off_j, nwords)
-            phase = _apply_chain_rtl!(new_state, H, term)
-            phase == zero(T) && continue
-            i = get_index(basis, new_state)
-            i == 0 && continue
-            v = term.coef * phase
-            new_v = get(accum, i, zero(T)) + v
-            # Drop exact cancellations rather than storing explicit zeros.
-            # Use `iszero`, never tolerance — small but legitimate matrix
-            # elements must survive.
-            if iszero(new_v)
-                haskey(accum, i) && delete!(accum, i)
-            else
-                accum[i] = new_v
-            end
+        empty!(elements)
+        _foreach_projected_element(H, basis, j, index, new_state) do i, value
+            push!(elements, (i, value))
         end
 
-        # Sort the column's row indices and write them out. CSC requires
-        # row indices be sorted within each column for downstream BLAS /
-        # KrylovKit to be happy.
-        empty!(keys_buf)
-        for k in keys(accum)
-            push!(keys_buf, k)
-        end
-        sort!(keys_buf)
-        for i in keys_buf
+        # Groups have distinct row indices, so sorting needs no stability buffer.
+        sort!(elements; by=first, alg=QuickSort)
+        for (i, value) in elements
             push!(rowval_chunk, Idx(i))
-            push!(nzval_chunk, accum[i])
+            push!(nzval_chunk, value)
         end
 
         colptr_chunk[j_local + 1] = length(rowval_chunk) + 1
@@ -216,6 +185,8 @@ function _apply_chain_rtl!(state::AbstractVector{UInt64},
                            term::CompiledTerm{T})::T where {T}
     if term.kind === EMPTY_CHAIN
         return one(T)
+    elseif term.kind === FERM_CHAIN
+        return _apply_fermion_chain!(state, H, term)
     end
     phase = one(T)
     # Walk entries from chain_length down to 1 (right-to-left).
@@ -276,6 +247,19 @@ function _apply_chain_rtl!(state::AbstractVector{UInt64},
         end
     end
     return phase
+end
+
+@inline function _apply_fermion_chain!(state, H::CompiledHamiltonian{T}, term) where {T}
+    negative = term.negative_phase
+    @inbounds for w in 1:H.nwords
+        word = state[w]
+        required = H.masks_flat[term.ann_mask_offset + w]
+        forbidden = H.masks_flat[term.cre_forbid_mask_offset + w]
+        (word & required) == required && iszero(word & forbidden) || return zero(T)
+        negative ⊻= isodd(count_ones(word & H.masks_flat[term.action_mask_offset + H.nwords + w]))
+        state[w] = word ⊻ H.masks_flat[term.action_mask_offset + w]
+    end
+    return negative ? -one(T) : one(T)
 end
 
 # Jordan-Wigner parity: count occupied fermion bits *strictly below*

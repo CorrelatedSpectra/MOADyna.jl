@@ -150,12 +150,11 @@ the radial factor of a rank-`k` transition moment.
 - `weight = :physical` → `w = r²` (inputs are the physical radial
   wavefunctions `R(r)`); `weight = :reduced` → `w = 1` (inputs are the
   reduced radial functions `u(r) = r·R(r)`, so `∫u_a j_k u_b dr =
-  ∫R_a j_k R_b r² dr` — this matches the tabulated radial files as
-  integrated in Quanty's tutorial 28 `28_NIXS_dd.lua`).
+  ∫R_a j_k R_b r² dr`).
 
 The grid `r` must have `≥ 2` strictly increasing, finite points.
-- `q` is the momentum transfer (only used for `:bessel`); units must match
-  `r` (Quanty's atomic files use `q` per Bohr radius `a₀` on a Bohr grid).
+- `q` is the momentum transfer (only used for `:bessel`), in inverse units of
+  `r`. For a grid in Bohr radii `a₀`, use `q` in `1/a₀`.
 """
 function radial_integral(R_a::AbstractVector, R_b::AbstractVector,
                          r::AbstractVector, k::Integer;

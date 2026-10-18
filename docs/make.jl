@@ -57,9 +57,10 @@ const PAGES = [
         "Point groups"                   => "man/pointgroups.md",
         "Atomic parameters"              => "man/atomic.md",
     ],
-    # Worked spectroscopy examples have their own section.
+    # Worked calculations have their own section.
     "Tutorials" => [
         "Getting started"      => "tut/getting_started.md",
+        "Matrix-free calculations" => "tut/matrixfree.md",
         "NiO: XAS, RIXS, and nIXS" => "tut/nio.md",
     ],
     "Library" => [
@@ -71,7 +72,7 @@ const PAGES = [
         "Shells"           => "lib/shells.md",
         "AtomicParameters" => "lib/atomic.md",
         "PointGroups"      => "lib/pointgroups.md",
-        "QuantyIO"         => "lib/quantyio.md",
+        "Text import"      => "lib/quantyio.md",
         "Diagnostics"      => "lib/diagnostics.md",
         "Units"            => "lib/units.md",
         "Gradients"        => "lib/gradients.md",
@@ -80,7 +81,7 @@ const PAGES = [
     "Appendix" => [
         "Conventions"        => "app/conventions.md",
         "Point-group theory primer" => "app/point_groups.md",
-        "Coming from Quanty" => "app/from_quanty.md",
+        "Importing calculation data" => "app/importing_data.md",
         "Acknowledgments"    => "app/acknowledgments.md",
     ],
 ]

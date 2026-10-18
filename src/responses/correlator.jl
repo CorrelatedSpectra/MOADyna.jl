@@ -94,7 +94,9 @@ threads. `true` requests the row kernels on the available default pool (possibly
 one thread); `false` keeps both serial, including sparse products in automatic
 ground-state and thermal-ensemble solves. Start Julia with `--threads=N` to make
 multiple threads available. Dense/custom Hamiltonian multiplication,
-basis/assembly scheduling, and BLAS thread settings are independent.
+basis/assembly scheduling, and BLAS thread settings are independent. For
+matrix-free actions, `:auto` preserves their construction setting; `true` and
+`false` override it throughout the calculation.
 
 # Return
 
@@ -147,7 +149,8 @@ function correlator(H::AbstractMatrix,
                     ensemble_energies  = nothing,
                     threaded           = :auto,
                     kwargs...)
-    _validate_sparse_threading(threaded)
+    _validate_threading(threaded)
+    _validate_action_basis(H, basis)
     # --- 1. Autocorrelator validation ----------------------------------
     if !(As === Bs)
         throw(ArgumentError(
@@ -557,7 +560,7 @@ function correlator(H::AbstractMatrix,
         Tcol   = Tprod <: Complex ? Tprod : Complex{Tprod}
         X = Matrix{Tcol}(undef, N_basis, N_B)
         for j in 1:N_B
-            B_assembled = assemble(compile(ops_active[j], basis), basis)
+            B_assembled = _transition_action(ops_active[j], basis, H; threaded)
             X[:, j] = B_assembled * ψ₀
         end
         (X, Eg_use)
@@ -701,16 +704,16 @@ end
 Truncate a precomputed spectrum to its lowest `N_states` eigenpairs
 (degeneracy-complete), form the 1/Z-normalised Boltzmann weights, and drop
 zero-weight states. Shared by `_thermal_states` (which supplies `eigen(H, basis)`)
-and the Spectroscopy finite-T wrappers (which supply a user `Eigen` of the
-*initial* spectrum, whose eigenvectors live in the propagation `basis`).
+and the Spectroscopy finite-T wrappers (which supply a user `Eigen` on the
+initial-state basis).
 
 `energies` / `vectors` need NOT be pre-sorted — they are sorted here (carrying
 the eigenvectors), so the caller never has to trust the input `Eigen` ordering.
 The contract is only that the lowest kept states are the intended initial
 manifold. `T == 0` gives equal weight `1/g` across the degenerate ground
-manifold (within `degen_tol`); `T > 0` gives `ρ_m = e^{-βE_m}/Z`. The same P8
-degeneracy gate (truncation must not split a manifold) and P10 under-convergence
-warning apply.
+manifold (within `degen_tol`); `T > 0` gives `ρ_m = e^{-βE_m}/Z`. Truncation
+must preserve complete degenerate manifolds; an appreciable Boltzmann weight
+on the first excluded state raises an under-convergence warning.
 """
 function _boltzmann_ensemble(energies_in::AbstractVector, vectors_in::AbstractMatrix,
                              T::Real, N_states, degen_tol)
@@ -722,13 +725,11 @@ function _boltzmann_ensemble(energies_in::AbstractVector, vectors_in::AbstractMa
     E0 = energies_all[1]
 
     # First-excluded eigenvalue (if a buffer state exists beyond N_states),
-    # captured BEFORE truncation for the degeneracy gate (P8) and the
-    # under-convergence warning (P10).
+    # captured before truncation for the degeneracy and convergence checks.
     has_buffer = N_states !== nothing && length(energies_all) ≥ N_states + 1
     E_excluded = has_buffer ? energies_all[N_states + 1] : nothing
 
-    # Degeneracy gate (P8): truncating at N_states must not split a
-    # degenerate manifold.
+    # Truncating at N_states must not split a degenerate manifold.
     if has_buffer && abs(energies_all[N_states + 1] - energies_all[N_states]) < degen_tol
         throw(ArgumentError(
             "correlator: truncation at N_states=$N_states splits a degenerate " *
@@ -825,7 +826,7 @@ function _thermal_response(H, basis, As, Bs;
         _boltzmann_ensemble(ensemble_energies, V, T, N_states, degen_tol)
     end
 
-    action = _prepare_sparse_action(H; nrhs=max(1,length(Bs)), threaded)
+    action = _prepare_action(H; nrhs=max(1,length(Bs)), threaded)
     weighted = map(eachindex(states)) do m
         per_state = correlator(action, basis, As, Bs;
                                Γ = Γ, Eg = energies[m], state = states[m],

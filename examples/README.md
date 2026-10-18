@@ -19,6 +19,7 @@ julia --project=. examples/01_hubbard_chain.jl
 | `06_nio_rixs.jl` | NiO L₃ RIXS — native multiplet calculation |
 | `07_nio_xas_compact.jl` | NiO L₂,₃ XAS — compact-basis (n_2p = 5 only) workflow |
 | `08_nio_nixs.jl` | NiO 3d d-d nIXS — `nixs` multipole scattering operator → `S(q,ω)` |
+| `09_matrixfree.jl` | Matrix-free Hubbard ground state and response, with residual-controlled basis selection |
 
 ## Future example ideas
 

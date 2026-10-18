@@ -40,6 +40,8 @@ struct CompiledTerm{T<:Number}
     # `-1` means "no precheck of this kind".
     ann_mask_offset::Int
     cre_forbid_mask_offset::Int
+    action_mask_offset::Int      # flip mask followed by parity mask; -1 if unused
+    negative_phase::Bool
     # Boson prechecks: range into boson_reqs (1-based indices).
     boson_req_start::Int
     boson_req_count::Int
@@ -62,10 +64,53 @@ struct CompiledHamiltonian{T<:Number}
     terms::Vector{CompiledTerm{T}}
     entries::Vector{CompiledEntry}
     fermion_mask::Vector{UInt64}           # fermion bit positions eligible for JW parity
-    masks_flat::Vector{UInt64}              # 2 × nwords per fermion-bearing term
+    masks_flat::Vector{UInt64}              # occupation and action masks
     boson_reqs::Vector{Tuple{Int,Int,Int}}  # (mode_idx into entries, required_min_occ, max_val)
     basis_id::UInt64
     nwords::Int
+    term_groups::Vector{Vector{Int}}
+end
+
+function CompiledHamiltonian{T}(terms, entries, fermion_mask, masks_flat, boson_reqs,
+                                basis_id, nwords) where {T<:Number}
+    return CompiledHamiltonian{T}(terms, entries, fermion_mask, masks_flat, boson_reqs,
+                                  basis_id, nwords, _group_destinations(terms, entries, nwords))
+end
+
+CompiledHamiltonian(terms::Vector{CompiledTerm{T}}, entries, fermion_mask, masks_flat,
+                    boson_reqs, basis_id, nwords) where {T<:Number} =
+    CompiledHamiltonian{T}(terms, entries, fermion_mask, masks_flat, boson_reqs, basis_id, nwords)
+
+# Successful terms with the same occupation changes reach the same determinant.
+function _group_destinations(terms, entries, nwords)
+    groups = Vector{Int}[]
+    indices = Dict{Tuple,Int}()
+    for (i, term) in enumerate(terms)
+        flips = zeros(UInt64, nwords)
+        shifts = Dict{NTuple{3,Int},Int}()
+        for k in 1:term.chain_length
+            entry = entries[term.chain_offset + k]
+            if entry.kind === FERM_C || entry.kind === FERM_CDAG
+                flips[entry.word_idx] ⊻= UInt64(1) << entry.bit_offset
+            else
+                delta = entry.kind in (BOS_BDAG, SPIN_SPLUS) ? 1 :
+                    entry.kind in (BOS_B, SPIN_SMINUS) ? -1 : 0
+                iszero(delta) && continue
+                span = (entry.word_idx, entry.bit_offset, entry.nbits)
+                shifts[span] = get(shifts, span, 0) + delta
+            end
+        end
+        key = (Tuple(flips), Tuple(sort!([(span..., delta)
+            for (span, delta) in shifts if !iszero(delta)])))
+        group = get(indices, key, 0)
+        if group == 0
+            push!(groups, Int[])
+            group = length(groups)
+            indices[key] = group
+        end
+        push!(groups[group], i)
+    end
+    return groups
 end
 
 Base.length(h::CompiledHamiltonian) = length(h.terms)
@@ -78,9 +123,6 @@ Base.show(io::IO, h::CompiledHamiltonian{T}) where {T} =
 # =====================================================================
 # compile
 # =====================================================================
-
-const SXSY_EXPANSION_WARN  = 256
-const SXSY_EXPANSION_ERROR = 65_536
 
 """
     compile(H::OperatorSum, basis::EagerBasis) -> CompiledHamiltonian
@@ -116,7 +158,7 @@ function compile(H::OperatorSum{T}, basis::EagerBasis) where {T<:Number}
             ccoef = Tout(coef * factor)
             ccoef == 0 && continue
             term_record = _compile_one_term(ccoef, expanded_chain, enc, nwords,
-                                            entries, masks_flat, boson_reqs)
+                                            entries, masks_flat, boson_reqs, fermion_mask)
             push!(terms, term_record)
         end
     end
@@ -125,93 +167,29 @@ function compile(H::OperatorSum{T}, basis::EagerBasis) where {T<:Number}
                                      basis.basis_id, nwords)
 end
 
-# --- Sx/Sy expansion --------------------------------------------------------
-
-# Returns a Vector{Tuple{Complex{Rational}, Chain}} of (coefficient_factor,
-# expanded_chain) pairs where every spin entry in the chain is one of
-# {:Sz, :Splus, :Sminus}. We do the expansion as a Cartesian product over
-# the positions occupied by :Sx / :Sy.
-function _expand_spin_xy(chain::Chain)
-    # Reject exponential growth before allocating its Cartesian product.
-    # Guard the shift separately so long chains cannot overflow Int.
-    n_xy = count(e -> e.kind === :Sx || e.kind === :Sy, chain)
-    n_xy >= 8 * sizeof(Int) - 1 && throw(ArgumentError(
-        "Sx/Sy compile-time expansion factor 2^$n_xy exceeds " *
-        "limit $SXSY_EXPANSION_ERROR. Rewrite the chain in S+/S- form."))
-    _check_spin_expansion(1 << n_xy)
-
-    # Find every :Sx/:Sy position and its (factor, replacement_kind) options.
-    positions = Tuple{Int, Vector{Tuple{ComplexF64, Symbol}}}[]
-    for (i, e) in enumerate(chain)
-        if e.kind === :Sx
-            push!(positions, (i, [(0.5 + 0im, :Splus), (0.5 + 0im, :Sminus)]))
-        elseif e.kind === :Sy
-            # Sy = (-i/2)(S+ - S-) = (-i/2)·S+ + (i/2)·S-
-            push!(positions, (i, [(-0.5im, :Splus), (0.5im, :Sminus)]))
-        end
-    end
-    isempty(positions) && return [(1.0 + 0im, chain)]
-
-    # Cartesian product of the choice vectors, each producing one (factor, chain).
-    out = Tuple{ComplexF64, Chain}[]
-    pos_idx = ones(Int, length(positions))
-    pos_card = [length(p[2]) for p in positions]
-    while true
-        factor = 1.0 + 0im
-        new_chain = collect(LadderEntry, chain)
-        for (j, (chain_pos, options)) in enumerate(positions)
-            f, kind = options[pos_idx[j]]
-            factor *= f
-            old = chain[chain_pos]
-            new_chain[chain_pos] = LadderEntry(kind, old.site, old.label)
-        end
-        push!(out, (factor, Tuple(new_chain)))
-        # Increment pos_idx (mixed-radix counter).
-        carry = true
-        for j in eachindex(pos_idx)
-            pos_idx[j] += 1
-            if pos_idx[j] > pos_card[j]
-                pos_idx[j] = 1
-            else
-                carry = false
-                break
-            end
-        end
-        carry && break
-    end
-    return out
-end
-
-function _check_spin_expansion(factor::Int)
-    if factor > SXSY_EXPANSION_ERROR
-        throw(ArgumentError("Sx/Sy compile-time expansion factor $factor exceeds " *
-                            "limit $SXSY_EXPANSION_ERROR. Rewrite the chain in S+/S- form."))
-    elseif factor > SXSY_EXPANSION_WARN
-        @warn "Sx/Sy compile-time expansion factor $factor exceeds soft limit"
-    end
-    return nothing
-end
-
 # --- Per-term compilation ---------------------------------------------------
 
 function _compile_one_term(coef::T, chain::Chain, enc::EncodingMap, nwords::Int,
                            entries::Vector{CompiledEntry},
                            masks_flat::Vector{UInt64},
-                           boson_reqs::Vector{Tuple{Int,Int,Int}}) where {T}
-    if isempty(chain)
-        # Identity term.
-        return CompiledTerm{T}(coef, EMPTY_CHAIN, length(entries), 0, -1, -1, 0, 0)
-    end
-
+                           boson_reqs::Vector{Tuple{Int,Int,Int}}, fermion_mask) where {T}
     chain_offset = length(entries)
+    for e in chain
+        push!(entries, _lower_entry(e, enc))
+    end
+    return _compiled_term(coef, chain_offset, length(chain), nwords,
+                          entries, masks_flat, boson_reqs, fermion_mask)
+end
+
+function _compiled_term(coef::T, chain_offset::Int, chain_length::Int, nwords::Int,
+                        entries::Vector{CompiledEntry}, masks_flat::Vector{UInt64},
+                        boson_reqs::Vector{Tuple{Int,Int,Int}}, fermion_mask) where {T}
     has_fermion = false
     has_boson = false
     has_spin = false
 
-    for e in chain
-        ce = _lower_entry(e, enc)
-        push!(entries, ce)
-        kind = ce.kind
+    for k in 1:chain_length
+        kind = entries[chain_offset + k].kind
         if kind === FERM_C || kind === FERM_CDAG
             has_fermion = true
         elseif kind === BOS_B || kind === BOS_BDAG
@@ -220,8 +198,6 @@ function _compile_one_term(coef::T, chain::Chain, enc::EncodingMap, nwords::Int,
             has_spin = true
         end
     end
-    chain_length = length(entries) - chain_offset
-
     # Term kind classification.
     term_kind = if has_fermion && (has_boson || has_spin)
         MIXED_CHAIN
@@ -242,8 +218,11 @@ function _compile_one_term(coef::T, chain::Chain, enc::EncodingMap, nwords::Int,
     cre_off = -1
     if has_fermion
         ann_off, cre_off = _build_fermion_masks!(
-            masks_flat, chain, chain_offset, entries, nwords)
+            masks_flat, chain_length, chain_offset, entries, nwords)
     end
+    action_off, negative_phase = term_kind === FERM_CHAIN ?
+        _build_fermion_action!(masks_flat, chain_length, chain_offset, entries,
+                              nwords, fermion_mask) : (-1, false)
 
     # Bosonic prechecks: per-mode required min occupation. For each boson
     # entry we count how many `b` (annihilations) and `bdag` (creations) it
@@ -252,11 +231,12 @@ function _compile_one_term(coef::T, chain::Chain, enc::EncodingMap, nwords::Int,
     boson_req_start = length(boson_reqs) + 1
     boson_req_count = 0
     if has_boson
-        boson_req_count = _build_boson_reqs!(boson_reqs, chain, chain_offset, entries)
+        boson_req_count = _build_boson_reqs!(boson_reqs, chain_length, chain_offset, entries)
     end
 
     return CompiledTerm{T}(coef, term_kind, chain_offset, chain_length,
-                           ann_off, cre_off, boson_req_start, boson_req_count)
+                           ann_off, cre_off, action_off, negative_phase,
+                           boson_req_start, boson_req_count)
 end
 
 function _lower_entry(e::LadderEntry, enc::EncodingMap)::CompiledEntry
@@ -295,11 +275,11 @@ end
 
 # --- Fermionic precheck masks ----------------------------------------------
 #
-# For a normally ordered fermion chain, annihilated modes must be occupied.
-# Created modes must be empty unless they are also annihilated in the chain.
+# Express every occupation requirement on the incoming determinant, accounting
+# for earlier flips when walking right-to-left. Conflicting masks reject a chain.
 
 function _build_fermion_masks!(masks_flat::Vector{UInt64},
-                               chain::Chain, chain_offset::Int,
+                               chain_length::Int, chain_offset::Int,
                                entries::Vector{CompiledEntry},
                                nwords::Int)
     ann_off = length(masks_flat)
@@ -307,35 +287,50 @@ function _build_fermion_masks!(masks_flat::Vector{UInt64},
     cre_off = length(masks_flat)
     append!(masks_flat, zeros(UInt64, nwords))
 
-    # Track which bits are annihilated and which are created.
-    ann_bits = zeros(UInt64, nwords)
-    cre_bits = zeros(UInt64, nwords)
-    for (k, e) in enumerate(chain)
+    flipped = zeros(UInt64, nwords)
+    for k in chain_length:-1:1
         ce = entries[chain_offset + k]
-        if ce.kind === FERM_C
-            ann_bits[ce.word_idx] |= UInt64(1) << ce.bit_offset
-        elseif ce.kind === FERM_CDAG
-            cre_bits[ce.word_idx] |= UInt64(1) << ce.bit_offset
+        if ce.kind === FERM_C || ce.kind === FERM_CDAG
+            bit = UInt64(1) << ce.bit_offset
+            occupied = (ce.kind === FERM_C) ⊻ !iszero(flipped[ce.word_idx] & bit)
+            offset = occupied ? ann_off : cre_off
+            masks_flat[offset + ce.word_idx] |= bit
+            flipped[ce.word_idx] ⊻= bit
         end
     end
-    # cre_forbid = cre_bits ∖ ann_bits
-    for w in 1:nwords
-        masks_flat[ann_off + w] = ann_bits[w]
-        masks_flat[cre_off + w] = cre_bits[w] & ~ann_bits[w]
-    end
     return ann_off, cre_off
+end
+
+# A valid fermion chain maps x to x ⊻ F with sign (-1)^(s + parity(x & P)).
+# Earlier flips contribute the constant sign; all spectator fermions enter P.
+function _build_fermion_action!(masks, chain_length, chain_offset, entries,
+                                nwords, fermion_mask)
+    offset = length(masks)
+    append!(masks, zeros(UInt64, 2nwords))
+    negative = false
+    for k in chain_length:-1:1
+        entry = entries[chain_offset + k]
+        for w in 1:entry.word_idx
+            lower = fermion_mask[w]
+            w == entry.word_idx && (lower &= (UInt64(1) << entry.bit_offset) - UInt64(1))
+            masks[offset + nwords + w] ⊻= lower
+            negative ⊻= isodd(count_ones(masks[offset + w] & lower))
+        end
+        masks[offset + entry.word_idx] ⊻= UInt64(1) << entry.bit_offset
+    end
+    return offset, negative
 end
 
 # --- Bosonic precheck reqs --------------------------------------------------
 
 function _build_boson_reqs!(boson_reqs::Vector{Tuple{Int,Int,Int}},
-                            chain::Chain, chain_offset::Int,
+                            chain_length::Int, chain_offset::Int,
                             entries::Vector{CompiledEntry})
     # Group by (word_idx, bit_offset) — the unique boson mode identifier.
     # Walk the chain right-to-left, tracking running occupation deficit.
     # The "required min occupation" is the maximum deficit reached.
     grouped = Dict{Tuple{Int,Int}, Vector{Int}}()    # mode_id → list of chain idx
-    for k in 1:length(chain)
+    for k in 1:chain_length
         ce = entries[chain_offset + k]
         if ce.kind === BOS_B || ce.kind === BOS_BDAG
             key = (ce.word_idx, ce.bit_offset)
@@ -372,7 +367,30 @@ end
 
 # --- Output eltype helper --------------------------------------------------
 
-function _output_eltype(::Type{T}, H::OperatorSum) where {T}
-    has_sy = any(any(e.kind === :Sy for e in term.chain) for term in H)
-    return has_sy ? complex(float(T)) : T
+
+function _adjoint_compiled_entry(e::CompiledEntry)
+    kind = e.kind === FERM_C ? FERM_CDAG : e.kind === FERM_CDAG ? FERM_C :
+           e.kind === BOS_B ? BOS_BDAG : e.kind === BOS_BDAG ? BOS_B :
+           e.kind === SPIN_SPLUS ? SPIN_SMINUS :
+           e.kind === SPIN_SMINUS ? SPIN_SPLUS : e.kind
+    # A spin entry selects its source m; the inverse selects the destination m.
+    target = e.target_value + (e.kind === SPIN_SPLUS ? 1 : e.kind === SPIN_SMINUS ? -1 : 0)
+    return CompiledEntry(kind, e.word_idx, e.bit_offset, e.nbits, e.max_val, target)
+end
+
+function _adjoint_plan(H::CompiledHamiltonian{T}, basis_id::UInt64) where {T}
+    entries = CompiledEntry[]
+    terms = CompiledTerm{T}[]
+    masks = UInt64[]
+    reqs = Tuple{Int,Int,Int}[]
+    for term in H.terms
+        offset = length(entries)
+        for k in term.chain_length:-1:1
+            push!(entries, _adjoint_compiled_entry(H.entries[term.chain_offset + k]))
+        end
+        push!(terms, _compiled_term(conj(term.coef), offset, term.chain_length,
+                                    H.nwords, entries, masks, reqs, H.fermion_mask))
+    end
+    return CompiledHamiltonian(terms, entries, H.fermion_mask, masks, reqs,
+                               basis_id, H.nwords)
 end

@@ -26,7 +26,11 @@ using OhMyThreads: @tasks
 
 using ..Algebra
 using ..Bases
-using ..Bases: _prepare_sparse_action, _validate_sparse_threading
+using ..Bases: _prepare_action, _validate_threading
+using ..Bases: _transition_action, _validate_action_basis
+using ..Bases: SelectionConvergenceError, _selected_basis, _rebind_action, _embed_block
+using ..Bases: _external_action, _discover_action, _enrichment_rows, _CandidateLimit
+using ..Bases: _StateAccumulator, _accumulator_row!, _finish_accumulator
 
 include("types.jl")
 include("scalar_lanczos.jl")
@@ -35,6 +39,7 @@ include("block_lanczos.jl")
 include("block_tridiagonal.jl")
 include("cf.jl")
 include("conversions.jl")
+include("selection.jl")
 include("arithmetic.jl")
 include("correlator.jl")
 include("io.jl")
@@ -51,6 +56,7 @@ export GreensFunction
 export to_pole
 export to_grid
 export correlator
+export selected_response, SelectedResponse, resolvent
 export save_response
 export load_response
 

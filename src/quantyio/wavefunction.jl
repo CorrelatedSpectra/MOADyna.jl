@@ -44,15 +44,14 @@ basis states not appearing in the dump are zero.
 
 `mode_map` follows the same convention as `read_quanty_operator`:
 either a function `i -> (site_name, label)` or a `Dict{Int, ...}`
-mapping Quanty's 0-indexed mode integers to MOADyna addresses.
+mapping zero-based file indices to site and mode addresses.
 
-If Quanty's wavefunction is real (QComplex=0), the imaginary parts of
+For real wavefunctions (`QComplex=0`), the imaginary parts of
 the returned vector are exactly zero. Use `eltype=Float64` when you
 want a real return type.
 
 Throws `ArgumentError` if a determinant in the dump lies outside
-`basis` (which would indicate a sector mismatch — silent dropping
-would mask a real error).
+`basis`.
 """
 function read_quanty_wavefunction(path::AbstractString, basis,
                                   mode_map; eltype = ComplexF64)
@@ -65,9 +64,8 @@ end
     read_quanty_wavefunctions(path, basis, mode_map; eltype=ComplexF64)
         -> Vector{Vector{eltype}}
 
-Read EVERY `WaveFunction:` block from `path` (typical use: an
-`Eigensystem` dump that contains multiple eigenvectors). Returns a
-vector of MOADyna-indexed coefficient vectors in file order.
+Read every `WaveFunction:` block from `path`. Return a vector of coefficient
+vectors aligned to `basis`, in file order.
 """
 function read_quanty_wavefunctions(path::AbstractString, basis,
                                    mode_map; eltype = ComplexF64)
@@ -88,8 +86,7 @@ end
 
 Read a list of eigenvalues from a plain-text file with one number per
 line (blank lines and `#`-comments ignored). Pairs naturally with
-`read_quanty_wavefunctions` to form a `LinearAlgebra.Eigen` from a
-Quanty `Eigensystem` dump.
+`read_quanty_wavefunctions` to form a `LinearAlgebra.Eigen`.
 """
 function read_quanty_eigenvalues(path::AbstractString)
     out = Float64[]

@@ -1,16 +1,3 @@
-# =====================================================================
-# ConvergenceError — raised by `eigen` on Krylov non-convergence
-# =====================================================================
-#
-# Silent partial-convergence is a foot-gun. Users running batched
-# parameter scans wrap the call in `try`/`catch` and decide whether
-# to retry with larger `maxiter` / `krylovdim`.
-#
-# `normres` carries KrylovKit's `info.normres` — a `Vector{Float64}` of
-# per-eigenpair residual norms. NOT KrylovKit's `info.residual`, which is
-# a Vector of residual VECTORS (not numbers); that is the wrong field for
-# this purpose.
-
 """
     ConvergenceError <: Exception
 
@@ -19,8 +6,9 @@ requested number of eigenpairs.
 
 # Fields
 - `converged::Int`              — number of eigenpairs that did converge
-- `normres::Vector{Float64}`    — per-eigenpair residual norms (`info.normres`)
-- `info`                        — full KrylovKit `ConvergenceInfo` for diagnostics
+- `normres::Vector{Float64}`    — per-eigenpair residual norms; independently
+  measured when the final check fails, otherwise reported by KrylovKit
+- `info`                        — original KrylovKit `ConvergenceInfo` for diagnostics
 
 Use [`max_normres`](@ref) for the worst-case scalar diagnostic.
 """

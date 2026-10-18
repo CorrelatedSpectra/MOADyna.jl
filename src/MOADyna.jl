@@ -50,7 +50,7 @@ almost never reach for these directly.
   Akm, hop, dipole, to_real, to_jlmj, onsite_energies)
 - [`MOADyna.Diagnostics`](@ref) — post-eigenstate analysis (`expectation_table`,
   `configuration_weights`)
-- [`MOADyna.QuantyIO`](@ref) — read Quanty operator dumps into `OperatorSum`s
+- [`MOADyna.QuantyIO`](@ref) — read operator text dumps into `OperatorSum`s
 - [`MOADyna.AtomicParameters`](@ref) — atomic Slater-Condon parameters
   (`atomic_parameters`, static Haverkort dict + optional Cowan)
 - [`MOADyna.Units`](@ref) — energy-unit conversions (`convert_energy`, `Units.kB_eV`)
@@ -116,6 +116,7 @@ export get_state, get_index, basis_id
 export apply_restriction!
 export CompiledHamiltonian
 export compile, assemble
+export MatrixFreeOperator, matrixfree
 export embed
 
 # From Shells
@@ -138,7 +139,9 @@ export read_quanty_operator, read_quanty_operators
 export read_quanty_wavefunction, read_quanty_wavefunctions, read_quanty_eigenvalues
 
 # From ED
+export Eigenstates
 export ConvergenceError, max_normres
+export selected_eigen, SelectedEigen, SelectionConvergenceError
 export save_eigensystem, load_eigensystem
 
 # From Responses (algorithm internals — block_lanczos, cf_block — stay
@@ -146,6 +149,7 @@ export save_eigensystem, load_eigensystem
 export AbstractResponse
 export LanczosResponse, PoleResponse, GridResponse, GreensFunction
 export correlator, to_pole, to_grid
+export selected_response, SelectedResponse, resolvent
 export save_response, load_response
 
 # From Spectroscopy. Algorithm internals (LanczosChunk, BlockTriDiagonal,

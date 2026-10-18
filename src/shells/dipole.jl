@@ -79,9 +79,8 @@ T_x, T_y, T_z = T
 ```
 
 # Notes
-For a cross-shell dipole, `T_x` and `T_y` are NOT individually Hermitian
-— each is the absorption operator only. Its adjoint is the emission
-operator. This matches the Quanty TXAS convention.
+Each cross-shell component is an absorption operator. Its adjoint is the
+corresponding emission operator.
 """
 function dipole(m::ShellModel, shells::Pair{Symbol, Symbol})
     shellA, shellB = shells

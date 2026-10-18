@@ -43,12 +43,7 @@
                       for k in 1:4) < 1e-10
     end
 
-    # E0b — dense and Krylov agree on the GROUND STATE
-    # On a degenerate spectrum, single-vector Lanczos returns at most one
-    # vector per degenerate eigenspace (this is a fundamental property,
-    # not a v0.1 limitation we can fix without block Lanczos). We test
-    # agreement on the non-degenerate ground state of a 4-site Heisenberg
-    # chain, where both paths must produce identical numbers.
+    # Check the nondegenerate ground state against dense diagonalization.
     @testset "E0b: dense and Krylov agree on non-degenerate GS" begin
         sites = [SpinSite{1//2}(Symbol("s$i")) for i in 1:4]
         h = Hilbert(s.name => s for s in sites)

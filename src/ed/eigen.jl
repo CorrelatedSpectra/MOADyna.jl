@@ -1,62 +1,46 @@
-# =====================================================================
-# eigen(H, basis; ...)  — single user-facing method
-# =====================================================================
-#
-# Two methods on Base.LinearAlgebra.eigen:
-#   - eigen(H::OperatorSum,     basis::EagerBasis; kwargs...)
-#   - eigen(H::SparseMatrixCSC, basis::EagerBasis; kwargs...)
-#
-# Both return LinearAlgebra.Eigen{Float64, T} with `.values::Vector{Float64}`
-# (sorted by `which`) and `.vectors::Matrix{T}` (orthonormal columns,
-# T = eltype(H)).
-
-# --- Convenience method on OperatorSum --------------------------------
-#
-# The user gives us a symbolic H; we compile + assemble + dispatch. Power
-# users with parameter-scan workflows hold the `SparseMatrixCSC`
-# themselves and call the second method directly to skip recompilation.
-
 function LinearAlgebra.eigen(H::OperatorSum, basis::EagerBasis;
-                             threaded = :auto, kwargs...)
-    _validate_sparse_threading(threaded)
-    H_compiled = compile(H, basis)
-    H_sparse = assemble(H_compiled, basis)
-    return LinearAlgebra.eigen(H_sparse, basis; threaded, kwargs...)
+                             backend::Symbol = :sparse, threaded = :auto, kwargs...)
+    action = _build_action(H, basis; backend, threaded)
+    return LinearAlgebra.eigen(action, basis; threaded, kwargs...)
 end
 
-# --- Main method on SparseMatrixCSC -----------------------------------
+# Shared sparse and matrix-free solver.
 
 """
     eigen(H, basis; n=1, which=:SR, kwargs...) -> LinearAlgebra.Eigen
 
-Compute `n` eigenpairs of `H` in `basis`. Auto-selects between dense
-`eigen(Hermitian(...))` (small bases) and `KrylovKit.eigsolve` (large).
+Compute `n` eigenpairs of `H` in `basis`. Sparse matrices use dense
+`eigen(Hermitian(...))` for small bases and `KrylovKit.eigsolve` otherwise.
+Matrix-free operators always use the iterative solver. Multiple requested
+eigenvectors use block Lanczos, including repeated eigenvalues.
+Returned iterative eigenpairs are checked against `H` with residual norm `tol`.
 The Hamiltonian is assumed Hermitian; eigenvalues are returned as
 `Vector{Float64}`, eigenvectors keep `eltype(H)`.
 
 # Arguments
-- `H`     :: `OperatorSum` (compiled+assembled internally) or pre-assembled
-            `SparseMatrixCSC`.
+- `H`     :: `OperatorSum`, `SparseMatrixCSC`, or `MatrixFreeOperator`.
 - `basis` :: `EagerBasis`.
 
 # Keyword arguments
 | kwarg          | default                  | meaning                                            |
 |----------------|--------------------------|----------------------------------------------------|
 | `n`            | `1`                      | number of eigenpairs                               |
+| `backend`      | `:sparse`                | representation for symbolic `H`: `:sparse` or `:matrixfree` |
 | `which`        | `:SR`                    | selection: `:SR`, `:LR`, `:LM` (Hermitian-only)    |
 | `tol`          | `1e-10`                  | Krylov convergence tolerance                       |
 | `degen_tol`    | `1e-8`                   | tolerance for grouping degenerate eigvals (QR)     |
 | `maxiter`      | `300`                    | Krylov max iterations                              |
 | `krylovdim`    | `max(20, 2n + 10)`       | Krylov subspace dimension                          |
-| `dense_below`  | `1024`                   | dense path when `length(basis) ≤ this`             |
-| `x0`           | `nothing`                | initial Krylov vector (seeded random if `nothing`) |
-| `threaded`     | `:auto`                  | sparse Hamiltonian action: `:auto`, `true`, or `false` |
+| `dense_below`  | `1024`                   | sparse dense-path threshold; ignored for matrix-free input |
+| `x0`           | `nothing`                | initial vector or block with up to `n` columns (seeded random if `nothing`) |
+| `threaded`     | `:auto`                  | Hamiltonian action: `:auto`, `true`, or `false` |
 
 `threaded=:auto` selects a parallel sparse action when the matrix workload and
 available Julia threads justify it. `true` forces that kernel using the available
 Julia thread pool (which may contain only one thread); `false` uses serial sparse
-products. Start Julia with `--threads=N` to make multiple threads available.
-This per-call control affects iterative sparse Hamiltonian products only;
+products. For a matrix-free operator, `:auto` preserves its construction setting;
+`true` and `false` override it for this solve. Start Julia with `--threads=N` to
+make multiple threads available. This control affects iterative operator products;
 dense diagonalization, basis/assembly scheduling, and BLAS thread settings are
 independent.
 
@@ -70,7 +54,7 @@ A `LinearAlgebra.Eigen{Float64, T, Matrix{T}}` with:
 - `DimensionMismatch` — H/basis size disagree, x0 wrong length
 - `ConvergenceError`  — Krylov path failed to converge `n` eigenpairs
 """
-function LinearAlgebra.eigen(H_sparse::SparseMatrixCSC, basis::EagerBasis;
+function LinearAlgebra.eigen(H::Union{SparseMatrixCSC,MatrixFreeOperator}, basis::EagerBasis;
                              n::Int = 1,
                              which::Symbol = :SR,
                              tol::Real = 1e-10,
@@ -78,24 +62,21 @@ function LinearAlgebra.eigen(H_sparse::SparseMatrixCSC, basis::EagerBasis;
                              maxiter::Int = 300,
                              krylovdim::Int = max(20, 2n + 10),
                              dense_below::Int = 1024,
-                             x0::Union{Nothing, AbstractVector} = nothing,
+                             x0::Union{Nothing, AbstractVecOrMat} = nothing,
                              threaded = :auto)
-    _validate_sparse_threading(threaded)
-    _validate_eigen_inputs(H_sparse, basis;
+    _validate_threading(threaded)
+    _validate_eigen_inputs(H, basis;
                            n, which, krylovdim, x0)
+    _validate_action_basis(H, basis)
 
-    # The public API accepts SparseMatrixCSC; check Hermiticity upfront.
-    # `Hermitian(M)` would silently mirror one triangle on non-Hermitian
-    # input, producing wrong eigenvalues for a different operator than
-    # the caller passed — better to fail loudly than guess.
-    # `ishermitian` on a sparse matrix is O(nnz); cheap.
-    ishermitian(H_sparse) || throw(ArgumentError(
+    # A Hermitian wrapper alone would silently replace one input triangle.
+    ishermitian(H) || throw(ArgumentError(
         "H is not Hermitian. MOADyna's eigen contract requires Hermitian " *
         "input. For a non-Hermitian operator, use a different solver."))
-    if length(basis) ≤ dense_below
-        return _eigen_dense(H_sparse; n, which)
+    if H isa SparseMatrixCSC && length(basis) ≤ dense_below
+        return _eigen_dense(H; n, which)
     else
-        return _eigen_krylov(H_sparse; n, which, tol, degen_tol,
+        return _eigen_krylov(H; n, which, tol, degen_tol,
                              maxiter, krylovdim, x0, threaded)
     end
 end
@@ -106,15 +87,15 @@ end
 # (SYEVR / HEEVR). Eigenvectors are orthonormal by LAPACK guarantee — no
 # extra QR needed.
 
-function _eigen_dense(H_sparse::SparseMatrixCSC; n::Int, which::Symbol)
+function _eigen_dense(H::SparseMatrixCSC; n::Int, which::Symbol)
     # Hermiticity was already verified at the public-API entry; we
     # wrap with `Hermitian` only to dispatch to LAPACK's symmetric
     # eigensolver (SYEVR). The wrap uses the upper triangle as truth,
     # which is exact for Hermitian input.
-    M_H = Hermitian(Matrix(H_sparse))
-    N = size(H_sparse, 1)
+    M_H = Hermitian(Matrix(H))
+    N = size(H, 1)
     if n < N && which in (:SR, :LR) &&
-       eltype(H_sparse) <: Union{Float32, Float64, ComplexF32, ComplexF64}
+       eltype(H) <: Union{Float32, Float64, ComplexF32, ComplexF64}
         # LAPACK can return only the requested edge of the sorted spectrum.
         indices = which === :SR ? (1:n) : (N-n+1:N)
         E = LinearAlgebra.eigen(M_H, indices)
@@ -129,38 +110,45 @@ end
 
 # --- Krylov backend ---------------------------------------------------
 
-function _eigen_krylov(H_sparse::SparseMatrixCSC; n::Int, which::Symbol,
+function _eigen_krylov(H::AbstractMatrix; n::Int, which::Symbol,
                        tol::Real, degen_tol::Real,
                        maxiter::Int, krylovdim::Int,
-                       x0::Union{Nothing, AbstractVector}, threaded = :auto)
-    T = eltype(H_sparse)
+                       x0::Union{Nothing, AbstractVecOrMat}, threaded = :auto)
+    T = eltype(H)
     x0_actual = if x0 === nothing
-        _default_x0(size(H_sparse, 1), T)
+        _default_x0(size(H, 1), T)
     else
-        # Always convert user-supplied x0 to Vector{T} so KrylovKit sees a
-        # vector that matches the matrix element type (handles Float32 ↔
-        # Float64, BigFloat → Float64, real → complex promotion). The
-        # complex-to-real direction is already rejected by validation.
-        convert(Vector{T}, x0)
+        seed = Array{T}(x0)
+        for column in eachcol(reshape(seed, size(seed, 1), :))
+            seed_norm = norm(column)
+            isfinite(seed_norm) && seed_norm > 0 || throw(ArgumentError(
+                "each x0 column must have a finite, nonzero norm"))
+            column ./= seed_norm
+        end
+        seed
     end
 
-    action = _prepare_sparse_action(H_sparse; threaded)
-    vals, vecs, info = KrylovKit.eigsolve(action, x0_actual, n, which;
-                                          tol = tol,
-                                          maxiter = maxiter,
-                                          krylovdim = krylovdim,
-                                          ishermitian = true)
+    action = _prepare_action(H; nrhs=n, threaded)
+    vals, vecs, info = _krylov_eigenpairs(action, x0_actual, n, which;
+                                         tol, maxiter, krylovdim)
 
     if info.converged < n
-        # KrylovKit's `info.normres` is a Vector{Float64} of per-eigenpair
-        # residual norms — that's the scalar diagnostic we want. Do NOT
-        # use info.residual: it's a Vector of residual VECTORS, not norms.
         normres = Float64[Float64(r) for r in info.normres]
         throw(ConvergenceError(info.converged, normres, info))
     end
 
     λ = Float64[Float64(real(v)) for v in vals[1:n]]
     V = reduce(hcat, vecs[1:n])::Matrix{T}
+    for column in eachcol(V)
+        vector_norm = norm(column)
+        isfinite(vector_norm) && vector_norm > 0 ||
+            throw(ConvergenceError(0, fill(Inf, n), info))
+        column ./= vector_norm
+    end
     _orthonormalize_clusters!(V, λ, degen_tol)
+    residual = action * V - V * Diagonal(λ)
+    normres = Float64[norm(column) for column in eachcol(residual)]
+    converged = count(r -> isfinite(r) && r <= tol, normres)
+    converged == n || throw(ConvergenceError(converged, normres, info))
     return LinearAlgebra.Eigen(λ, V)
 end

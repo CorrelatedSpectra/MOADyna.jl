@@ -34,6 +34,14 @@ hard-depends on an ML stack. The deterministic point-estimate fit
 [`MOADyna.Gradients.fit_spectrum`](@ref) is available when `Optim` is
 loaded (weak-dependency extension).
 
+`AffineModel` accepts sparse matrices or matrix-free terms on a fixed basis.
+Matrix-free combinations retain compiled operator plans, and the ground-state
+gap is checked with an iterative two-state solve. Ground-state and resolvent
+derivatives use operator products throughout. The selected basis must stay fixed
+while differentiating; derivatives of determinant selection are not defined.
+Full-spectrum analysis, including automatic spectral-window construction,
+requires explicitly stored matrices.
+
 ```@autodocs
 Modules = [MOADyna.Gradients]
 Private = false

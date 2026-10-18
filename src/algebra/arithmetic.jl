@@ -92,17 +92,21 @@ end
 
 Conjugate transpose. For each term:
 - reverse the chain
-- swap each entry's `kind` per `adjoint_kind` (c↔cdag, b↔bdag, S+↔S-, Sx/Sy/Sz unchanged)
+- reverse each primitive action, including the source label of resolved spin transitions
 - conjugate the coefficient
 """
 function Base.adjoint(a::OperatorSum{T}) where {T}
-    out = OperatorSum{T}()   # adjoint preserves T (real stays real, complex stays complex up to conj)
+    out = OperatorSum{_output_eltype(T, a)}()
     for term in a
-        rev_chain = _adjoint_chain(term.chain)
-        new_coef = conj(term.coefficient)
-        # Reversal can violate canonical order — re-canonicalize
-        for (factor, canon_chain) in canonicalize(rev_chain)
-            _push!(out, new_coef * factor, canon_chain)
+        expansions = any(e -> e.kind in (:Sx, :Sy), term.chain) ?
+            _expand_spin_xy(term.chain) : ((one(T), term.chain),)
+        for (weight, chain) in expansions
+            any(_zero_spin_transition, chain) && continue
+            rev_chain = _adjoint_chain(chain)
+            new_coef = conj(term.coefficient * weight)
+            for (factor, canon_chain) in canonicalize(rev_chain)
+                _push!(out, new_coef * factor, canon_chain)
+            end
         end
     end
     return out
@@ -113,6 +117,15 @@ function _adjoint_chain(c::Chain)
 end
 
 _adjoint_entry(e::LadderEntry) = LadderEntry(adjoint_kind(e.kind), e.site, e.label)
+
+function _adjoint_entry(e::LadderEntry{<:SpinSite})
+    shift = e.kind === :Splus ? 1 : e.kind === :Sminus ? -1 : 0
+    return LadderEntry(adjoint_kind(e.kind), e.site, (e.label[1] + shift,))
+end
+
+_zero_spin_transition(e::LadderEntry) = false
+_zero_spin_transition(e::LadderEntry{SpinSite{S}}) where {S} =
+    (e.kind === :Splus && e.label[1] == S) || (e.kind === :Sminus && e.label[1] == -S)
 
 # --- Hermitian-conjugate convenience (+h.c.) ---
 

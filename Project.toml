@@ -1,6 +1,6 @@
 name = "MOADyna"
 uuid = "5c3054dd-214e-41f9-9cf5-211a9fa316b3"
-version = "0.3.3"
+version = "0.3.4"
 authors = ["Yi Lu <yilu@nju.edu.cn>"]
 
 [deps]
@@ -29,7 +29,7 @@ MOADynaPlotsExt = ["RecipesBase"]
 DataStructures = "0.18, 0.19"
 Dates = "1"
 HDF5 = "0.16, 0.17"
-KrylovKit = "0.7, 0.8, 0.9, 0.10"
+KrylovKit = "0.10.4"
 LinearAlgebra = "1"
 OhMyThreads = "0.7, 0.8"
 PrecompileTools = "1"

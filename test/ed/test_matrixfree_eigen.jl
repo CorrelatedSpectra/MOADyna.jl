@@ -1,0 +1,91 @@
+struct ProductOnlyMatrix{T} <: AbstractMatrix{T}
+    data::Matrix{T}
+end
+Base.size(A::ProductOnlyMatrix) = size(A.data)
+Base.getindex(::ProductOnlyMatrix, ::Int, ::Int) = error("scalar indexing is unavailable")
+Base.:*(A::ProductOnlyMatrix, x::AbstractVector) = A.data * x
+
+@testset "Sparse and matrix-free eigenproblems" begin
+    using LinearAlgebra
+
+    site = FermionSite{8}(:f)
+    h = Hilbert(:f => site)
+    b = basis(h, n_fermion(h) == 1)
+    H = sum((k / 7) * n(site, k) for k in 1:8) +
+        sum((0.3 + 0.2im) * cdag(site, k) * c(site, k + 1) +
+            (0.3 - 0.2im) * cdag(site, k + 1) * c(site, k) for k in 1:7)
+    A = matrixfree(H, b; threaded=false)
+    M = assemble(compile(H, b), b)
+    reference = eigen(Hermitian(Matrix(M)))
+    for backend in (:sparse, :matrixfree), count in (1, 3)
+        E = eigen(H, b; backend, n=count, dense_below=0,
+                  krylovdim=6, tol=1e-11, threaded=false)
+        @test E.values ≈ reference.values[1:count] atol=1e-10
+        @test norm(M * E.vectors - E.vectors * Diagonal(E.values)) < 1e-9
+        @test E.vectors' * E.vectors ≈ I atol=1e-10
+    end
+    E = eigen(A, b; n=2, dense_below=1024, x0=ones(8), threaded=true)
+    @test E.values ≈ reference.values[1:2] atol=1e-9
+    @test eltype(E.vectors) == eltype(A)
+    initial = copy(E.vectors)
+    warm = eigen(A, b; n=3, x0=initial, threaded=false)
+    @test warm.values ≈ reference.values[1:3] atol=1e-9
+    @test initial == E.vectors
+    @test_throws DimensionMismatch eigen(A, b; n=2, x0=ones(7, 2))
+    @test_throws ArgumentError eigen(A, b; n=2, x0=ones(8, 3))
+    @test_throws ArgumentError eigen(H, b; backend=:unknown)
+    @test_throws ArgumentError eigen(A, basis(h, n_fermion(h) == 1))
+    @test_throws ArgumentError eigen(matrixfree(cdag(site, 1) * c(site, 2), b), b)
+
+    # The public entry point has checked Hermiticity before preparing the action.
+    real_matrix = real.(Matrix(M))
+    values, vectors, info = MOADyna.ED._krylov_eigenpairs(ProductOnlyMatrix(real_matrix),
+        ones(8) / sqrt(8), 1, :SR; tol=1e-10, maxiter=100, krylovdim=8)
+    @test info.converged >= 1 && norm(real_matrix * vectors[1] - values[1] * vectors[1]) < 1e-9
+
+    s1, s2 = SpinSite{1//2}(:s1), SpinSite{1//2}(:s2)
+    spin_basis = basis(Hilbert(:s1 => s1, :s2 => s2))
+    J = sum(S(s1)[k] * S(s2)[k] for k in 1:3)
+    Jmatrix = assemble(compile(J, spin_basis), spin_basis)
+    for backend in (:sparse, :matrixfree)
+        E = eigen(J, spin_basis; backend, n=4, dense_below=0, tol=1e-12)
+        @test E.values ≈ [-0.75, 0.25, 0.25, 0.25] atol=1e-11
+        @test E.vectors' * E.vectors ≈ I atol=1e-11
+        @test norm(Jmatrix * E.vectors - E.vectors * Diagonal(E.values)) < 1e-10
+    end
+
+    @testset "Scaled Hamiltonian" begin
+        E = eigen(1e-13 * H, b; backend=:matrixfree, n=2,
+                  tol=1e-15, krylovdim=6, threaded=false)
+        @test E.values ≈ 1e-13 * reference.values[1:2] atol=1e-15 rtol=0
+        @test norm(1e-13 * M * E.vectors - E.vectors * Diagonal(E.values)) ≤ sqrt(2) * 1e-15
+    end
+    @testset "Seed normalization and block rank" begin
+        identity_on_sector = sum(n(site, k) for k in 1:8)
+        seed = fill(1e-20, 8)
+        E = eigen(identity_on_sector, b; backend=:matrixfree, n=2,
+                  x0=seed, threaded=false)
+        @test E.values ≈ ones(2) atol=1e-10
+        @test E.vectors' * E.vectors ≈ I atol=1e-10
+        @test seed == fill(1e-20, 8)
+        @test_throws ArgumentError eigen(A, b; x0=zeros(8))
+    end
+
+    @testset "Rank-deficient complex residual block" begin
+        small = MOADyna.Bases._selected_basis(b, UInt64[1, 2, 4]; restrictions=n_fermion(h) == 1)
+        local_H = 1.08n(site, 1) + 1.54n(site, 2) + 1.94n(site, 3) -
+            0.4add_hc(cdag(site, 1) * c(site, 2) + cdag(site, 2) * c(site, 3)) +
+            0.07im * (cdag(site, 3) * c(site, 1) - cdag(site, 1) * c(site, 3))
+        M = assemble(compile(local_H, small), small)
+        reference = eigen(Hermitian(Matrix(M)))
+        for backend in (:sparse, :matrixfree)
+            E = eigen(local_H, small; backend, n=2, x0=ComplexF64[1, 0, 0],
+                tol=5e-8, krylovdim=6, dense_below=0, threaded=false)
+            @test E.values ≈ reference.values[1:2] atol=1e-10
+            @test norm(M * E.vectors - E.vectors * Diagonal(E.values)) < 1e-10
+            @test E.vectors' * E.vectors ≈ I atol=1e-10
+            @test_throws ConvergenceError eigen(local_H, small; backend, n=2,
+                x0=ComplexF64[1, 0, 0], tol=1e-20, krylovdim=6, dense_below=0, threaded=false)
+        end
+    end
+end

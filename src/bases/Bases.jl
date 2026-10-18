@@ -1,10 +1,9 @@
 """
     MOADyna.Bases
 
-Eager basis enumeration + compiled-Hamiltonian sparse-matrix assembly. Takes a
-`Hilbert` and `Restriction`s from [`MOADyna.Algebra`](@ref), produces an
-[`EagerBasis`](@ref) and an
-`assemble(compile(H, basis), basis) → SparseMatrixCSC`.
+Basis enumeration and compiled operator actions. Takes a `Hilbert` and
+`Restriction`s from [`MOADyna.Algebra`](@ref), produces an [`EagerBasis`](@ref),
+and represents operators as sparse matrices or [`MatrixFreeOperator`](@ref).
 
 This is an internal submodule of `MOADyna`; the names below are
 re-exported from the umbrella package, so users typically write `using MOADyna`
@@ -17,11 +16,13 @@ module Bases
 
 using SparseArrays
 using LinearAlgebra
+using Random: rand
 using OhMyThreads
 using OhMyThreads: @tasks, tcollect
 
 using ..Algebra
 using ..Algebra: LadderEntry, OperatorTerm, OperatorSum, Chain
+using ..Algebra: _expand_spin_xy, _output_eltype
 using ..Algebra: name, encoding_bits, statistics
 using ..Algebra: AbstractSite, FermionSite, BosonSite, SpinSite
 using ..Algebra: Hilbert, Restriction
@@ -33,7 +34,15 @@ include("restriction.jl")
 include("basis.jl")
 include("compile.jl")
 include("assemble.jl")
+include("operator_action.jl")
 include("sparse_action.jl")
+include("state_index.jl")
+include("matrixfree.jl")
+include("linear_combination.jl")
+include("selection.jl")
+include("selected_basis.jl")
+include("sampling.jl")
+include("discovery.jl")
 include("embed.jl")
 
 # Basis
@@ -46,6 +55,8 @@ export apply_restriction!
 # Hamiltonian compilation / assembly
 export CompiledHamiltonian
 export compile, assemble
+export MatrixFreeOperator, matrixfree
+export SelectionConvergenceError
 
 # Cross-basis embedding
 export embed

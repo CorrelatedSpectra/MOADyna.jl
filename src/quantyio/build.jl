@@ -17,14 +17,11 @@
 """
     build_operator(parsed::ParsedOperator, hilbert::Hilbert, mode_map) -> OperatorSum
 
-Construct a MOADyna `OperatorSum` from a parsed Quanty dump. The chain
-order in the parsed dump is preserved literally — the resulting product
-goes through MOADyna.Algebra's Tier-2 canonicalization, so the output is
-the canonical MOADyna representation regardless of Quanty's storage order.
+Construct an `OperatorSum` from a parsed operator dump. Products preserve the
+chain order in the file and are simplified by the standard operator algebra.
 
 `mode_map` is either a function `Int -> (Symbol, label)` or a `Dict{Int,
-Tuple{Symbol, ...}}` defining which (site, label) each Quanty mode
-maps to.
+Tuple{Symbol, ...}}` mapping each file index to a site and mode label.
 
 Returns an empty sum if `parsed.terms` is empty.
 """
