@@ -11,6 +11,7 @@ using MOADyna
         include("algebra/test_hilbert.jl")
         include("algebra/test_operators.jl")
         include("algebra/test_operator_sum.jl")
+        include("algebra/test_onebody.jl")
         include("algebra/test_canonicalize.jl")
         include("algebra/test_algebra.jl")
         include("algebra/test_observables.jl")

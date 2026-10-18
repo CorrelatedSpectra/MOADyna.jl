@@ -21,6 +21,7 @@ include("operator_sum.jl")
 include("canonicalize.jl")
 include("spin_expansion.jl")
 include("arithmetic.jl")
+include("onebody.jl")
 include("observables.jl")
 include("interactions.jl")
 include("rotate.jl")
@@ -43,6 +44,7 @@ export c, cdag, b, bdag, n, n_b
 export Sx, Sy, Sz, Splus, Sminus, S
 export chop, add_hc
 export rotate
+export onebody
 export save_operator, load_operator
 
 # Multi-orbital interaction primitives (FermionSite + orbital-pair list)

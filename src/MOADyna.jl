@@ -107,6 +107,7 @@ export c, cdag, b, bdag, n, n_b
 export Sx, Sy, Sz, Splus, Sminus, S
 export chop, add_hc
 export rotate
+export onebody
 export save_operator, load_operator
 export QuantumNumber, QN, ParticleCount, TotalSz, WeightedParticleCount
 export n_fermion, n_boson, Sz_total
@@ -116,6 +117,8 @@ export density_density, kanamori, Ssqr
 # From TightBinding
 export TightBindingModel, hopping, bloch_hamiltonian, bloch_hamiltonian!
 export KPath, BandStructure, kpath, bandstructure
+export FiniteCluster, finite_cluster, supercell
+export ligand_basis
 
 # From Bases
 export AbstractBasis, EagerBasis, basis
