@@ -114,10 +114,11 @@ hub_basis = basis(hilbert,
 E = eigen(H, hub_basis; n = 4)        # 4 lowest states; or assemble() for your own solver
 ```
 
-To solve on the same basis without assembling the Hamiltonian, use
+Sparse storage is recommended for routine spectroscopy. To solve on the same
+basis without storing the Hamiltonian matrix, use
 `eigen(H, hub_basis; backend=:matrixfree, n=4)`. The
 [matrix-free tutorial](docs/src/tut/matrixfree.md) explains when to choose this
-backend and how to grow a selected basis when full enumeration is impractical.
+backend and how to let the solver construct or adapt a basis automatically.
 
 ## A complete NiO L₂,₃ XAS calculation
 

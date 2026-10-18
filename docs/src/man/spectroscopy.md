@@ -26,6 +26,41 @@ response wrappers ([`optical_conductivity`](@ref), [`dynamical_structure_factor`
 return an already-evaluated algebraic tensor (`chunks = nothing`), so `re_broaden_table` does
 not apply to them — re-run with a new `Γ` instead.
 
+## Spectroscopy from eigenstates
+
+Pass a symbolic Hamiltonian and physical restrictions to `eigen` to keep the
+solved states together with their basis. The spectroscopy functions can then
+construct their own sectors and transitions automatically:
+
+```julia
+gs = eigen(H_GS, m; restrictions=initial_sector, n=1)
+T = dipole(m, :Ni_2p => :Ni_3d)
+spec = xas(H_XAS, T, gs; restrictions=core_hole_sector,
+           omega_grid=incident_grid, Gamma=0.6)
+result = rixs(H_final, H_XAS, T, T, gs;
+              restrictions_intermediate=core_hole_sector,
+              restrictions_final=final_sector,
+              omega_in_grid=incident_grid, omega_out_grid=loss_grid,
+              Gamma_intermediate=0.6, Gamma_final=0.1)
+```
+
+Here `m` is a `ShellModel` (a `Hilbert` also works), and each sector is a
+restriction or collection of restrictions on individual determinants. The
+initial and core-hole occupations must be specified separately. The default is
+sparse storage; `backend=:matrixfree` can be selected in the solve or overridden
+in a spectrum call. The same result supports finite-temperature keywords when
+enough initial eigenstates have been computed.
+
+These calls enumerate the **complete response sectors**, even if the ground state
+used `adaptive=true`. They do not approximate a spectrum using the selected
+ground-state determinant list. Adaptive responses require separate convergence
+with [`selected_response`](@ref). For fluorescence yield, also give
+`restrictions_final`: it defines all allowed decay destinations, even though no
+final-state Hamiltonian is needed.
+
+The explicit interfaces below remain available when bases and prepared actions
+should be reused across calculations.
+
 ## X-ray absorption (XAS)
 
 XAS evaluates ``I(\omega) = -\tfrac{1}{\pi}\operatorname{Im}\langle g|T^\dagger (\omega + E_g - H + i\Gamma/2)^{-1} T|g\rangle`` for a transition

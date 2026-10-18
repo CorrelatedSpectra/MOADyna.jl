@@ -9,6 +9,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Matrix-free operator actions for diagonalization, spectroscopy and fixed-basis gradients.
 - Residual-controlled determinant selection for eigenstates and response tensors.
+- Automatic basis management for eigensolves and spectroscopy.
 
 ### Fixed
 

@@ -12,6 +12,9 @@ end
 basis constructed with [`basis`](@ref). It diagonalizes the Hamiltonian in that conserved sector and returns a
 standard `LinearAlgebra.Eigen` (so `.values` and `.vectors` work as usual). `eigen` is re-exported
 from `MOADyna`, so `using MOADyna` is enough — no explicit `using LinearAlgebra`.
+Alternatively, pass a `Hilbert` or `ShellModel` and physical `restrictions` to
+construct the basis automatically and return [`Eigenstates`](@ref), which keeps
+the eigenvectors and their basis together.
 
 ## Diagonalizing
 
@@ -30,6 +33,18 @@ b = basis(h, n_fermion(h) == 4, WeightedParticleCount(sites, repeat([1, -1], 4))
 sys = eigen(H, b; n = 4)        # lowest 4 eigenpairs
 round.(sys.values; digits = 4)
 ```
+
+To let the solver manage the basis:
+
+```@example ed
+allowed = [n_fermion(h) == 4, WeightedParticleCount(sites, repeat([1, -1], 4)) == 0]
+states = eigen(H, h; restrictions=allowed, n=4)
+states.values
+```
+
+`states.vectors` uses `states.basis`. This result can be passed directly to
+`xas`, `rixs`, and `fluorescence_yield`; see [Spectroscopy from eigenstates](@ref).
+The explicit-basis form remains useful for reusing prepared operators.
 
 ## Dense vs Krylov dispatch
 
@@ -64,16 +79,43 @@ calculation assemble a dense matrix implicitly.
 
 ## Choosing a representation
 
+**Use the default sparse backend for routine spectroscopy.** It is the recommended
+starting point for typical atomic multiplet and modest cluster or impurity
+calculations: matrix storage is usually manageable, and stored entries often
+make repeated products faster.
+
+Matrix-free calculations are an advanced option for very large systems where
+Hamiltonian storage becomes limiting. Adaptive basis selection additionally
+requires experience with the model's sectors and convergence checks. Neither
+option is an automatic speed improvement.
+
 | Situation | Starting point |
 |---|---|
 | The Hamiltonian fits comfortably in memory | The default sparse backend; stored entries can make repeated products faster |
 | Matrix storage is limiting, but the basis and solver vectors fit | `backend=:matrixfree` on the same basis |
-| Full basis enumeration is impractical | `selected_eigen`, with physical restrictions, appropriate seeds, and a checked residual tolerance |
+| Full basis enumeration is impractical | `eigen(H, h; restrictions=allowed, adaptive=true, backend=:matrixfree)`, with seed and residual convergence checks |
 
-Matrix-free multiplication changes storage, not the physical space. Adaptive
-selection changes the space and requires its own convergence checks. Neither
-choice guarantees a speedup. The [Matrix-free Calculations](@ref) tutorial works
-through both on a small Hubbard model.
+**Fixed basis** means that the determinant list stays unchanged. Both sparse and
+matrix-free actions implement ``P H P``, where ``P`` projects onto that list:
+contributions to determinants outside it are discarded. For a complete invariant
+sector, such as a conserved particle-number sector, there are no couplings out
+of the sector. For an incomplete subset, those couplings are omitted and a
+converged projected solve alone does not establish full-space accuracy.
+
+**Adaptive** means that the determinant list changes during the calculation.
+MOADyna starts from a small seed, solves on that fixed working basis, checks the
+residual including omitted allowed determinants, and adds states as needed.
+Previously selected states are retained. This is separate from increasing the
+Krylov dimension within a solve. Quanty's
+[Eigensystem](https://www.quanty.org/documentation/language_reference/functions/eigensystem)
+is also adaptive when `ExpandBasis=true` (its documented default); the selection
+and truncation rules differ.
+Quanty's restriction-based call samples its initial wavefunction using
+`StartRestrictions`, which need not hold after expansion. In MOADyna,
+`restrictions` defines the allowed space throughout the solve; an optional
+explicit `seed` can impose narrower starting conditions.
+
+The [Matrix-free Calculations](@ref) tutorial demonstrates both workflows.
 
 ## Multiplication threads
 
@@ -115,6 +157,35 @@ for several, allowing independent eigenvectors with the same eigenvalue.
 to cover the complete manifold when needed for thermal averages or spectroscopy.
 
 ## Selecting determinants
+
+The automatic interface manages the seed and basis growth:
+
+```julia
+gs = eigen(H, h; restrictions=allowed, backend=:matrixfree,
+           adaptive=true, n=1, tol=1e-8)
+gs.values
+gs.selection.residual_norm
+```
+
+`allowed` is only a variable name. Each restriction applies to **every basis
+state**, not to the expectation value of the full wavefunction. For example,
+`n_fermion(h) == 4` permits only four-particle states. It does not permit a mixture
+of three- and five-particle states whose average occupation happens to be four.
+
+The automatic seed samples up to `krylovdim` allowed states without materializing
+the full basis. Use `seed_size` or a local `rng` to check seed stability, or pass
+an explicit `seed` for a physically chosen starting space. Complicated restrictions
+can make counting expensive; `seed_max_work` bounds this work, and an explicit
+seed bypasses counting. A diagonal Hamiltonian illustrates the limitation: a
+sampled determinant can have zero residual while a lower, unsampled determinant
+exists. Automatic initialization does not remove the need to check sectors and
+seed dependence.
+
+Set `max_states` and `max_candidates` to bound retained and generated state counts;
+these limits are unset by default in the automatic interface. They are resource
+limits, not accuracy settings. `tol` is the full residual tolerance,
+`maxiter` controls the inner eigensolver, and `selection_maxiter` controls outer
+selection iterations. The lower-level interface gives explicit control:
 
 [`selected_eigen`](@ref) starts from a small basis and discovers connected states
 without enumerating the full allowed space. Each inner eigensolve uses a fixed
