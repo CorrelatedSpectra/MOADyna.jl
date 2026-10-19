@@ -62,8 +62,7 @@ const PAGES = [
     "Tutorials" => [
         "Getting started"      => "tut/getting_started.md",
         "Matrix-free calculations" => "tut/matrixfree.md",
-        "Wannier models and clusters" => "tut/wannier.md",
-        "From Wannier bands to bilayer XAS" => "tut/la3ni2o7.md",
+        "Interfacing with Wannier90" => "tut/wannier.md",
         "NiO: XAS, RIXS, and nIXS" => "tut/nio.md",
     ],
     "Library" => [

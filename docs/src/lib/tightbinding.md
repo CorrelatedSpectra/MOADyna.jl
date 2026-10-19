@@ -20,8 +20,12 @@ The orbital-position gauge includes the extra phase
 ``e^{2\pi i\kappa\cdot(\tau_j-\tau_i)}``. Both gauges have the same band energies.
 Hermiticity requires ``t(-R)=t(R)^\dagger``; the constructor checks this relation.
 
-The [Wannier models and clusters](@ref) tutorial connects these objects to
+The [Interfacing with Wannier90](@ref) tutorial connects these objects to
 the operator algebra and exact-diagonalization workflow.
+For a fragment defined by neighboring atoms, [`cluster_sites`](@ref) selects
+periodic site images around specified centres. Map those sites to Wannier
+orbitals and pass the ordered selection to [`finite_cluster`](@ref), as shown
+in that tutorial.
 
 ## API
 

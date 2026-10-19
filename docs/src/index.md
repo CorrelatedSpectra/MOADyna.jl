@@ -175,8 +175,8 @@ builds the operators and parameters the pipeline consumes (plus small utilities)
 - **Pipeline:** [Operator Algebra](@ref) → [Hilbert Spaces & Bases](@ref) →
   [Exact Diagonalization](@ref) → [Responses](@ref) → [Spectroscopy](@ref).
 - **Toolkit:** [Multiplets & Standard Operators](@ref), [Point Groups](@ref),
-  [Atomic Parameters](@ref), [Wannier models and clusters](@ref),
-  [From Wannier bands to bilayer XAS](@ref), and
+  [Atomic Parameters](@ref),
+  [Interfacing with Wannier90](@ref), and
   [energy-unit conversions](@ref MOADyna.Units).
 - **Utilities:** diagnostics for ground-state inspection and shared HDF5 I/O.
 
