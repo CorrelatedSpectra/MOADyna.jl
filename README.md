@@ -34,9 +34,11 @@ core-level spectroscopy.
 - **Exact diagonalization.** `eigen(H, basis; n, which)` dispatches between dense
   LAPACK and Krylov (KrylovKit) automatically; the assembled `SparseMatrixCSC` is
   also usable directly with your own solver.
-- **Wannier and tight-binding models.** Read Wannier90 Hamiltonians, reconstruct
-  bands and compare with DFT output. Extract interacting clusters, rotate ligand
-  orbitals, or group cells while retaining their intercluster hoppings.
+- **Wannier90 interface and tight-binding models.** Import hopping Hamiltonians
+  and crystal geometry, compare bands with DFT, and select clusters around chosen
+  atoms. Rotate ligand orbitals or construct supercells with their connecting
+  hoppings. The [Wannier90 tutorial](docs/src/tut/wannier.md) follows this workflow
+  through to XAS.
 - **Matrix-free calculations.** `matrixfree(H, basis)` applies operators without
   storing matrix elements, using the same eigensolvers and spectroscopy interfaces.
   Products support Julia threads, with explicit serial and parallel controls.
@@ -186,6 +188,8 @@ The [`examples/`](examples/) directory contains runnable scripts:
 - **NiO 3d nIXS** — non-resonant inelastic X-ray scattering multipoles
 - **[Matrix-free Hubbard chain](examples/09_matrixfree.jl)** — ground state,
   dynamical response, and residual-controlled basis selection
+- **[Wannier90 to cluster XAS](examples/la3ni2o7/)** — DFT band comparisons,
+  geometric cluster selection, and ligand construction
 
 ## Documentation
 

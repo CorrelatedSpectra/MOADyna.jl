@@ -5,11 +5,13 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.5] — 2026-10-19
+
 ### Added
 
 - Wannier90 and tight-binding models, with band reconstruction and DFT comparisons.
 - Cluster and supercell construction, ligand-basis rotations, and a one-body operator builder.
-- A La₃Ni₂O₇ tutorial connecting DFT bands to double-cluster XAS.
+- A Wannier90 tutorial connecting DFT bands, cluster construction, and XAS.
 
 ### Fixed
 
@@ -133,6 +135,8 @@ Initial feature-complete version.
 
 Consolidated the experimental algebra, basis and import components into a single package.
 
+[Unreleased]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/CorrelatedSpectra/MOADyna.jl/compare/v0.3.1...v0.3.2
