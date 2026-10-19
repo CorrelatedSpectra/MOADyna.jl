@@ -62,8 +62,8 @@ const PAGES = [
     "Tutorials" => [
         "Getting started"      => "tut/getting_started.md",
         "Matrix-free calculations" => "tut/matrixfree.md",
-        "Interfacing with Wannier90" => "tut/wannier.md",
         "NiO: XAS, RIXS, and nIXS" => "tut/nio.md",
+        "Interfacing with Wannier90" => "tut/wannier.md",
     ],
     "Library" => [
         "Algebra"          => "lib/algebra.md",

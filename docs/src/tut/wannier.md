@@ -32,19 +32,27 @@ tutorial.
 tar -xzf la3ni2o7-wannier.tar.gz
 ```
 
-The archive contains the following files from the original WIEN2k,
-WIEN2Wannier, and Wannier90 calculation:
+The files below follow the calculation workflow: DFT inputs and results,
+then the Wannier interface and its results, followed by the files prepared
+for this tutorial.
+
+**DFT calculation (WIEN2k)**
 
 | File | Contents | Used for |
 |:-----|:---------|:---------|
-| `model_hr.dat` | Real-space hopping matrices between the 31 Wannier orbitals, indexed by lattice translation, with degeneracy weights. Energies are in eV. | Constructing the tight-binding Hamiltonian for both bands and clusters. |
-| `model.win` | Wannier90 input: primitive lattice vectors, atomic positions, k mesh, and the band-path endpoints and sampling settings. | Reading the geometry and interpolation settings; defining the stored Wannier band path. |
-| `model_band.dat` | Band energies interpolated by Wannier90 along its own k path. | Checking that MOADyna reproduces the stored Wannier bands. |
-| `dft.spaghetti_ene` | Original WIEN2k DFT band energies and printed k coordinates. | Overlaying the original DFT bands. |
-| `dft.klist_band` | Exact DFT k points as rational coordinates in the conventional reciprocal cell, with symmetry-point labels. | Evaluating MOADyna bands at the same points as the DFT calculation. |
-| `model.struct` | Matching WIEN2k crystal structure, including the conventional-cell lattice parameters. | Converting the DFT k path to the primitive reciprocal coordinates used by the Wannier model. |
-| `model_centres.xyz` | Wannier centres wrapped into the home cell, in Cartesian coordinates. | Inspecting the source centres; the scripts use the unwrapped centres in `geometry.toml`. |
-| `model.inwf` | WIEN2Wannier atomic projection definitions and their orbital order. | Checking the orbital identities recorded in `geometry.toml`; the scripts do not read it. |
+| `model.struct` | **Input:** crystal structure, including the conventional-cell lattice parameters and atomic positions. | Converting the DFT k path to the primitive reciprocal coordinates used by the Wannier model. |
+| `dft.klist_band` | **Input:** exact band-path k points as rational coordinates in the conventional reciprocal cell, with symmetry-point labels. | Evaluating MOADyna bands at the same points as the DFT calculation. |
+| `dft.spaghetti_ene` | **Output:** DFT band energies and printed k coordinates for that path. | Overlaying the original DFT bands. |
+
+**Wannier construction (WIEN2Wannier and Wannier90)**
+
+| File | Contents | Used for |
+|:-----|:---------|:---------|
+| `model.inwf` | **WIEN2Wannier input:** atomic projection definitions and their orbital order. | Establishing the orbital-to-atom assignment; the example writes this assignment explicitly in Julia. |
+| `model.win` | **Wannier90 input:** primitive lattice vectors, atomic positions, k mesh, and band-path endpoints and sampling settings. | Reading the geometry and interpolation settings; defining the stored Wannier band path. |
+| `model_hr.dat` | **Wannier90 output:** real-space hopping matrices between the 31 Wannier orbitals, indexed by lattice translation, with degeneracy weights. Energies are in eV. | Constructing the tight-binding Hamiltonian for both bands and clusters. |
+| `model_centres.xyz` | **Wannier90 output:** Wannier centres wrapped into the home cell, in Cartesian coordinates. | Inspecting the source centres; the scripts use their unwrapped representatives from `geometry.toml`. |
+| `model_band.dat` | **Wannier90 output:** interpolated band energies along the path defined in `model.win`. | Checking that MOADyna reproduces the stored Wannier bands. |
 
 Three additional files were prepared for this tutorial:
 
@@ -101,10 +109,10 @@ together under the same seedname:
 
 | Input | Information used by the importer |
 |:------|:--------------------------------|
-| `seed_hr.dat` or `seed_tb.dat` | Real-space Hamiltonian. The combined `_tb.dat` format also supplies lattice vectors and Wannier centres. |
 | `seed.win` | Lattice, atom positions, k mesh, and declared interpolation settings. |
-| `seed.wout` | Final Wannier centres and version information. |
+| `seed_hr.dat` or `seed_tb.dat` | Real-space Hamiltonian. The combined `_tb.dat` format also supplies lattice vectors and Wannier centres. |
 | `seed_wsvec.dat` | Pair-dependent Wigner–Seitz translations, when written by Wannier90. |
+| `seed.wout` | Final Wannier centres and version information. |
 | `seed_centres.xyz` | Wannier centres, when their cell representatives are established by the companion input. |
 
 The default `interpolation=:auto` uses the available source declarations.
@@ -142,8 +150,8 @@ model contains the effective hopping blocks ready for bands or cluster extractio
 model
 ```
 
-```text
-TightBindingModel(31 orbitals, 565 translations, 3 dimensions)
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">TightBindingModel(31 orbitals, 565 translations, 3 dimensions)</code></pre>
 ```
 
 Inspect the dimensions and geometry:
@@ -154,19 +162,19 @@ atoms = model.metadata[:atoms].positions
 size(model), size(atoms)
 ```
 
-```text
-((31, 31), (3, 12))
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">((31, 31), (3, 12))</code></pre>
 ```
 
 ```julia
 round.(A; digits=4)
 ```
 
-```text
-3×3 Matrix{Float64}:
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×3 Matrix{Float64}:
  -1.912    1.912     1.912
   1.912   -1.912     1.912
- 10.2015  10.2015  -10.2015
+ 10.2015  10.2015  -10.2015</code></pre>
 ```
 
 The columns of `A` are the primitive lattice vectors in Å. The columns of
@@ -176,11 +184,11 @@ The columns of `A` are the primitive lattice vectors in Å. The columns of
 round.(atoms[:, 4:5]; digits=4)
 ```
 
-```text
-3×2 Matrix{Float64}:
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×2 Matrix{Float64}:
   0.0      0.0
   0.0      0.0
- 12.1663   8.2367
+ 12.1663   8.2367</code></pre>
 ```
 
 The structure and the WIEN2Wannier projection definitions give this assignment:
@@ -204,9 +212,9 @@ orbital_atoms = vcat(fill(4, 5), fill(5, 5), repeat(collect(6:12); inner=3))
 orbital_atoms
 ```
 
-```text
-[4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 7, 7, 7,
- 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 12]
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">[4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 7, 7, 7,
+ 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 12]</code></pre>
 ```
 
 The two `fill` calls assign five orbitals to each Ni; `repeat` assigns three
@@ -251,8 +259,8 @@ h_a = hopping(model, (1, 0, 0))
 size(h0), size(h_a)
 ```
 
-```text
-((31, 31), (31, 31))
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">((31, 31), (31, 31))</code></pre>
 ```
 
 For example, `h0[1:5, 1:5]` is the Ni A onsite d-shell matrix in the source
@@ -265,8 +273,8 @@ opposite translations:
 isapprox(hopping(model, (-1, 0, 0)), h_a')
 ```
 
-```text
-true
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre>
 ```
 
 For fractional reciprocal coordinates ``\kappa``, the Bloch Hamiltonian is
@@ -283,8 +291,8 @@ energies_Gamma = eigvals(Hermitian(h_Gamma))
 length(energies_Gamma)
 ```
 
-```text
-31
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">31</code></pre>
 ```
 
 These are energies in eV on the source energy reference. The importer preserves
@@ -308,8 +316,8 @@ calculated = bandstructure(model, wannier_path)
 maximum(abs, calculated.energies - reference.energies)
 ```
 
-```text
-3.754095e-5
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">3.754095e-5</code></pre>
 ```
 
 These are all package functions: `read_wannier_path` reads the path defined
@@ -387,8 +395,8 @@ computed = bandstructure(model, path)
 size(computed.energies)
 ```
 
-```text
-(31, 201)
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">(31, 201)</code></pre>
 ```
 
 `read_wien2k_bands` is a package reader for the dispersion file; it checks the
@@ -461,8 +469,8 @@ connection = hopping(grouped, (1, 0, 0))
 size(grouped), size(internal)
 ```
 
-```text
-((62, 62), (62, 62))
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">((62, 62), (62, 62))</code></pre>
 ```
 
 `grouped.lattice` contains the new lattice vectors, and
@@ -491,8 +499,8 @@ sites = cluster_sites(A, atoms; centres=nickel_atoms,
 length(sites)
 ```
 
-```text
-13
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">13</code></pre>
 ```
 
 Each entry is `(cell, atom)`, with an integer cell translation and an atom index
@@ -518,8 +526,8 @@ offsets = [norm(wannier_positions[:, i] + A*collect(orbital_images[i]) -
 maximum(offsets)
 ```
 
-```text
-0.14593387509665057
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.14593387509665057</code></pre>
 ```
 
 The shifted Wannier centres are all within 0.146 Å of their assigned atoms.
@@ -547,8 +555,8 @@ cluster = finite_cluster(model, selection)
 size(cluster.hamiltonian)
 ```
 
-```text
-(43, 43)
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">(43, 43)</code></pre>
 ```
 
 The first ten orbitals are the two Ni d shells; the remaining 33 are O p
@@ -584,8 +592,8 @@ rotation = ligand_basis(cluster, 1:10)
 rotation.direct, rotation.tail
 ```
 
-```text
-(11:20, 21:43)
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">(11:20, 21:43)</code></pre>
 ```
 
 The returned `rotation.U` changes from the original orbital basis to the new
@@ -616,8 +624,8 @@ h = rotation.hamiltonian[keep, keep]
 size(h)
 ```
 
-```text
-(20, 20)
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">(20, 20)</code></pre>
 ```
 
 This last projection discards 23 oxygen combinations. They have no direct d
@@ -689,8 +697,8 @@ end
 ed, eL
 ```
 
-```text
-(-32.114285714285714, 9.385714285714286)
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">(-32.114285714285714, 9.385714285714286)</code></pre>
 ```
 
 The large individual values reflect the chosen configuration-energy zero.
@@ -789,12 +797,12 @@ states = eigen(H_gs, m; restrictions=ground,
 round.(states.values; digits=6)
 ```
 
-```text
-4-element Vector{Float64}:
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">4-element Vector{Float64}:
  -10.808483
  -10.808483
  -10.806290
- -10.806290
+ -10.806290</code></pre>
 ```
 
 Calculate the absorption tensor on the relative photon-energy grid:
@@ -807,8 +815,8 @@ spec = xas(H_xas, T, states;
 size(spec.tensor)
 ```
 
-```text
-(3, 3, 1001)
+```@raw html
+<pre class="documenter-example-output"><code class="nohighlight hljs ansi">(3, 3, 1001)</code></pre>
 ```
 
 The lowest Kramers pair is averaged at zero temperature. The next pair checks

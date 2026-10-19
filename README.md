@@ -196,8 +196,8 @@ Useful entry points:
 
 - [Getting started](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/getting_started/) — installation and first calculation
 - [Matrix-free calculations](docs/src/tut/matrixfree.md) — choosing a backend, threading, and selected spaces
-- [Interfacing with Wannier90](docs/src/tut/wannier.md) — reading DFT inputs, comparing bands, and constructing a cluster for XAS
 - [NiO: XAS, RIXS, and nIXS](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/nio/) — a complete worked multiplet calculation
+- [Interfacing with Wannier90](docs/src/tut/wannier.md) — reading DFT inputs, comparing bands, and constructing a cluster for XAS
 - [Manual](https://correlatedspectra.github.io/MOADyna.jl/stable/man/intro/) — operator algebra, bases, ED, responses, spectroscopy
 - [Library reference](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/) — every exported function
 - [Importing calculation data](docs/src/app/importing_data.md) — operator and wavefunction text files

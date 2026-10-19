@@ -127,8 +127,8 @@ Depth = 2
 Pages = [
     "tut/getting_started.md",
     "tut/matrixfree.md",
-    "tut/wannier.md",
     "tut/nio.md",
+    "tut/wannier.md",
 ]
 Depth = 2
 ```
