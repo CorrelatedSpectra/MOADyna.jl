@@ -1,5 +1,38 @@
 using LinearAlgebra
 
+@testset "Geometric cluster selection" begin
+    A = [4.0 3.9; 0.0 0.1]
+    positions = [0.0 1.0 0.5; 0.0 0.0 0.0]
+    selected = cluster_sites(A, positions; centres=[1, 2], neighbors=[3], radius=0.55)
+    reference = [((0, 0), 1), ((0, 0), 2)]
+    candidates = [(R, 3) for R in Iterators.product(-12:12, -12:12)
+                  if any(norm(positions[:, 3] + A*collect(R) - positions[:, c]) <= 0.55
+                         for c in 1:2)]
+    append!(reference, sort(candidates))
+    @test selected == reference
+    @test allunique(selected)
+    @test count(==(((0, 0), 3)), selected) == 1
+    @test any(maximum(abs, R) > 1 for (R, _) in selected)
+    shift = (3, -2)
+    translated = cluster_sites(A, positions; centres=[(shift, 1), (shift, 2)],
+                               neighbors=[3], radius=0.55)
+    @test translated == [(R .+ shift, i) for (R, i) in selected]
+    @test cluster_sites(A, positions; centres=[2, 1, 2], neighbors=Int[], radius=0) ==
+          [((0, 0), 2), ((0, 0), 1)]
+    @test cluster_sites(reshape([3.0], 1, 1), reshape([0.0, 1.0], 1, 2);
+                        centres=[1], neighbors=[2], radius=1.0, atol=0) ==
+          [((0,), 1), ((0,), 2)]
+    @test cluster_sites(reshape([0.1], 1, 1), reshape([3*0.1, 0.0], 1, 2);
+                        centres=[1], neighbors=[2], radius=0, atol=0) ==
+          [((0,), 1), ((3,), 2)]
+    @test_throws ArgumentError cluster_sites(A, positions; centres=[1], radius=-1)
+    @test_throws ArgumentError cluster_sites(A, positions; centres=[1], radius=Inf)
+    @test_throws ArgumentError cluster_sites(A, positions; centres=Int[], radius=1)
+    @test_throws ArgumentError cluster_sites(A, positions; centres=[4], radius=1)
+    @test_throws ArgumentError cluster_sites(zeros(2, 2), positions; centres=[1], radius=1)
+    @test_throws DimensionMismatch cluster_sites(A, zeros(3, 2); centres=[1], radius=1)
+end
+
 @testset "Clusters and supercells" begin
     hoppings = Dict((0, 0) => fill(0.2, 1, 1), (1, 0) => fill(0.3im, 1, 1),
                     (-1, 0) => fill(-0.3im, 1, 1), (0, 1) => fill(-0.4, 1, 1),

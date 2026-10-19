@@ -14,6 +14,7 @@ import ..Algebra: onebody
 include("model.jl")
 include("bands.jl")
 include("clusters.jl")
+include("cluster_sites.jl")
 include("ligand.jl")
 include("wannier.jl")
 include("wannier_geometry.jl")
@@ -23,7 +24,7 @@ include("reference_bands.jl")
 
 export TightBindingModel, hopping, bloch_hamiltonian, bloch_hamiltonian!
 export KPath, BandStructure, kpath, bandstructure
-export FiniteCluster, finite_cluster, supercell
+export FiniteCluster, finite_cluster, cluster_sites, supercell
 export ligand_basis
 export read_wannier90
 export read_wannier_path, read_wannier_bands

@@ -117,7 +117,7 @@ export density_density, kanamori, Ssqr
 # From TightBinding
 export TightBindingModel, hopping, bloch_hamiltonian, bloch_hamiltonian!
 export KPath, BandStructure, kpath, bandstructure
-export FiniteCluster, finite_cluster, supercell
+export FiniteCluster, finite_cluster, cluster_sites, supercell
 export ligand_basis
 export read_wannier90
 export read_wannier_path, read_wannier_bands

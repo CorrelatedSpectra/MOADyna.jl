@@ -14,31 +14,18 @@ end
 function bilayer_cluster(model, orbital_atoms; radius=2.5)
     A = model.lattice
     atoms = model.metadata[:atoms].positions
-    nickel = atoms[:, 4:5]
+    sites = cluster_sites(A, atoms; centres=[4, 5], neighbors=6:12, radius)
     centres = A * model.centres
     images = [Tuple(round.(Int, A \ (atoms[:, orbital_atoms[i]] - centres[:, i])))
               for i in eachindex(orbital_atoms)]
-
-    # Geometric bounds include every periodic image inside the search sphere.
-    bounds = radius .* [norm(row) for row in eachrow(inv(A))]
-    oxygen = Set{Tuple{NTuple{3,Int},Int}}()
-    for site in 6:12, ni in eachcol(nickel)
-        centre = A \ (ni - atoms[:, site])
-        ranges = [ceil(Int, centre[i]-bounds[i]):floor(Int, centre[i]+bounds[i]) for i in 1:3]
-        for cell in Iterators.product(ranges...)
-            norm(atoms[:, site] + A*collect(cell) - ni) <= radius &&
-                push!(oxygen, (cell, site))
-        end
-    end
-    selection = [(images[i], i) for i in 1:10]
-    positions = [nickel[:, 1], nickel[:, 2]]
-    for (cell, site) in sort!(collect(oxygen))
-        push!(positions, atoms[:, site] + A*collect(cell))
-        for i in findall(==(site), orbital_atoms)
-            push!(selection, (cell .+ images[i], i))
-        end
-    end
-    return finite_cluster(model, selection), reduce(hcat, positions)
+    offsets = [norm(centres[:, i] + A*collect(images[i]) - atoms[:, orbital_atoms[i]])
+               for i in eachindex(orbital_atoms)]
+    # This bound certifies a unique closest image for each declared atom.
+    @assert maximum(offsets) < minimum(svdvals(A))/2
+    selection = [(cell .+ images[i], i) for (cell, site) in sites
+                 for i in findall(==(site), orbital_atoms)]
+    positions = reduce(hcat, [atoms[:, site] + A*collect(cell) for (cell, site) in sites])
+    return finite_cluster(model, selection), positions
 end
 
 """Keep the ten direct ligand combinations and order each shell as real d harmonics."""
