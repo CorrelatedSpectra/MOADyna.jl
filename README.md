@@ -34,6 +34,11 @@ core-level spectroscopy.
 - **Exact diagonalization.** `eigen(H, basis; n, which)` dispatches between dense
   LAPACK and Krylov (KrylovKit) automatically; the assembled `SparseMatrixCSC` is
   also usable directly with your own solver.
+- **Wannier90 interface and tight-binding models.** Import hopping Hamiltonians
+  and crystal geometry, compare bands with DFT, and select clusters around chosen
+  atoms. Rotate ligand orbitals or construct supercells with their connecting
+  hoppings. The [Wannier90 tutorial](docs/src/tut/wannier.md) follows this workflow
+  through to XAS.
 - **Matrix-free calculations.** `matrixfree(H, basis)` applies operators without
   storing matrix elements, using the same eigensolvers and spectroscopy interfaces.
   Products support Julia threads, with explicit serial and parallel controls.
@@ -183,6 +188,8 @@ The [`examples/`](examples/) directory contains runnable scripts:
 - **NiO 3d nIXS** — non-resonant inelastic X-ray scattering multipoles
 - **[Matrix-free Hubbard chain](examples/09_matrixfree.jl)** — ground state,
   dynamical response, and residual-controlled basis selection
+- **[Wannier90 to cluster XAS](examples/la3ni2o7/)** — DFT band comparisons,
+  geometric cluster selection, and ligand construction
 
 ## Documentation
 
@@ -194,6 +201,7 @@ Useful entry points:
 - [Getting started](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/getting_started/) — installation and first calculation
 - [Matrix-free calculations](docs/src/tut/matrixfree.md) — choosing a backend, threading, and selected spaces
 - [NiO: XAS, RIXS, and nIXS](https://correlatedspectra.github.io/MOADyna.jl/stable/tut/nio/) — a complete worked multiplet calculation
+- [Interfacing with Wannier90](docs/src/tut/wannier.md) — reading DFT inputs, comparing bands, and constructing a cluster for XAS
 - [Manual](https://correlatedspectra.github.io/MOADyna.jl/stable/man/intro/) — operator algebra, bases, ED, responses, spectroscopy
 - [Library reference](https://correlatedspectra.github.io/MOADyna.jl/stable/lib/algebra/) — every exported function
 - [Importing calculation data](docs/src/app/importing_data.md) — operator and wavefunction text files

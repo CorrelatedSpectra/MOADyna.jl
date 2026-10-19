@@ -518,13 +518,13 @@ end
 function Base.:+(a::SpectraTensor, b::SpectraTensor)
     _check_alg_compat(a, b, "+")
     new_tensor = a.tensor .+ b.tensor
-    return _alg_result(new_tensor, a)
+    return _alg_result(new_tensor, a, b)
 end
 
 function Base.:-(a::SpectraTensor, b::SpectraTensor)
     _check_alg_compat(a, b, "-")
     new_tensor = a.tensor .- b.tensor
-    return _alg_result(new_tensor, a)
+    return _alg_result(new_tensor, a, b)
 end
 
 Base.:*(α::Number, a::SpectraTensor) = _scalar_mul(α, a)
@@ -541,12 +541,28 @@ function _check_alg_compat(a::SpectraTensor, b::SpectraTensor, op::String)
         throw(ArgumentError("SpectraTensor $op: ω_grid mismatch"))
     size(a.tensor) == size(b.tensor) ||
         throw(DimensionMismatch("SpectraTensor $op: tensor shape mismatch ($(size(a.tensor)) vs $(size(b.tensor)))"))
+    Symbol(get(a.metadata, :function, :unknown)) == Symbol(get(b.metadata, :function, :unknown)) ||
+        throw(ArgumentError("SpectraTensor $op: incompatible spectroscopy methods"))
+    for key in (:T_is_vector_input, :T_in_is_vector_input,
+                :T_out_is_vector_input, :ψ_is_list_input, :n_T, :n_T_in, :n_T_out,
+                :n_ψ, :n_ops, :n_A, :n_B, :observable)
+        isequal(get(a.metadata, key, nothing), get(b.metadata, key, nothing)) ||
+            throw(ArgumentError("SpectraTensor $op: incompatible spectroscopy method or tensor layout ($key)"))
+    end
 end
 
-function _alg_result(tensor, prototype::SpectraTensor)
-    new_meta = Dict{Symbol,Any}(:function => :algebraic_combination,
-                                 :Γ => get(prototype.metadata, :Γ, nothing),
-                                 :Eg => prototype.Eg)
+function _alg_result(tensor, prototype::SpectraTensor, other::Union{Nothing,SpectraTensor}=nothing)
+    new_meta = copy(prototype.metadata)
+    if other !== nothing
+        filter!(pair -> haskey(other.metadata, first(pair)) &&
+                       isequal(last(pair), other.metadata[first(pair)]), new_meta)
+    end
+    # Polarization needs the observable and axis metadata after averaging.
+    new_meta[:function] = Symbol(get(prototype.metadata, :function, :unknown))
+    new_meta[:algebraic_combination] = true
+    new_meta[:Eg] = prototype.Eg
+    delete!(new_meta, :converged)
+    delete!(new_meta, :n_iter_per_ψ)
     F = typeof(prototype.ω_grid)
     N = ndims(tensor)
     return SpectraTensor{eltype(tensor), Float64, N, F}(
@@ -559,10 +575,12 @@ end
 
 Equal-weight mean of a collection of `SpectraTensor` results.
 
-All inputs must share the same `ω_grid` and tensor shape; a mismatch
+All inputs must share the spectroscopy method, tensor layout and `ω_grid`; a mismatch
 raises an error. The returned `SpectraTensor` has `chunks = nothing`,
 so `re_broaden` is unavailable on the result — use the original
 per-component results if you need to rebroad.
+Polarization metadata is preserved; other metadata is retained when shared
+by all inputs. `Eg` follows the first input.
 
 Typical use: averaging spectra computed for degenerate initial states
 before comparing to experiment.
@@ -581,9 +599,11 @@ end
 
 Compute the linear combination `Σ_i weights[i] * results[i]`.
 
-All inputs must share the same `ω_grid` and tensor shape; a mismatch
+All inputs must share the spectroscopy method, tensor layout and `ω_grid`; a mismatch
 raises an error. The returned `SpectraTensor` has `chunks = nothing`,
 so `re_broaden` is unavailable on the result.
+Polarization metadata is preserved; other metadata is retained when shared
+by all inputs. `Eg` follows the first input.
 
 Typical use: thermal (Boltzmann) average over low-lying states, where
 `weights[i] = exp(-β * E_i) / Z` and `results[i]` is the spectrum

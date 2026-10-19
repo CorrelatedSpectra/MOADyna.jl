@@ -373,3 +373,12 @@
         @test result.n_iter ≤ 4
     end
 end
+
+@testset "Requested Lanczos length" begin
+    h = spdiagm(0 => collect(range(-1.0, 1.0; length=1024)))
+    source = ones(1024, 1)
+    requested = block_lanczos(h, source; krylovdim=510)
+    capped = block_lanczos(h, source; krylovdim=510, max_iter=17)
+    @test requested.n_iter == 510
+    @test capped.n_iter == 17
+end

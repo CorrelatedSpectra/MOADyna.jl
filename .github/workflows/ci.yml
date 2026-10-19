@@ -76,7 +76,7 @@ jobs:
       - name: Run examples
         run: |
           set -e
-          for f in examples/0*.jl; do
+          for f in examples/[0-9][0-9]_*.jl; do
             echo "::group::$f"
             julia --project=. --color=yes "$f"
             echo "::endgroup::"

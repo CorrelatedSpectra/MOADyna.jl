@@ -1,17 +1,8 @@
 module MOADynaPlotsExt
 
-# Package extension activated automatically when both `MOADyna` and a
-# plot package built on RecipesBase (e.g. `Plots.jl`) are loaded in the
-# user's session. Provides a `plot(spec::SpectraTensor; …)` recipe that
-# converts a spectroscopy result into either a 1-D line plot
-# (XAS / FY / scalar RIXS along a single grid) or a 2-D heatmap (RIXS
-# with two ω axes).
-#
-# Only `RecipesBase` is required at compile time; the actual plotting
-# backend is supplied by the user's `Plots.jl` install. This keeps the
-# extension lightweight and backend-agnostic.
+# Plotting recipes for spectra and band structures, activated by RecipesBase.
 
-using MOADyna: SpectraTensor
+using MOADyna: SpectraTensor, BandStructure
 using MOADyna.Spectroscopy: polarise
 using RecipesBase
 
@@ -166,6 +157,46 @@ end
         throw(ArgumentError(
             "MOADynaPlotsExt: unsupported SpectraTensor metadata[:function] = $(fn)"))
     end
+end
+
+@recipe function f(bands::BandStructure; energy_zero=0.0)
+    isfinite(energy_zero) || throw(ArgumentError("energy_zero must be finite"))
+    path = bands.path
+    xlabel --> "k path (Å⁻¹)"
+    ylabel --> (iszero(energy_zero) ? "Energy (eV)" : "E − E₀ (eV)")
+    linewidth --> 1.5
+    seriescolor --> :steelblue
+    label --> ""
+    if !isempty(path.labels)
+        positions, names = Float64[], String[]
+        for (i, name) in sort(path.labels; by=first)
+            name = uppercase(name) == "GAMMA" ? "Γ" : name
+            x = path.distance[i]
+            if !isempty(positions) && x == last(positions)
+                name in split(last(names), '|') || (names[end] *= "|" * name)
+            else
+                push!(positions, x)
+                push!(names, name)
+            end
+        end
+        xticks --> (positions, names)
+    end
+    for b in axes(bands.energies, 1)
+        x, y = Float64[], Float64[]
+        for j in eachindex(path.distance)
+            if j in path.breaks
+                push!(x, NaN)
+                push!(y, NaN)
+            end
+            push!(x, path.distance[j])
+            push!(y, bands.energies[b, j] - energy_zero)
+        end
+        @series begin
+            primary := b == 1
+            x, y
+        end
+    end
+    nothing
 end
 
 end # module MOADynaPlotsExt

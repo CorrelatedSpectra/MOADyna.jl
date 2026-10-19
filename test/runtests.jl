@@ -11,6 +11,7 @@ using MOADyna
         include("algebra/test_hilbert.jl")
         include("algebra/test_operators.jl")
         include("algebra/test_operator_sum.jl")
+        include("algebra/test_onebody.jl")
         include("algebra/test_canonicalize.jl")
         include("algebra/test_algebra.jl")
         include("algebra/test_observables.jl")
@@ -19,6 +20,8 @@ using MOADyna
         include("algebra/test_rotate.jl")
         include("algebra/test_operator_io.jl")
     end
+
+    include("tightbinding/runtests.jl")
 
     @testset "Bases" begin
         include("bases/test_encoding.jl")

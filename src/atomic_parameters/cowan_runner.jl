@@ -29,7 +29,7 @@
 # ---------------------------------------------------------------------
 
 const _RYDBERG_TO_EV = 13.605693122994  # CODATA 2018, eV/Ry
-const _BOHR_TO_ANG   = 0.529177210903   # CODATA 2018, Å/a₀
+const _BOHR_TO_ANG   = bohr_angstrom
 const _BOHR2_TO_ANG2 = _BOHR_TO_ANG^2   # ≈ 0.28002852
 const _BOHR4_TO_ANG4 = _BOHR_TO_ANG^4   # ≈ 0.07841596
 
