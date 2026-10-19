@@ -1,6 +1,7 @@
 # julia --project --threads=8 examples/la3ni2o7/xas.jl la3ni2o7-wannier results
 include("model.jl")
 using DelimitedFiles
+using TOML
 
 function calculate_xas(datadir, output; krylovdim=600)
     mkpath(output)

@@ -26,7 +26,7 @@ coupling, electron count, and charge-transfer energy are set later in this
 tutorial.
 
 [Download the example inputs](https://github.com/CorrelatedSpectra/MOADyna.jl/releases/download/v0.3.5/la3ni2o7-wannier.tar.gz)
-(1.62 MiB) and unpack them:
+(1.64 MiB) and unpack them:
 
 ```sh
 tar -xzf la3ni2o7-wannier.tar.gz
@@ -51,27 +51,21 @@ for this tutorial.
 | `model.inwf` | **WIEN2Wannier input:** atomic projection definitions and their orbital order. | Establishing the orbital-to-atom assignment; the example writes this assignment explicitly in Julia. |
 | `model.win` | **Wannier90 input:** primitive lattice vectors, atomic positions, k mesh, and band-path endpoints and sampling settings. | Reading the geometry and interpolation settings; defining the stored Wannier band path. |
 | `model_hr.dat` | **Wannier90 output:** real-space hopping matrices between the 31 Wannier orbitals, indexed by lattice translation, with degeneracy weights. Energies are in eV. | Constructing the tight-binding Hamiltonian for both bands and clusters. |
-| `model_centres.xyz` | **Wannier90 output:** Wannier centres wrapped into the home cell, in Cartesian coordinates. | Inspecting the source centres; the scripts use their unwrapped representatives from `geometry.toml`. |
+| `model.wout` | **Wannier90 output from an earlier run:** final Wannier centres and a run summary. | Identifying the integer cell images of the current centres, using the shared orbital ordering. |
+| `model_centres.xyz` | **Wannier90 output:** current Wannier centres wrapped into the home cell, in Cartesian coordinates. | Reading the current positions and unwrapping them with the cell images from `model.wout`. |
 | `model_band.dat` | **Wannier90 output:** interpolated band energies along the path defined in `model.win`. | Checking that MOADyna reproduces the stored Wannier bands. |
 
-Three additional files were prepared for this tutorial:
+Two additional files describe and verify the archive:
 
 | File | Contents | Used for |
 |:-----|:---------|:---------|
-| `geometry.toml` | Orbital-to-atom assignments and d-orbital order extracted from `model.inwf`, plus unwrapped fractional Wannier centres reconstructed from the centre files. | Supplying the reconstructed centres; recording the projection assignments for provenance. |
 | `README.md` | Dataset provenance and coordinate conventions. | Understanding the input calculation. |
 | `SHA256SUMS` | Checksums of the data files. | Checking the downloaded files. |
 
-TOML is a general-purpose text format. `geometry.toml` is an example metadata
-file, not a DFT or Wannier90 output, and it is not a required MOADyna input
-format. This archived calculation lacks a matching final output containing
-the unwrapped centres. The example helper reads the reconstructed centres
-from this file with Julia's TOML library. The orbital assignment is written
-explicitly in Julia below; the file also records it for provenance.
-
 For **cluster construction and XAS**, only `model_hr.dat`, `model.win`, and
-`geometry.toml` are read. The band files and `model.struct` can be omitted.
-These same three files also suffice to calculate new tight-binding bands on a
+the two centre sources, `model.wout` and `model_centres.xyz`, are read.
+The band files and `model.struct` can be omitted.
+These same four files also suffice to calculate new tight-binding bands on a
 chosen k path. Add `model_band.dat` to compare against Wannier90, and
 `dft.spaghetti_ene`, `dft.klist_band`, and `model.struct` to reproduce the DFT
 overlay below. The data is distributed separately from the package source.
@@ -121,23 +115,34 @@ A bare `_hr.dat` does not identify its interpolation convention: use
 centre-dependent Wigner–Seitz interpolation, according to the generating
 calculation. The reader needs `_wsvec.dat`, or enough geometry and mesh
 information to reconstruct its shifts, for the latter. The geometry is read
-from these native files; creating a TOML file is not part of that workflow.
+from these native files.
 The atom-to-orbital assignment is supplied separately from the known orbital
 ordering, as shown explicitly below.
 
-For the archived dataset in this tutorial, the matching final output is
-missing. We therefore read the supplied reconstructed centres from
-`geometry.toml` and pass them explicitly to [`read_wannier90`](@ref):
+This archive contains current wrapped XYZ centres and a WOUT from an earlier
+run. Using their shared orbital ordering, we take the current positions from
+the XYZ file and recover their integer cell images from the earlier centres.
+First read the native geometry without reconstructing Wigner–Seitz shifts:
 
 ```julia
 using MOADyna
 using LinearAlgebra
-using TOML
+using DelimitedFiles
 
 datadir = "la3ni2o7-wannier"
-geometry = TOML.parsefile(joinpath(datadir, "geometry.toml"))
-centres = reduce(hcat, geometry["centres_fractional"])
 seed = joinpath(datadir, "model")
+geometry = read_wannier90(seed; interpolation=:plain)
+```
+
+An XYZ file starts with two header lines. Its `X` rows are the Wannier centres,
+in orbital order; the other rows describe atoms. Read those positions,
+convert from Cartesian to fractional coordinates, and add the integer images:
+
+```julia
+xyz = readdlm(seed * "_centres.xyz"; skipstart=2)
+cartesian = permutedims(Float64.(xyz[xyz[:, 1] .== "X", 2:4]))
+wrapped = geometry.lattice \ cartesian
+centres = wrapped + round.(Int, geometry.centres - wrapped)
 model = read_wannier90(seed; centres, interpolation=:ws)
 ```
 
@@ -222,13 +227,11 @@ orbitals to each oxygen. `orbital_atoms[i]` therefore names the atom of orbital
 `i`. Adapt these groups to your own orbital ordering. This assignment belongs
 to the model setup, and does not require a metadata file.
 
-In this archive, `model_centres.xyz` wraps the Wannier centres into the home
-cell. Their integer cell images were recovered from an earlier Wannier output
-and combined with the current XYZ coordinates to prepare `geometry.toml`.
-That earlier output used a different k mesh, so it is not included as an
-importer companion. The archive README records this reconstruction and its
-checks. For a calculation with a consistent final `.wout` or `_tb.dat`, the
-importer can read the centre representatives directly from those native files.
+The archived WOUT used a different k mesh. Only its centre cell images enter
+the reconstruction above; the final import uses the current `.win` lattice
+and mesh and the current XYZ positions. The archive README records the checks
+on this reconstruction. With a matching final `.wout` or `_tb.dat`,
+`read_wannier90(seed)` reads the centres directly and this extra step is unnecessary.
 
 The representatives must agree with the translation indices in the hopping
 table. Wannier centres can be displaced from nuclei; atomic positions select

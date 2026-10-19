@@ -1,12 +1,17 @@
 using MOADyna
 using LinearAlgebra
-using TOML
+using DelimitedFiles
 
 """Read the supplied 31-orbital La₃Ni₂O₇ Wannier model and orbital identities."""
 function load_wannier(datadir)
-    geometry = TOML.parsefile(joinpath(datadir, "geometry.toml"))
-    centres = reduce(hcat, geometry["centres_fractional"])
-    model = read_wannier90(joinpath(datadir, "model"); centres, interpolation=:ws)
+    seed = joinpath(datadir, "model")
+    geometry = read_wannier90(seed; interpolation=:plain)
+    xyz = readdlm(seed * "_centres.xyz"; skipstart=2)
+    cartesian = permutedims(Float64.(xyz[xyz[:, 1] .== "X", 2:4]))
+    wrapped = geometry.lattice \ cartesian
+    # Recover cell images from the earlier run; retain the current XYZ positions.
+    centres = wrapped + round.(Int, geometry.centres - wrapped)
+    model = read_wannier90(seed; centres, interpolation=:ws)
     orbital_atoms = vcat(fill(4, 5), fill(5, 5), repeat(collect(6:12); inner=3))
     return model, orbital_atoms
 end
