@@ -32,7 +32,7 @@ core, never the reverse.
 
 MOADyna is one package of submodules, each exercised by the test suite and each the subject of a
 Manual chapter. They fall into two groups: a **calculation pipeline** that carries a model from
-operators to a spectrum, and a **multiplet toolkit** that builds the physical operators and
+operators to a spectrum, and **model construction tools** that build the physical operators and
 parameters the pipeline consumes.
 
 **The calculation pipeline** — each stage builds directly on the one before it:
@@ -51,9 +51,12 @@ parameters the pipeline consumes.
    [`fluorescence_yield`](@ref), [`optical_conductivity`](@ref),
    [`dynamical_structure_factor`](@ref).
 
-**The multiplet toolkit** — these sit *beside* the pipeline (not above it), producing the
+**The model construction tools** — these sit beside the pipeline, producing the
 operators and parameters it runs on:
 
+- **[TightBinding](@ref)** (`TightBinding`) — Wannier90 Hamiltonians and crystal geometry,
+  band comparisons, finite clusters, supercells, and ligand rotations. The resulting
+  one-electron matrices enter the operator algebra through [`onebody`](@ref).
 - **[Multiplets & Standard Operators](@ref)** (`Shells`) — the `ShellModel` registry and every
   standard multiplet / transition operator (Coulomb, spin–orbit, crystal field, hybridisation,
   and the dipole / quadrupole / nIXS transition operators). This is where most spectroscopy
@@ -72,6 +75,8 @@ operators and parameters it runs on:
   [Matrix-free Calculations](@ref) for the two distinct choices.
 - Here for spectroscopy? Jump to [Multiplets & Standard Operators](@ref) and the
   [NiO: XAS, RIXS, and nIXS](@ref) tutorial.
+- Starting from DFT? [Interfacing with Wannier90](@ref) follows the input files,
+  band comparison, cluster construction, and absorption calculation.
 
 The reference docstrings for every exported symbol are in the **Library** section; the
 **Appendix** collects conventions and the point-group theory primer.

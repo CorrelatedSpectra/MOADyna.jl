@@ -169,14 +169,14 @@ Depth = 2
 ## How the package is organised
 
 MOADyna is one package of submodules in two groups: a **calculation pipeline** that
-carries a model from operators to a spectrum, and a **multiplet toolkit** that
+carries a model from operators to a spectrum, and **model construction tools** that
 builds the operators and parameters the pipeline consumes (plus small utilities).
 
 - **Pipeline:** [Operator Algebra](@ref) → [Hilbert Spaces & Bases](@ref) →
   [Exact Diagonalization](@ref) → [Responses](@ref) → [Spectroscopy](@ref).
 - **Toolkit:** [Multiplets & Standard Operators](@ref), [Point Groups](@ref),
   [Atomic Parameters](@ref),
-  [Interfacing with Wannier90](@ref), and
+  [TightBinding](@ref), and
   [energy-unit conversions](@ref MOADyna.Units).
 - **Utilities:** diagnostics for ground-state inspection and shared HDF5 I/O.
 
