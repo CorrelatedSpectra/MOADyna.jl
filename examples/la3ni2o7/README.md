@@ -6,7 +6,10 @@ ligand reduction and interaction convention.
 and unpack it outside the source tree, or in a local working directory.
 
 For cluster construction and XAS, the scripts read only `model_hr.dat`,
-`model.win`, and `geometry.toml`. The band comparison also reads `model_band.dat`,
+`model.win`, and `geometry.toml`. The TOML file was prepared for this example:
+it records orbital assignments from `model.inwf` and reconstructed unwrapped
+Wannier centres. It is supplemental metadata, not a DFT or Wannier90 output.
+The band comparison also reads `model_band.dat`,
 `dft.spaghetti_ene`, `dft.klist_band`, and `model.struct`. The tutorial describes
 each input and shows the underlying package calls with their outputs.
 

@@ -7,7 +7,8 @@ function load_wannier(datadir)
     geometry = TOML.parsefile(joinpath(datadir, "geometry.toml"))
     centres = reduce(hcat, geometry["centres_fractional"])
     model = read_wannier90(joinpath(datadir, "model"); centres, interpolation=:ws)
-    return model, geometry["orbital_atoms"]
+    orbital_atoms = vcat(fill(4, 5), fill(5, 5), repeat(collect(6:12); inner=3))
+    return model, orbital_atoms
 end
 
 """Select the two Ni sites and the oxygen atoms within `radius` Å of either."""
